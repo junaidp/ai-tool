@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { apiService } from '@/services/api';
 import type { TestPlan, Issue } from '@/types';
 import {  Calendar, CheckCircle, Clock, XCircle, AlertTriangle, Plus, Download, Sparkles } from 'lucide-react';
@@ -19,6 +20,10 @@ export default function TestingCoordination() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [testingPeriod, setTestingPeriod] = useState('');
   const [testScope, setTestScope] = useState('');
+  const [selectedTest, setSelectedTest] = useState<TestPlan | null>(null);
+  const [isTestScriptOpen, setIsTestScriptOpen] = useState(false);
+  const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
+  const [newScheduledDate, setNewScheduledDate] = useState('');
 
   const loadData = async () => {
     const [tests, issuesData] = await Promise.all([
@@ -32,6 +37,46 @@ export default function TestingCoordination() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const handleStartTest = async (testId: number) => {
+    try {
+      await apiService.updateTestPlan(testId, { status: 'in_progress' });
+      await loadData();
+      alert('✅ Test started successfully!');
+    } catch (error) {
+      console.error('Failed to start test:', error);
+      alert('Failed to start test. Please try again.');
+    }
+  };
+
+  const handleViewTestScript = (test: TestPlan) => {
+    setSelectedTest(test);
+    setIsTestScriptOpen(true);
+  };
+
+  const handleReschedule = (test: TestPlan) => {
+    setSelectedTest(test);
+    setNewScheduledDate(test.scheduledDate.split('T')[0]); // Convert to YYYY-MM-DD format
+    setIsRescheduleOpen(true);
+  };
+
+  const handleRescheduleSubmit = async () => {
+    if (!selectedTest || !newScheduledDate) return;
+    
+    try {
+      await apiService.updateTestPlan(selectedTest.id, { 
+        scheduledDate: new Date(newScheduledDate).toISOString() 
+      });
+      setIsRescheduleOpen(false);
+      setSelectedTest(null);
+      setNewScheduledDate('');
+      await loadData();
+      alert('✅ Test rescheduled successfully!');
+    } catch (error) {
+      console.error('Failed to reschedule test:', error);
+      alert('Failed to reschedule test. Please try again.');
+    }
+  };
 
   const handleGenerateTestPlan = async () => {
     try {
@@ -336,8 +381,8 @@ export default function TestingCoordination() {
                     <div className="flex gap-2 pt-2 border-t">
                       {test.status === 'not_started' && (
                         <>
-                          <Button size="sm">Start Test</Button>
-                          <Button size="sm" variant="outline">View Test Script</Button>
+                          <Button size="sm" onClick={() => handleStartTest(test.id)}>Start Test</Button>
+                          <Button size="sm" variant="outline" onClick={() => handleViewTestScript(test)}>View Test Script</Button>
                         </>
                       )}
                       {test.status === 'in_progress' && (
@@ -352,7 +397,7 @@ export default function TestingCoordination() {
                           <Button size="sm" variant="outline">View Report</Button>
                         </>
                       )}
-                      <Button size="sm" variant="outline">Reschedule</Button>
+                      <Button size="sm" variant="outline" onClick={() => handleReschedule(test)}>Reschedule</Button>
                     </div>
                   </div>
                 ))}
@@ -532,6 +577,116 @@ export default function TestingCoordination() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Test Script Dialog */}
+      <Dialog open={isTestScriptOpen} onOpenChange={setIsTestScriptOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Test Script: {selectedTest?.controlName}</DialogTitle>
+            <DialogDescription>
+              Detailed test procedures and steps for {selectedTest?.testType} testing
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="border rounded-lg p-4 bg-muted/50">
+              <h4 className="font-medium mb-3">Test Objective</h4>
+              <p className="text-sm text-muted-foreground">
+                Verify the {selectedTest?.testType === 'design' ? 'design effectiveness' : 'operating effectiveness'} of {selectedTest?.controlName}
+              </p>
+            </div>
+            
+            <div className="border rounded-lg p-4">
+              <h4 className="font-medium mb-3">Test Procedures</h4>
+              <ol className="space-y-3 text-sm">
+                <li className="flex gap-2">
+                  <span className="font-medium">1.</span>
+                  <span>Obtain and review control documentation and process descriptions</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-medium">2.</span>
+                  <span>Identify key control activities and responsible personnel</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-medium">3.</span>
+                  <span>Select sample transactions/events based on defined sampling methodology</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-medium">4.</span>
+                  <span>Request and review evidence of control operation</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-medium">5.</span>
+                  <span>Verify evidence matches control requirements and timing</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-medium">6.</span>
+                  <span>Document any exceptions or deviations identified</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-medium">7.</span>
+                  <span>Conclude on control effectiveness based on test results</span>
+                </li>
+              </ol>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="border rounded-lg p-3">
+                <h4 className="font-medium text-sm mb-2">Sample Size</h4>
+                <p className="text-sm text-muted-foreground">25 items (based on control frequency)</p>
+              </div>
+              <div className="border rounded-lg p-3">
+                <h4 className="font-medium text-sm mb-2">Evidence Required</h4>
+                <p className="text-sm text-muted-foreground">Approvals, logs, screenshots, reports</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsTestScriptOpen(false)}>Close</Button>
+            <Button onClick={() => {
+              setIsTestScriptOpen(false);
+              if (selectedTest) handleStartTest(selectedTest.id);
+            }}>
+              Start Test
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reschedule Dialog */}
+      <Dialog open={isRescheduleOpen} onOpenChange={setIsRescheduleOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reschedule Test</DialogTitle>
+            <DialogDescription>
+              Change the scheduled date for: {selectedTest?.controlName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Current Scheduled Date</Label>
+              <Input 
+                type="text" 
+                value={selectedTest ? formatDate(selectedTest.scheduledDate) : ''} 
+                disabled 
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>New Scheduled Date</Label>
+              <Input 
+                type="date" 
+                value={newScheduledDate}
+                onChange={(e) => setNewScheduledDate(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRescheduleOpen(false)}>Cancel</Button>
+            <Button onClick={handleRescheduleSubmit}>Reschedule Test</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader>
