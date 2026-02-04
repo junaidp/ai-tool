@@ -19,6 +19,8 @@ export default function BoardReporting() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isEditDraftOpen, setIsEditDraftOpen] = useState(false);
   const [draftText, setDraftText] = useState('');
+  const [isPriorYearOpen, setIsPriorYearOpen] = useState(false);
+  const [isProvision29Open, setIsProvision29Open] = useState(false);
 
   useEffect(() => {
     apiService.getDashboardData().then(setData);
@@ -39,6 +41,14 @@ export default function BoardReporting() {
   const handleSaveDraft = () => {
     alert('✅ Draft saved successfully!');
     setIsEditDraftOpen(false);
+  };
+
+  const handleViewPriorYear = () => {
+    setIsPriorYearOpen(true);
+  };
+
+  const handleProvision29 = () => {
+    setIsProvision29Open(true);
   };
 
   const handleExportPDF = () => {
@@ -204,9 +214,9 @@ export default function BoardReporting() {
         </CardHeader>
         <CardContent>
           <div className="flex gap-3">
-            <Button>Generate Board Pack</Button>
-            <Button variant="outline">View Prior Year Statement</Button>
-            <Button variant="outline">Provision 29 Disclosure Draft</Button>
+            <Button onClick={handlePreviewPack}>Generate Board Pack</Button>
+            <Button variant="outline" onClick={handleViewPriorYear}>View Prior Year Statement</Button>
+            <Button variant="outline" onClick={handleProvision29}>Provision 29 Disclosure Draft</Button>
           </div>
         </CardContent>
       </Card>
@@ -783,6 +793,145 @@ export default function BoardReporting() {
             <Button onClick={handleExportPDF}>
               <Download className="h-4 w-4 mr-2" />
               Export to PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Prior Year Statement Dialog */}
+      <Dialog open={isPriorYearOpen} onOpenChange={setIsPriorYearOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Prior Year Board Statement (FY 2023)</DialogTitle>
+            <DialogDescription>
+              Review the prior year's annual board statement for reference
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-white border rounded-lg p-4 space-y-3">
+              <h4 className="font-medium">Board's Responsibility</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                The Board is responsible for determining the nature and extent of the significant risks it is willing to take in achieving its strategic objectives. The Board maintains sound risk management and internal control systems and is responsible for reviewing their effectiveness.
+              </p>
+            </div>
+
+            <div className="bg-white border rounded-lg p-4 space-y-3">
+              <h4 className="font-medium">How Monitoring and Review Were Performed (FY 2023)</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Throughout FY 2023, the Board conducted quarterly reviews of control effectiveness against approved criteria covering design, implementation, operation, and outcomes. The Board reviewed comprehensive reports from management, internal audit, and external audit. Continuous monitoring systems provided real-time visibility into control performance, with 156 material controls tested during the period.
+              </p>
+            </div>
+
+            <div className="bg-white border rounded-lg p-4 space-y-3">
+              <h4 className="font-medium">Basis of Declaration at Balance Sheet Date (Dec 31, 2023)</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                As of December 31, 2023, the Board reviewed evidence from 156 material control tests, continuous monitoring signals from integrated systems, and remediation activities for identified exceptions. 148 controls (95%) demonstrated effective operation. All exceptions were within established tolerance thresholds and subject to approved remediation plans.
+              </p>
+            </div>
+
+            <div className="bg-white border rounded-lg p-4 space-y-3">
+              <h4 className="font-medium">Material Weaknesses (FY 2023)</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                No material weaknesses were identified during FY 2023. Minor control exceptions were identified in vendor due diligence processes, with remediation completed in Q1 2024. The Board was satisfied that these exceptions did not constitute material weaknesses.
+              </p>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+              <p className="text-blue-900">
+                <strong>Note:</strong> This prior year statement is provided for reference and consistency in approach. The current year statement should reflect the actual control testing results and board assessment for the current period.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPriorYearOpen(false)}>Close</Button>
+            <Button onClick={() => {
+              setIsPriorYearOpen(false);
+              handleEditDraft();
+            }}>
+              Use as Template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Provision 29 Disclosure Draft Dialog */}
+      <Dialog open={isProvision29Open} onOpenChange={setIsProvision29Open}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Provision 29 Disclosure Draft</DialogTitle>
+            <DialogDescription>
+              Draft disclosure for UK Corporate Governance Code - Provision 29
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-semibold text-blue-900 mb-2">UK Corporate Governance Code - Provision 29</h4>
+              <p className="text-sm text-blue-800">
+                The Board should monitor the company's risk management and internal control systems and, at least annually, carry out a review of their effectiveness and report on that review in the annual report. The monitoring and review should cover all material controls, including financial, operational and compliance controls.
+              </p>
+            </div>
+
+            <div className="bg-white border rounded-lg p-4 space-y-3">
+              <h4 className="font-medium">Draft Disclosure Statement</h4>
+              <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
+                <p>
+                  <strong className="text-foreground">Risk Management Framework:</strong> The Board has established a comprehensive risk management and internal control framework that is integrated with the Company's strategy and business planning processes. The framework is designed to manage rather than eliminate the risk of failure to achieve business objectives and can only provide reasonable and not absolute assurance against material misstatement or loss.
+                </p>
+
+                <p>
+                  <strong className="text-foreground">Board Oversight:</strong> Throughout {new Date().getFullYear()}, the Board conducted quarterly reviews of control effectiveness. The Audit Committee, on behalf of the Board, reviewed detailed reports covering:
+                </p>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>Results of testing of {data?.controlHealth.tested || 'material'} controls identified as material to financial reporting and business operations</li>
+                  <li>Analysis of control exceptions and remediation progress</li>
+                  <li>Assessment against effectiveness criteria approved by the Board</li>
+                  <li>Output from continuous monitoring systems providing real-time control insights</li>
+                  <li>Reports from internal audit, external audit, and regulatory examinations</li>
+                </ul>
+
+                <p>
+                  <strong className="text-foreground">Effectiveness Assessment:</strong> The Board's assessment is based on a structured framework covering design, implementation, operation, decision-use, assurance, outcomes, and adaptability of controls. As of December 31, {new Date().getFullYear() - 1}, {data?.controlHealth.effective || 'material'} controls ({data ? Math.round((data.controlHealth.effective / data.controlHealth.tested) * 100) : '95'}%) demonstrated effective operation.
+                </p>
+
+                <p>
+                  <strong className="text-foreground">Material Weaknesses:</strong> No material weaknesses in internal control over financial reporting or operations were identified during the period under review. The Board is satisfied that the Company maintains effective risk management and internal control systems.
+                </p>
+
+                <p>
+                  <strong className="text-foreground">Continuous Improvement:</strong> The Company has plans in place to further strengthen its control environment through automation initiatives and enhanced continuous monitoring coverage, scheduled for implementation in {new Date().getFullYear()}.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+              <p className="text-yellow-900">
+                <strong>Disclosure Checklist:</strong>
+              </p>
+              <ul className="mt-2 space-y-1 text-yellow-800">
+                <li>✓ Description of risk management framework</li>
+                <li>✓ How monitoring and review were performed</li>
+                <li>✓ Basis of assessment at balance sheet date</li>
+                <li>✓ Statement on material weaknesses (or confirmation of none)</li>
+                <li>✓ Forward-looking statements on improvements</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsProvision29Open(false)}>Close</Button>
+            <Button onClick={() => {
+              const provision29Text = `Risk Management Framework: The Board has established a comprehensive risk management and internal control framework that is integrated with the Company's strategy and business planning processes. The framework is designed to manage rather than eliminate the risk of failure to achieve business objectives and can only provide reasonable and not absolute assurance against material misstatement or loss.
+
+Board Oversight: Throughout ${new Date().getFullYear()}, the Board conducted quarterly reviews of control effectiveness against board-approved criteria.
+
+Effectiveness Assessment: As of December 31, ${new Date().getFullYear() - 1}, ${data?.controlHealth.effective || 'material'} controls demonstrated effective operation.
+
+Material Weaknesses: No material weaknesses were identified during the period under review.`;
+              setDraftText(provision29Text);
+              setIsProvision29Open(false);
+              setIsEditDraftOpen(true);
+            }}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit in Draft
             </Button>
           </DialogFooter>
         </DialogContent>
