@@ -29,6 +29,14 @@ export default function TestingCoordination() {
   const [isCompleteTestOpen, setIsCompleteTestOpen] = useState(false);
   const [testResults, setTestResults] = useState('');
   const [hasExceptions, setHasExceptions] = useState(false);
+  const [isScheduleTestOpen, setIsScheduleTestOpen] = useState(false);
+  const [scheduleFormData, setScheduleFormData] = useState({
+    controlId: '',
+    controlName: '',
+    testType: 'operating',
+    tester: '',
+    scheduledDate: ''
+  });
 
   const loadData = async () => {
     const [tests, issuesData] = await Promise.all([
@@ -112,6 +120,90 @@ export default function TestingCoordination() {
     } catch (error) {
       console.error('Failed to complete test:', error);
       alert('Failed to complete test. Please try again.');
+    }
+  };
+
+  const handleScheduleTest = () => {
+    setScheduleFormData({
+      controlId: '',
+      controlName: '',
+      testType: 'operating',
+      tester: '',
+      scheduledDate: ''
+    });
+    setIsScheduleTestOpen(true);
+  };
+
+  const handleScheduleTestSubmit = async () => {
+    if (!scheduleFormData.controlId || !scheduleFormData.controlName || !scheduleFormData.tester || !scheduleFormData.scheduledDate) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    
+    try {
+      await apiService.createTestPlan({
+        controlId: scheduleFormData.controlId,
+        controlName: scheduleFormData.controlName,
+        testType: scheduleFormData.testType,
+        tester: scheduleFormData.tester,
+        scheduledDate: new Date(scheduleFormData.scheduledDate).toISOString(),
+        status: 'not_started',
+        remediationRequired: false,
+        results: null,
+        exceptions: []
+      });
+      setIsScheduleTestOpen(false);
+      await loadData();
+      alert('✅ Test scheduled successfully!');
+    } catch (error) {
+      console.error('Failed to schedule test:', error);
+      alert('Failed to schedule test. Please try again.');
+    }
+  };
+
+  const handleExportResults = () => {
+    try {
+      // Create CSV content
+      const completedTests = testPlans.filter(t => t.status === 'completed');
+      
+      if (completedTests.length === 0) {
+        alert('No completed tests to export');
+        return;
+      }
+
+      const csvHeaders = ['Control ID', 'Control Name', 'Test Type', 'Tester', 'Scheduled Date', 'Status', 'Results', 'Remediation Required', 'Exceptions'];
+      const csvRows = completedTests.map(test => [
+        test.controlId,
+        test.controlName,
+        test.testType,
+        test.tester,
+        formatDate(test.scheduledDate),
+        test.status,
+        test.results || '',
+        test.remediationRequired ? 'Yes' : 'No',
+        test.exceptions?.join('; ') || ''
+      ]);
+
+      const csvContent = [
+        csvHeaders.join(','),
+        ...csvRows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `test-results-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      alert(`✅ Exported ${completedTests.length} test results!`);
+    } catch (error) {
+      console.error('Failed to export results:', error);
+      alert('Failed to export results. Please try again.');
     }
   };
 
@@ -295,11 +387,11 @@ export default function TestingCoordination() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleExportResults}>
             <Download className="h-4 w-4 mr-2" />
             Export Results
           </Button>
-          <Button>
+          <Button onClick={handleScheduleTest}>
             <Plus className="h-4 w-4 mr-2" />
             Schedule Test
           </Button>
@@ -754,6 +846,88 @@ export default function TestingCoordination() {
             <Button onClick={handleCompleteTestSubmit}>
               <CheckCircle className="h-4 w-4 mr-2" />
               Complete Test
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Test Dialog */}
+      <Dialog open={isScheduleTestOpen} onOpenChange={setIsScheduleTestOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Schedule New Test</DialogTitle>
+            <DialogDescription>
+              Manually schedule a test for a specific control
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Control ID *</Label>
+                <Input 
+                  placeholder="e.g., CTL-001"
+                  value={scheduleFormData.controlId}
+                  onChange={(e) => setScheduleFormData({...scheduleFormData, controlId: e.target.value})}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>Control Name *</Label>
+                <Input 
+                  placeholder="e.g., Access Control Review"
+                  value={scheduleFormData.controlName}
+                  onChange={(e) => setScheduleFormData({...scheduleFormData, controlName: e.target.value})}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Test Type *</Label>
+                <Select value={scheduleFormData.testType} onValueChange={(value) => setScheduleFormData({...scheduleFormData, testType: value})}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="design">Design Effectiveness</SelectItem>
+                    <SelectItem value="operating">Operating Effectiveness</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Tester *</Label>
+                <Input 
+                  placeholder="e.g., Internal Audit"
+                  value={scheduleFormData.tester}
+                  onChange={(e) => setScheduleFormData({...scheduleFormData, tester: e.target.value})}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label>Scheduled Date *</Label>
+              <Input 
+                type="date"
+                value={scheduleFormData.scheduledDate}
+                onChange={(e) => setScheduleFormData({...scheduleFormData, scheduledDate: e.target.value})}
+                className="mt-1"
+              />
+            </div>
+
+            <div className="bg-muted/50 rounded-lg p-3 text-sm">
+              <p className="font-medium mb-1">Note</p>
+              <p className="text-muted-foreground">
+                The test will be created with status "Not Started". You can begin testing when ready.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsScheduleTestOpen(false)}>Cancel</Button>
+            <Button onClick={handleScheduleTestSubmit}>
+              <Calendar className="h-4 w-4 mr-2" />
+              Schedule Test
             </Button>
           </DialogFooter>
         </DialogContent>
