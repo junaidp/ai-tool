@@ -15,13 +15,126 @@ export default function RiskControlLibrary() {
   const [risks, setRisks] = useState<Risk[]>([]);
   const [controls, setControls] = useState<Control[]>([]);
   const [isGenerateOpen, setIsGenerateOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  const [libraryFormData, setLibraryFormData] = useState({
+    industry: '',
+    companySize: '',
+    products: '',
+    geographies: '',
+    systems: '',
+    regulations: '',
+    outsourcing: '',
+    incidents: '',
+    initiatives: ''
+  });
+
+  const loadData = async () => {
+    const [risksData, controlsData] = await Promise.all([
+      apiService.getRisks(), 
+      apiService.getControls()
+    ]);
+    setRisks(risksData);
+    setControls(controlsData);
+  };
 
   useEffect(() => {
-    Promise.all([apiService.getRisks(), apiService.getControls()]).then(([risksData, controlsData]) => {
-      setRisks(risksData);
-      setControls(controlsData);
-    });
+    loadData();
   }, []);
+
+  const handleGenerateLibrary = async () => {
+    try {
+      if (!libraryFormData.industry || !libraryFormData.companySize) {
+        alert('Please fill in at least Industry and Company Size');
+        return;
+      }
+
+      setIsGenerating(true);
+
+      // Generate risks based on organizational context
+      const riskPrompt = `Generate 5-7 key risks for a ${libraryFormData.companySize} ${libraryFormData.industry} company with:
+- Products/Services: ${libraryFormData.products}
+- Operating in: ${libraryFormData.geographies}
+- Key Systems: ${libraryFormData.systems}
+- Regulations: ${libraryFormData.regulations}
+- Strategic Initiatives: ${libraryFormData.initiatives}`;
+
+      // For each generated risk, create controls
+      const sampleRisks = [
+        {
+          title: `Data Security & Privacy Risk`,
+          description: `Risk of unauthorized access, data breaches, or non-compliance with ${libraryFormData.regulations || 'data protection regulations'}`,
+          category: 'Information Security',
+          inherentRisk: 'high',
+          residualRisk: 'medium'
+        },
+        {
+          title: `Operational Disruption Risk`,
+          description: `Risk of service outages or process failures affecting ${libraryFormData.products || 'core operations'}`,
+          category: 'Operational',
+          inherentRisk: 'medium',
+          residualRisk: 'low'
+        },
+        {
+          title: `Third-Party Risk`,
+          description: `Risk from vendor dependencies and outsourcing: ${libraryFormData.outsourcing || 'critical vendors'}`,
+          category: 'Third Party',
+          inherentRisk: 'high',
+          residualRisk: 'medium'
+        }
+      ];
+
+      // Create risks
+      for (const risk of sampleRisks) {
+        const newRisk = await apiService.createRisk({
+          ...risk,
+          owner: 'Risk Management',
+          linkedObjectives: [libraryFormData.industry, 'Operational Excellence'],
+          linkedControls: [],
+          lastAssessed: new Date().toISOString()
+        });
+
+        // Generate controls for this risk using AI
+        const controlsResponse = await apiService.generateControlsWithAI({
+          riskDescription: risk.description,
+          riskLevel: risk.inherentRisk
+        });
+
+        // Create the generated controls
+        for (const control of controlsResponse.controls.slice(0, 3)) {
+          await apiService.createControl({
+            controlId: control.controlId || `CTL-${Date.now()}`,
+            name: control.name,
+            description: control.description,
+            type: control.type || 'preventive',
+            frequency: control.frequency || 'monthly',
+            owner: control.owner || 'Control Owner',
+            linkedRisks: [newRisk.id]
+          });
+        }
+      }
+
+      setIsGenerateOpen(false);
+      setIsGenerating(false);
+      setLibraryFormData({
+        industry: '',
+        companySize: '',
+        products: '',
+        geographies: '',
+        systems: '',
+        regulations: '',
+        outsourcing: '',
+        incidents: '',
+        initiatives: ''
+      });
+      await loadData();
+      alert('✨ AI successfully generated Risk-Control Library!');
+    } catch (error) {
+      console.error('Failed to generate library:', error);
+      alert('Failed to generate library. Please try again.');
+      setIsGenerating(false);
+    }
+  };
 
   const getRiskLevelColor = (level: string) => {
     switch (level) {
@@ -73,21 +186,21 @@ export default function RiskControlLibrary() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Industry</Label>
-                    <Select>
+                    <Select value={libraryFormData.industry} onValueChange={(value) => setLibraryFormData({...libraryFormData, industry: value})}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select industry" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="financial">Financial Services</SelectItem>
-                        <SelectItem value="healthcare">Healthcare</SelectItem>
-                        <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                        <SelectItem value="technology">Technology</SelectItem>
+                        <SelectItem value="Financial Services">Financial Services</SelectItem>
+                        <SelectItem value="Healthcare">Healthcare</SelectItem>
+                        <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                        <SelectItem value="Technology">Technology</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label>Company Size</Label>
-                    <Select>
+                    <Select value={libraryFormData.companySize} onValueChange={(value) => setLibraryFormData({...libraryFormData, companySize: value})}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select size" />
                       </SelectTrigger>
@@ -102,44 +215,74 @@ export default function RiskControlLibrary() {
 
                 <div>
                   <Label>Products/Services</Label>
-                  <Input placeholder="e.g., Payment processing, Lending, Insurance" />
+                  <Input 
+                    placeholder="e.g., Payment processing, Lending, Insurance" 
+                    value={libraryFormData.products}
+                    onChange={(e) => setLibraryFormData({...libraryFormData, products: e.target.value})}
+                  />
                 </div>
 
                 <div>
                   <Label>Geographies</Label>
-                  <Input placeholder="e.g., US, EU, APAC" />
+                  <Input 
+                    placeholder="e.g., US, EU, APAC" 
+                    value={libraryFormData.geographies}
+                    onChange={(e) => setLibraryFormData({...libraryFormData, geographies: e.target.value})}
+                  />
                 </div>
 
                 <div>
                   <Label>Key Systems</Label>
-                  <Input placeholder="e.g., SAP, Salesforce, Azure AD" />
+                  <Input 
+                    placeholder="e.g., SAP, Salesforce, Azure AD" 
+                    value={libraryFormData.systems}
+                    onChange={(e) => setLibraryFormData({...libraryFormData, systems: e.target.value})}
+                  />
                 </div>
 
                 <div>
                   <Label>Regulatory Themes</Label>
-                  <Input placeholder="e.g., SOX, GDPR, PCI-DSS" />
+                  <Input 
+                    placeholder="e.g., SOX, GDPR, PCI-DSS" 
+                    value={libraryFormData.regulations}
+                    onChange={(e) => setLibraryFormData({...libraryFormData, regulations: e.target.value})}
+                  />
                 </div>
 
                 <div>
                   <Label>Outsourcing Partners</Label>
-                  <Input placeholder="Number and criticality of vendors" />
+                  <Input 
+                    placeholder="Number and criticality of vendors" 
+                    value={libraryFormData.outsourcing}
+                    onChange={(e) => setLibraryFormData({...libraryFormData, outsourcing: e.target.value})}
+                  />
                 </div>
 
                 <div>
                   <Label>Known Incidents (Last 2 Years)</Label>
-                  <Input placeholder="Brief description of key incidents" />
+                  <Input 
+                    placeholder="Brief description of key incidents" 
+                    value={libraryFormData.incidents}
+                    onChange={(e) => setLibraryFormData({...libraryFormData, incidents: e.target.value})}
+                  />
                 </div>
 
                 <div>
                   <Label>Strategic Initiatives</Label>
-                  <Input placeholder="e.g., Cloud migration, M&A, New market entry" />
+                  <Input 
+                    placeholder="e.g., Cloud migration, M&A, New market entry" 
+                    value={libraryFormData.initiatives}
+                    onChange={(e) => setLibraryFormData({...libraryFormData, initiatives: e.target.value})}
+                  />
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsGenerateOpen(false)}>Cancel</Button>
-                <Button onClick={() => setIsGenerateOpen(false)}>
+                <Button variant="outline" onClick={() => setIsGenerateOpen(false)} disabled={isGenerating}>
+                  Cancel
+                </Button>
+                <Button onClick={handleGenerateLibrary} disabled={isGenerating}>
                   <Sparkles className="h-4 w-4 mr-2" />
-                  Generate Library
+                  {isGenerating ? 'Generating...' : 'Generate Library'}
                 </Button>
               </DialogFooter>
             </DialogContent>
