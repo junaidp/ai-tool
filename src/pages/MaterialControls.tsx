@@ -5,6 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { apiService } from '@/services/api';
 import type { MaterialControl } from '@/types';
 import { Shield, Search, Plus, Download, Sparkles, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
@@ -15,6 +18,14 @@ export default function MaterialControls() {
   const [isAiScoringOpen, setIsAiScoringOpen] = useState(false);
   const [isScoring, setIsScoring] = useState(false);
   const [scoringProgress, setScoringProgress] = useState(0);
+  const [isAddControlOpen, setIsAddControlOpen] = useState(false);
+  const [controlFormData, setControlFormData] = useState({
+    name: '',
+    description: '',
+    category: 'financial',
+    frequency: 'monthly',
+    owner: ''
+  });
 
   const loadControls = async () => {
     const data = await apiService.getMaterialControls();
@@ -24,6 +35,76 @@ export default function MaterialControls() {
   useEffect(() => {
     loadControls();
   }, []);
+
+  const handleExportRegister = () => {
+    try {
+      const csvHeaders = ['Control ID', 'Control Name', 'Description', 'Category', 'Frequency', 'Owner', 'Effectiveness', 'Materiality Score', 'Rationale'];
+      const csvRows = controls.map(control => [
+        `CTL-${control.id}`,
+        control.name,
+        control.description,
+        control.category || 'N/A',
+        control.frequency || 'N/A',
+        control.owner || 'N/A',
+        control.effectiveness || 'Not Tested',
+        control.materialityScore || 'N/A',
+        control.rationale || 'N/A'
+      ]);
+
+      const csvContent = [
+        csvHeaders.join(','),
+        ...csvRows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `material-controls-register-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      alert(`✅ Exported ${controls.length} controls to CSV!`);
+    } catch (error) {
+      console.error('Failed to export register:', error);
+      alert('Failed to export register. Please try again.');
+    }
+  };
+
+  const handleAddControl = () => {
+    setControlFormData({
+      name: '',
+      description: '',
+      category: 'financial',
+      frequency: 'monthly',
+      owner: ''
+    });
+    setIsAddControlOpen(true);
+  };
+
+  const handleAddControlSubmit = async () => {
+    if (!controlFormData.name || !controlFormData.description || !controlFormData.owner) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      await apiService.createMaterialControl({
+        ...controlFormData,
+        effectiveness: 'not_tested',
+        materialityScore: null,
+        rationale: null
+      });
+      setIsAddControlOpen(false);
+      await loadControls();
+      alert('✅ Control added successfully!');
+    } catch (error) {
+      console.error('Failed to add control:', error);
+      alert('Failed to add control. Please try again.');
+    }
+  };
 
   const handleAiScoring = async () => {
     try {
@@ -190,11 +271,11 @@ export default function MaterialControls() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleExportRegister}>
             <Download className="h-4 w-4 mr-2" />
             Export Register
           </Button>
-          <Button>
+          <Button onClick={handleAddControl}>
             <Plus className="h-4 w-4 mr-2" />
             Add Control
           </Button>
@@ -376,6 +457,93 @@ export default function MaterialControls() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add Control Dialog */}
+      <Dialog open={isAddControlOpen} onOpenChange={setIsAddControlOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add Material Control</DialogTitle>
+            <DialogDescription>
+              Add a new control to the material controls register
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Control Name *</Label>
+              <Input 
+                placeholder="e.g., Financial Close Reconciliation"
+                value={controlFormData.name}
+                onChange={(e) => setControlFormData({...controlFormData, name: e.target.value})}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Description *</Label>
+              <Textarea 
+                placeholder="Describe the control's purpose, scope, and how it operates"
+                value={controlFormData.description}
+                onChange={(e) => setControlFormData({...controlFormData, description: e.target.value})}
+                className="mt-1"
+                rows={4}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Category *</Label>
+                <Select value={controlFormData.category} onValueChange={(value) => setControlFormData({...controlFormData, category: value})}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="financial">Financial Reporting</SelectItem>
+                    <SelectItem value="operational">Operational</SelectItem>
+                    <SelectItem value="compliance">Compliance</SelectItem>
+                    <SelectItem value="it">IT General Controls</SelectItem>
+                    <SelectItem value="strategic">Strategic</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Frequency *</Label>
+                <Select value={controlFormData.frequency} onValueChange={(value) => setControlFormData({...controlFormData, frequency: value})}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="continuous">Continuous</SelectItem>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="quarterly">Quarterly</SelectItem>
+                    <SelectItem value="annual">Annual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>Control Owner *</Label>
+              <Input 
+                placeholder="e.g., Finance Manager"
+                value={controlFormData.owner}
+                onChange={(e) => setControlFormData({...controlFormData, owner: e.target.value})}
+                className="mt-1"
+              />
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+              <p className="text-blue-900">
+                <strong>Note:</strong> The control will be created with "Not Tested" status. Use AI Materiality Scoring to calculate the materiality score.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddControlOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddControlSubmit}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Control
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
