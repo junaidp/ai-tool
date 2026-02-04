@@ -3,6 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { apiService } from '@/services/api';
 import type { ControlGap } from '@/types';
 import { AlertTriangle, TrendingUp, FileText, ExternalLink, Plus, Sparkles } from 'lucide-react';
@@ -10,10 +13,64 @@ import { formatDate } from '@/lib/utils';
 
 export default function ControlGapRadar() {
   const [gaps, setGaps] = useState<ControlGap[]>([]);
+  const [isAiAnalysisOpen, setIsAiAnalysisOpen] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [frameworkType, setFrameworkType] = useState('');
+
+  const loadGaps = async () => {
+    const data = await apiService.getControlGaps();
+    setGaps(data);
+  };
 
   useEffect(() => {
-    apiService.getControlGaps().then(setGaps);
+    loadGaps();
   }, []);
+
+  const handleAiAnalysis = async () => {
+    try {
+      if (!frameworkType) {
+        alert('Please select a framework type');
+        return;
+      }
+
+      setIsAnalyzing(true);
+
+      // Get existing controls from Material Controls
+      const controls = await apiService.getMaterialControls();
+      const existingControls = controls.map(c => c.name);
+
+      // Call AI to analyze gaps
+      const response = await apiService.generateGapsWithAI({
+        frameworkType,
+        existingControls
+      });
+
+      // Save all generated gaps to database
+      for (const gap of response.gaps) {
+        await apiService.createControlGap({
+          title: gap.title,
+          description: gap.description,
+          priority: gap.priority,
+          riskTheme: gap.affectedAreas?.[0] || 'Risk Management',
+          source: 'internal',
+          affectedControls: gap.affectedAreas || [],
+          proposedAction: gap.recommendedAction,
+          status: 'pending',
+          identifiedDate: new Date().toISOString()
+        });
+      }
+
+      setIsAiAnalysisOpen(false);
+      setIsAnalyzing(false);
+      setFrameworkType('');
+      await loadGaps(); // Refresh the list
+      alert(`✨ AI identified ${response.gaps.length} potential control gaps!`);
+    } catch (error) {
+      console.error('Failed to analyze gaps:', error);
+      alert('Failed to analyze control gaps. Please try again.');
+      setIsAnalyzing(false);
+    }
+  };
 
   const getSeverityBadge = (priority: string) => {
     switch (priority) {
@@ -55,10 +112,67 @@ export default function ControlGapRadar() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Sparkles className="h-4 w-4 mr-2" />
-            AI Analysis
-          </Button>
+          <Dialog open={isAiAnalysisOpen} onOpenChange={setIsAiAnalysisOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Sparkles className="h-4 w-4 mr-2" />
+                AI Analysis
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>AI Control Gap Analysis</DialogTitle>
+                <DialogDescription>
+                  Use GPT-4 to analyze your current control framework and identify potential gaps
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Framework Type</Label>
+                  <Select value={frameworkType} onValueChange={setFrameworkType}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select framework type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="COSO">COSO Internal Control Framework</SelectItem>
+                      <SelectItem value="ISO 27001">ISO 27001 Information Security</SelectItem>
+                      <SelectItem value="NIST CSF">NIST Cybersecurity Framework</SelectItem>
+                      <SelectItem value="SOX">SOX Financial Controls</SelectItem>
+                      <SelectItem value="COBIT">COBIT IT Governance</SelectItem>
+                      <SelectItem value="Custom">Custom Framework</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="border rounded-lg p-4 bg-muted/50">
+                  <h4 className="font-medium mb-2">AI will analyze:</h4>
+                  <ul className="space-y-1 text-sm text-muted-foreground">
+                    <li>• Your current material controls</li>
+                    <li>• Industry best practices for {frameworkType || 'selected framework'}</li>
+                    <li>• Common control gaps and blind spots</li>
+                    <li>• Regulatory requirements</li>
+                    <li>• Emerging risks and threats</li>
+                  </ul>
+                </div>
+
+                <div className="text-sm text-muted-foreground">
+                  <p>
+                    The AI will generate 3-5 potential control gaps with priorities, affected areas, 
+                    and recommended actions for your review.
+                  </p>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAiAnalysisOpen(false)} disabled={isAnalyzing}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAiAnalysis} disabled={isAnalyzing}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {isAnalyzing ? 'Analyzing...' : 'Run AI Analysis'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Report Gap
