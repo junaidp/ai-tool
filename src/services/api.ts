@@ -104,6 +104,20 @@ class ApiService {
     return this.request<FrameworkComponent[]>('/framework-components');
   }
 
+  createFrameworkComponent(data: Omit<FrameworkComponent, 'id' | 'createdAt' | 'updatedAt'>) {
+    return this.request('/framework-components', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  updateFrameworkComponent(id: string, data: Partial<FrameworkComponent>) {
+    return this.request(`/framework-components/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
   getMaterialControls() {
     return this.request<MaterialControl[]>('/material-controls');
   }

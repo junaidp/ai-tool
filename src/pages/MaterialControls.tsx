@@ -10,7 +10,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { apiService } from '@/services/api';
 import type { MaterialControl } from '@/types';
+import type { MaterialControl as ApiMaterialControl } from '@/types/api.types';
 import { Shield, Search, Plus, Download, Sparkles, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+
+const safeJsonParse = (value: string | string[], fallback: string[] = []): string[] => {
+  if (Array.isArray(value)) return value;
+  if (!value || value === '') return fallback;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const transformApiMaterialControl = (apiControl: ApiMaterialControl): MaterialControl => ({
+  id: apiControl.id,
+  name: apiControl.name,
+  description: apiControl.description,
+  materialityScore: apiControl.materialityScore,
+  rationale: apiControl.rationale,
+  owner: apiControl.owner,
+  evidenceSource: apiControl.evidenceSource,
+  testingFrequency: apiControl.testingFrequency,
+  dependencies: safeJsonParse(apiControl.dependencies as any),
+  effectiveness: apiControl.effectiveness as MaterialControl['effectiveness'],
+  lastTested: apiControl.lastTested || undefined,
+});
 
 export default function MaterialControls() {
   const [controls, setControls] = useState<MaterialControl[]>([]);
@@ -29,7 +55,7 @@ export default function MaterialControls() {
 
   const loadControls = async () => {
     const data = await apiService.getMaterialControls();
-    setControls(data);
+    setControls(data.map(transformApiMaterialControl));
   };
 
   useEffect(() => {
@@ -92,10 +118,16 @@ export default function MaterialControls() {
 
     try {
       await apiService.createMaterialControl({
-        ...controlFormData,
+        name: controlFormData.name,
+        description: controlFormData.description,
+        owner: controlFormData.owner,
+        materialityScore: 0,
+        rationale: 'Pending AI scoring',
+        evidenceSource: 'TBD',
+        testingFrequency: controlFormData.frequency,
+        dependencies: '[]',
         effectiveness: 'not_tested',
-        materialityScore: null,
-        rationale: null
+        lastTested: null
       });
       setIsAddControlOpen(false);
       await loadControls();
