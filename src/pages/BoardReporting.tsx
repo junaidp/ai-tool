@@ -22,6 +22,7 @@ export default function BoardReporting() {
   const [isPriorYearOpen, setIsPriorYearOpen] = useState(false);
   const [isProvision29Open, setIsProvision29Open] = useState(false);
   const [basisView, setBasisView] = useState<'criteria' | 'monitoring' | 'evidence' | null>(null);
+  const [evidenceView, setEvidenceView] = useState<'criteria' | 'tests' | 'exceptions' | 'remediation' | 'monitoring' | 'audit' | null>(null);
 
   useEffect(() => {
     apiService.getDashboardData().then(setData);
@@ -672,27 +673,27 @@ export default function BoardReporting() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-2 md:grid-cols-2">
-            <Button variant="outline" className="justify-start">
+            <Button variant="outline" className="justify-start" onClick={() => setEvidenceView('criteria')}>
               <FileText className="h-4 w-4 mr-2" />
               Effectiveness Criteria Evidence
             </Button>
-            <Button variant="outline" className="justify-start">
+            <Button variant="outline" className="justify-start" onClick={() => setEvidenceView('tests')}>
               <FileText className="h-4 w-4 mr-2" />
               Control Test Results
             </Button>
-            <Button variant="outline" className="justify-start">
+            <Button variant="outline" className="justify-start" onClick={() => setEvidenceView('exceptions')}>
               <FileText className="h-4 w-4 mr-2" />
               Exception Reports & Analysis
             </Button>
-            <Button variant="outline" className="justify-start">
+            <Button variant="outline" className="justify-start" onClick={() => setEvidenceView('remediation')}>
               <FileText className="h-4 w-4 mr-2" />
               Remediation Action Plans
             </Button>
-            <Button variant="outline" className="justify-start">
+            <Button variant="outline" className="justify-start" onClick={() => setEvidenceView('monitoring')}>
               <FileText className="h-4 w-4 mr-2" />
               Continuous Monitoring Dashboards
             </Button>
-            <Button variant="outline" className="justify-start">
+            <Button variant="outline" className="justify-start" onClick={() => setEvidenceView('audit')}>
               <FileText className="h-4 w-4 mr-2" />
               Approval Audit Trails
             </Button>
@@ -1091,6 +1092,357 @@ Material Weaknesses: No material weaknesses were identified during the period un
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setBasisView(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Evidence Index Dialog */}
+      <Dialog open={evidenceView !== null} onOpenChange={() => setEvidenceView(null)}>
+        <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {evidenceView === 'criteria' && 'Effectiveness Criteria Evidence'}
+              {evidenceView === 'tests' && 'Control Test Results'}
+              {evidenceView === 'exceptions' && 'Exception Reports & Analysis'}
+              {evidenceView === 'remediation' && 'Remediation Action Plans'}
+              {evidenceView === 'monitoring' && 'Continuous Monitoring Dashboards'}
+              {evidenceView === 'audit' && 'Approval Audit Trails'}
+            </DialogTitle>
+            <DialogDescription>
+              Detailed evidence and documentation for board review
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {evidenceView === 'criteria' && (
+              <>
+                <div className="bg-white border rounded-lg p-4">
+                  <h4 className="font-medium mb-3">Effectiveness Criteria Assessment Evidence</h4>
+                  <div className="space-y-3">
+                    <div className="border-l-4 border-green-500 pl-4 py-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="font-medium text-sm">Design Effectiveness</p>
+                        <Badge variant="success">Met</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Evidence: Control design documentation reviewed and validated against COSO principles. {data?.controlHealth.totalMaterial} control designs assessed.</p>
+                      <p className="text-xs text-blue-600 mt-1">Documents: Design specifications, risk assessments, control matrices</p>
+                    </div>
+                    <div className="border-l-4 border-green-500 pl-4 py-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="font-medium text-sm">Implementation Effectiveness</p>
+                        <Badge variant="success">Met</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Evidence: Walkthrough procedures performed for all material controls. Implementation verified through system configurations and process documentation.</p>
+                      <p className="text-xs text-blue-600 mt-1">Documents: Walkthrough notes, configuration screenshots, training records</p>
+                    </div>
+                    <div className="border-l-4 border-green-500 pl-4 py-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="font-medium text-sm">Operating Effectiveness</p>
+                        <Badge variant="success">Met</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Evidence: {data?.controlHealth.tested} controls tested with {data?.controlHealth.effective} ({data ? Math.round((data.controlHealth.effective / data.controlHealth.tested) * 100) : 95}%) operating effectively.</p>
+                      <p className="text-xs text-blue-600 mt-1">Documents: Test workpapers, sample selections, test evidence files</p>
+                    </div>
+                    <div className="border-l-4 border-yellow-500 pl-4 py-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="font-medium text-sm">Decision-Use Effectiveness</p>
+                        <Badge variant="warning">Partially Met</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Evidence: Management reporting reviewed. Some improvements needed in evidence of control information usage in decision-making processes.</p>
+                      <p className="text-xs text-blue-600 mt-1">Documents: Management reports, meeting minutes, action plans</p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {evidenceView === 'tests' && (
+              <>
+                <div className="bg-white border rounded-lg p-4">
+                  <h4 className="font-medium mb-3">Control Testing Summary ({data?.controlHealth.tested} Tests Completed)</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="text-left p-2 border">Control ID</th>
+                          <th className="text-left p-2 border">Control Name</th>
+                          <th className="text-left p-2 border">Test Type</th>
+                          <th className="text-left p-2 border">Sample Size</th>
+                          <th className="text-left p-2 border">Result</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="p-2 border">CTL-001</td>
+                          <td className="p-2 border">Financial Close Reconciliation</td>
+                          <td className="p-2 border">Operating</td>
+                          <td className="p-2 border">25 samples</td>
+                          <td className="p-2 border"><Badge variant="success">Effective</Badge></td>
+                        </tr>
+                        <tr className="bg-gray-50">
+                          <td className="p-2 border">CTL-002</td>
+                          <td className="p-2 border">Access Control Review</td>
+                          <td className="p-2 border">Operating</td>
+                          <td className="p-2 border">40 samples</td>
+                          <td className="p-2 border"><Badge variant="success">Effective</Badge></td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border">CTL-003</td>
+                          <td className="p-2 border">Vendor Due Diligence</td>
+                          <td className="p-2 border">Operating</td>
+                          <td className="p-2 border">15 samples</td>
+                          <td className="p-2 border"><Badge variant="warning">Exception</Badge></td>
+                        </tr>
+                        <tr className="bg-gray-50">
+                          <td className="p-2 border">CTL-004</td>
+                          <td className="p-2 border">Change Management Approval</td>
+                          <td className="p-2 border">Design</td>
+                          <td className="p-2 border">N/A</td>
+                          <td className="p-2 border"><Badge variant="success">Effective</Badge></td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border" colSpan={5} className="text-center text-muted-foreground">
+                            ... and {(data?.controlHealth.tested || 158) - 4} more test results
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                  <p className="text-blue-900">
+                    <strong>Access:</strong> Complete test workpapers, evidence files, and detailed results available in the testing repository. Contact Internal Audit for access.
+                  </p>
+                </div>
+              </>
+            )}
+
+            {evidenceView === 'exceptions' && (
+              <>
+                <div className="bg-white border rounded-lg p-4">
+                  <h4 className="font-medium mb-3">Exception Analysis ({data?.controlHealth.tested - (data?.controlHealth.effective || 0)} Exceptions Identified)</h4>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-3 bg-yellow-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                          <p className="font-medium text-sm">Vendor Due Diligence - Incomplete Documentation</p>
+                        </div>
+                        <Badge className="bg-orange-500 text-white">Medium</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-2">3 out of 15 samples lacked complete financial due diligence documentation for new vendor onboarding.</p>
+                      <div className="text-xs">
+                        <p><strong>Root Cause:</strong> Process gap in documentation requirements communication</p>
+                        <p><strong>Impact:</strong> Potential vendor risk exposure</p>
+                        <p><strong>Status:</strong> Remediation in progress (Q1 2024 completion)</p>
+                      </div>
+                    </div>
+
+                    <div className="border rounded-lg p-3 bg-yellow-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                          <p className="font-medium text-sm">Approval Timing - Late Approvals</p>
+                        </div>
+                        <Badge variant="warning">Low</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-2">5 instances of approvals obtained after transaction execution, though within same business day.</p>
+                      <div className="text-xs">
+                        <p><strong>Root Cause:</strong> Workflow timing in approval system</p>
+                        <p><strong>Impact:</strong> Minor process compliance issue</p>
+                        <p><strong>Status:</strong> System workflow updated (Closed)</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-white border rounded-lg p-4">
+                  <h4 className="font-medium mb-2">Exception Rate Analysis</h4>
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Overall Exception Rate</p>
+                      <p className="text-2xl font-bold">{data ? Math.round(((data.controlHealth.tested - data.controlHealth.effective) / data.controlHealth.tested) * 100) : 5}%</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Within Tolerance</p>
+                      <p className="text-2xl font-bold text-green-600">Yes</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Material Weaknesses</p>
+                      <p className="text-2xl font-bold text-green-600">0</p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {evidenceView === 'remediation' && (
+              <>
+                <div className="bg-white border rounded-lg p-4">
+                  <h4 className="font-medium mb-3">Active Remediation Plans</h4>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-medium text-sm">Vendor Due Diligence Process Enhancement</p>
+                        <Badge variant="info">In Progress</Badge>
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div><strong>Owner:</strong> Procurement Director</div>
+                          <div><strong>Target Date:</strong> March 31, 2024</div>
+                        </div>
+                        <div>
+                          <strong>Actions:</strong>
+                          <ul className="list-disc pl-5 mt-1 space-y-1 text-muted-foreground">
+                            <li>Updated vendor onboarding checklist (Completed)</li>
+                            <li>Enhanced training for procurement team (Completed)</li>
+                            <li>System workflow automation (In Progress - 80%)</li>
+                            <li>Retest controls Q1 2024 (Planned)</li>
+                          </ul>
+                        </div>
+                        <div className="mt-2">
+                          <Progress value={80} className="h-2" />
+                          <p className="text-muted-foreground mt-1">80% Complete</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border rounded-lg p-3 bg-green-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-medium text-sm">Approval Workflow Timing</p>
+                        <Badge variant="success">Closed</Badge>
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div><strong>Owner:</strong> IT Operations</div>
+                          <div><strong>Closed Date:</strong> December 15, 2023</div>
+                        </div>
+                        <div className="text-muted-foreground">
+                          System workflow updated to enforce approval before execution. Retesting completed successfully with 0 exceptions in follow-up sample.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {evidenceView === 'monitoring' && (
+              <>
+                <div className="bg-white border rounded-lg p-4">
+                  <h4 className="font-medium mb-3">Continuous Monitoring Dashboard</h4>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="border rounded-lg p-3 bg-blue-50">
+                      <p className="text-sm font-medium mb-1">Weekly Monitoring Reports</p>
+                      <p className="text-2xl font-bold text-blue-600">52</p>
+                      <p className="text-xs text-muted-foreground">Generated in {new Date().getFullYear() - 1}</p>
+                    </div>
+                    <div className="border rounded-lg p-3 bg-green-50">
+                      <p className="text-sm font-medium mb-1">Automated Alerts</p>
+                      <p className="text-2xl font-bold text-green-600">1,247</p>
+                      <p className="text-xs text-muted-foreground">Processed and investigated</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h5 className="font-medium text-sm">Key Monitoring Metrics</h5>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <span>Financial reconciliation completion rate</span>
+                        <Badge variant="success">98%</Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <span>Access review completion timeliness</span>
+                        <Badge variant="success">95%</Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <span>Change approval compliance</span>
+                        <Badge variant="success">99%</Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <span>Vendor onboarding documentation</span>
+                        <Badge variant="warning">88%</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                  <p className="text-blue-900">
+                    <strong>Real-time Access:</strong> Board members can access live monitoring dashboards through the secure portal. Contact IT Security for credentials.
+                  </p>
+                </div>
+              </>
+            )}
+
+            {evidenceView === 'audit' && (
+              <>
+                <div className="bg-white border rounded-lg p-4">
+                  <h4 className="font-medium mb-3">Approval and Decision Audit Trail</h4>
+                  <div className="space-y-3">
+                    <div className="border rounded-lg p-3">
+                      <p className="font-medium text-sm mb-2">Board Approvals</p>
+                      <div className="space-y-2 text-xs">
+                        <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div>
+                            <p className="font-medium">Effectiveness Criteria Framework</p>
+                            <p className="text-muted-foreground">Approved by Audit Committee & Board</p>
+                          </div>
+                          <span className="text-muted-foreground">Jan 22, 2024</span>
+                        </div>
+                        <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div>
+                            <p className="font-medium">Annual Control Testing Plan</p>
+                            <p className="text-muted-foreground">Approved by Audit Committee</p>
+                          </div>
+                          <span className="text-muted-foreground">Feb 10, 2024</span>
+                        </div>
+                        <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div>
+                            <p className="font-medium">Q1-Q4 Effectiveness Reviews</p>
+                            <p className="text-muted-foreground">Reviewed by Full Board</p>
+                          </div>
+                          <span className="text-muted-foreground">Quarterly {new Date().getFullYear() - 1}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border rounded-lg p-3">
+                      <p className="font-medium text-sm mb-2">Management Decisions</p>
+                      <div className="space-y-2 text-xs">
+                        <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div>
+                            <p className="font-medium">Enhanced Vendor Due Diligence Requirements</p>
+                            <p className="text-muted-foreground">Approved by CFO</p>
+                          </div>
+                          <span className="text-muted-foreground">Nov 15, 2023</span>
+                        </div>
+                        <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div>
+                            <p className="font-medium">Control Testing Scope Expansion</p>
+                            <p className="text-muted-foreground">Approved by CAE</p>
+                          </div>
+                          <span className="text-muted-foreground">Mar 5, 2023</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <p className="font-medium text-sm mb-2">Audit Trail Characteristics</p>
+                      <ul className="text-xs space-y-1 text-muted-foreground">
+                        <li>✓ Immutable logging with timestamp and user identification</li>
+                        <li>✓ Cryptographic hash verification for document integrity</li>
+                        <li>✓ Role-based access controls with audit logging</li>
+                        <li>✓ Retention: 7 years per regulatory requirements</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEvidenceView(null)}>Close</Button>
+            <Button>
+              <Download className="h-4 w-4 mr-2" />
+              Export Evidence
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
