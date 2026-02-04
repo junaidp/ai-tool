@@ -4,20 +4,48 @@ import bcrypt from 'bcryptjs';
 async function main() {
   console.log('🌱 Seeding database...');
 
-  const hashedPassword = await bcrypt.hash('admin123', 10);
+  const hashedPassword = await bcrypt.hash('demo123', 10);
   
-  const user = await prisma.user.upsert({
-    where: { email: 'john.doe@example.com' },
-    update: {},
-    create: {
-      email: 'john.doe@example.com',
-      name: 'John Doe',
-      role: 'Chief Risk Officer',
-      password: hashedPassword,
+  // Create 5 demo users with different roles
+  const demoUsers = [
+    {
+      email: 'board@company.com',
+      name: 'Sarah Thompson',
+      role: 'board',
     },
-  });
+    {
+      email: 'owner@company.com',
+      name: 'Michael Chen',
+      role: 'control_owner',
+    },
+    {
+      email: 'risk@company.com',
+      name: 'David Martinez',
+      role: 'risk_compliance',
+    },
+    {
+      email: 'audit@company.com',
+      name: 'Emily Johnson',
+      role: 'internal_audit',
+    },
+    {
+      email: 'admin@company.com',
+      name: 'Rachel Adams',
+      role: 'framework_admin',
+    },
+  ];
 
-  console.log('✅ Created user:', user.email);
+  for (const userData of demoUsers) {
+    const user = await prisma.user.upsert({
+      where: { email: userData.email },
+      update: {},
+      create: {
+        ...userData,
+        password: hashedPassword,
+      },
+    });
+    console.log('✅ Created user:', user.email, '-', user.name, `(${user.role})`);
+  }
 
   await prisma.effectivenessCriteria.createMany({
     data: [

@@ -12,9 +12,12 @@ import {
   FileText,
   Menu,
   X,
+  LogOut,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -29,9 +32,21 @@ const navigation = [
   { name: 'Board Reporting', href: '/board-reporting', icon: FileText },
 ];
 
+const getRoleDisplay = (role: string) => {
+  const roleMap: Record<string, string> = {
+    board: 'Board Member',
+    control_owner: 'Control Owner',
+    risk_compliance: 'Risk & Compliance',
+    internal_audit: 'Internal Audit',
+    framework_admin: 'Framework Admin'
+  };
+  return roleMap[role] || role;
+};
+
 export default function Layout() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -88,14 +103,25 @@ export default function Layout() {
           </nav>
 
           <div className="border-t p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                JD
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                  {user?.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{user?.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user && getRoleDisplay(user.role)}</p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">John Doe</p>
-                <p className="text-xs text-muted-foreground truncate">Chief Risk Officer</p>
-              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full justify-start"
+                onClick={logout}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
             </div>
           </div>
         </div>
