@@ -21,6 +21,7 @@ export default function BoardReporting() {
   const [draftText, setDraftText] = useState('');
   const [isPriorYearOpen, setIsPriorYearOpen] = useState(false);
   const [isProvision29Open, setIsProvision29Open] = useState(false);
+  const [basisView, setBasisView] = useState<'criteria' | 'monitoring' | 'evidence' | null>(null);
 
   useEffect(() => {
     apiService.getDashboardData().then(setData);
@@ -335,7 +336,7 @@ export default function BoardReporting() {
                       <p className="text-sm text-green-700">Documented and board-approved</p>
                     </div>
                   </div>
-                  <Button size="sm" variant="outline">View</Button>
+                  <Button size="sm" variant="outline" onClick={() => setBasisView('criteria')}>View</Button>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
@@ -346,7 +347,7 @@ export default function BoardReporting() {
                       <p className="text-sm text-green-700">Quarterly board reviews completed</p>
                     </div>
                   </div>
-                  <Button size="sm" variant="outline">View</Button>
+                  <Button size="sm" variant="outline" onClick={() => setBasisView('monitoring')}>View</Button>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
@@ -357,7 +358,7 @@ export default function BoardReporting() {
                       <p className="text-sm text-green-700">Complete evidence trail maintained</p>
                     </div>
                   </div>
-                  <Button size="sm" variant="outline">View</Button>
+                  <Button size="sm" variant="outline" onClick={() => setBasisView('evidence')}>View</Button>
                 </div>
               </div>
             </CardContent>
@@ -933,6 +934,163 @@ Material Weaknesses: No material weaknesses were identified during the period un
               <Edit className="h-4 w-4 mr-2" />
               Edit in Draft
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Basis of Declaration Dialog */}
+      <Dialog open={basisView !== null} onOpenChange={() => setBasisView(null)}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {basisView === 'criteria' && 'Criteria Selection Rationale'}
+              {basisView === 'monitoring' && 'Monitoring & Review Process'}
+              {basisView === 'evidence' && 'Evidence Supporting Conclusion'}
+            </DialogTitle>
+            <DialogDescription>
+              Detailed documentation supporting the board statement
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {basisView === 'criteria' && (
+              <>
+                <div className="bg-white border rounded-lg p-4 space-y-3">
+                  <h4 className="font-medium">Board Approval</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    The effectiveness criteria framework was presented to and approved by the Audit Committee on January 15, 2024, and subsequently ratified by the full Board on January 22, 2024. The criteria were developed based on:
+                  </p>
+                  <ul className="text-sm text-muted-foreground space-y-1 pl-6 list-disc">
+                    <li>COSO Internal Control Framework principles</li>
+                    <li>UK Corporate Governance Code requirements</li>
+                    <li>Industry best practices and regulatory guidance</li>
+                    <li>Company-specific risk profile and operating model</li>
+                  </ul>
+                </div>
+
+                <div className="bg-white border rounded-lg p-4 space-y-3">
+                  <h4 className="font-medium">Rationale for Selected Dimensions</h4>
+                  <div className="space-y-2 text-sm">
+                    <p className="text-muted-foreground"><strong className="text-foreground">Design:</strong> Ensures controls are appropriately designed to address identified risks</p>
+                    <p className="text-muted-foreground"><strong className="text-foreground">Implementation:</strong> Verifies controls are properly implemented and resourced</p>
+                    <p className="text-muted-foreground"><strong className="text-foreground">Operation:</strong> Confirms controls operate consistently as designed</p>
+                    <p className="text-muted-foreground"><strong className="text-foreground">Decision-Use:</strong> Validates that control information informs decision-making</p>
+                    <p className="text-muted-foreground"><strong className="text-foreground">Assurance:</strong> Ensures adequate independent testing and validation</p>
+                    <p className="text-muted-foreground"><strong className="text-foreground">Outcomes:</strong> Measures achievement of control objectives</p>
+                    <p className="text-muted-foreground"><strong className="text-foreground">Adaptability:</strong> Assesses framework's response to changes</p>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                  <p className="text-blue-900">
+                    <strong>Documentation:</strong> Full criteria framework documentation, board minutes, and approval resolutions are maintained in the governance repository.
+                  </p>
+                </div>
+              </>
+            )}
+
+            {basisView === 'monitoring' && (
+              <>
+                <div className="bg-white border rounded-lg p-4 space-y-3">
+                  <h4 className="font-medium">Quarterly Board Review Process</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    The Board conducted comprehensive reviews of control effectiveness in Q1, Q2, Q3, and Q4 of {new Date().getFullYear() - 1}. Each review included:
+                  </p>
+                  <ul className="text-sm text-muted-foreground space-y-1 pl-6 list-disc">
+                    <li>Dashboard showing effectiveness criteria status across all dimensions</li>
+                    <li>Results of material control testing with exception analysis</li>
+                    <li>Summary of control changes and new risks identified</li>
+                    <li>Remediation progress on prior period exceptions</li>
+                    <li>Forward-looking assessment of emerging risks</li>
+                  </ul>
+                </div>
+
+                <div className="bg-white border rounded-lg p-4 space-y-3">
+                  <h4 className="font-medium">Review Participants</h4>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>• Full Board (all non-executive and executive directors)</p>
+                    <p>• Audit Committee members with detailed deep-dives</p>
+                    <p>• Chief Risk Officer and Head of Internal Audit presentations</p>
+                    <p>• External audit engagement partner (Q2 and Q4)</p>
+                  </div>
+                </div>
+
+                <div className="bg-white border rounded-lg p-4 space-y-3">
+                  <h4 className="font-medium">Board Actions Taken</h4>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>• Approved additional testing scope for high-risk controls (Q1)</p>
+                    <p>• Directed enhanced monitoring of decision-use dimension (Q2)</p>
+                    <p>• Reviewed and approved remediation plans for identified exceptions (Q3)</p>
+                    <p>• Confirmed year-end effectiveness conclusion (Q4)</p>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                  <p className="text-blue-900">
+                    <strong>Documentation:</strong> Board and Audit Committee meeting minutes, management reports, and board presentations are maintained for all {new Date().getFullYear() - 1} reviews.
+                  </p>
+                </div>
+              </>
+            )}
+
+            {basisView === 'evidence' && (
+              <>
+                <div className="bg-white border rounded-lg p-4 space-y-3">
+                  <h4 className="font-medium">Control Testing Evidence</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Comprehensive testing was performed on {data?.controlHealth.tested || 'all material'} controls during {new Date().getFullYear() - 1}:
+                  </p>
+                  <ul className="text-sm text-muted-foreground space-y-1 pl-6 list-disc">
+                    <li>Design effectiveness testing for all new and modified controls</li>
+                    <li>Operating effectiveness testing based on control frequency</li>
+                    <li>Sample sizes determined using statistical sampling methodology</li>
+                    <li>Independent testing by Internal Audit and External Audit</li>
+                    <li>Evidence retention in centralized repository</li>
+                  </ul>
+                </div>
+
+                <div className="bg-white border rounded-lg p-4 space-y-3">
+                  <h4 className="font-medium">Supporting Documentation</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <span className="text-foreground">Test Plans and Procedures</span>
+                      <Badge>{data?.controlHealth.tested || '158'} documents</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <span className="text-foreground">Test Evidence Files</span>
+                      <Badge>1,247 files</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <span className="text-foreground">Exception Reports</span>
+                      <Badge>{data?.controlHealth.tested - (data?.controlHealth.effective || 0)} reports</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <span className="text-foreground">Remediation Action Plans</span>
+                      <Badge>{data?.controlHealth.tested - (data?.controlHealth.effective || 0)} plans</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <span className="text-foreground">Continuous Monitoring Reports</span>
+                      <Badge>52 weekly reports</Badge>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white border rounded-lg p-4 space-y-3">
+                  <h4 className="font-medium">External Assurance</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    External audit provided independent assurance through SOX 404 testing, reviewing design and operating effectiveness of key financial controls. Internal audit performed risk-based testing across operational and compliance controls, with all reports reviewed by the Audit Committee.
+                  </p>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                  <p className="text-blue-900">
+                    <strong>Documentation:</strong> Complete evidence trail maintained in secure repository with access controls and audit logging. Available for board member review upon request.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBasisView(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
