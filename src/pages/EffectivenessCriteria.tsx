@@ -24,6 +24,13 @@ export default function EffectivenessCriteriaPage() {
     frequency: ''
   });
 
+  const [aiFormData, setAiFormData] = useState({
+    sector: '',
+    operatingModel: '',
+    riskProfile: '',
+    regulations: ''
+  });
+
   const loadCriteria = async () => {
     const data = await apiService.getEffectivenessCriteria();
     setCriteria(data);
@@ -49,6 +56,51 @@ export default function EffectivenessCriteriaPage() {
     } catch (error) {
       console.error('Failed to save criteria:', error);
       alert('Failed to save criteria. Please try again.');
+    }
+  };
+
+  const handleAiGenerate = async () => {
+    try {
+      // Generate sample criteria based on inputs (simulating AI)
+      const generatedCriteria = [
+        {
+          dimension: 'Design',
+          criteria: `Controls are designed to address ${aiFormData.sector} sector risks with ${aiFormData.riskProfile} risk profile`,
+          threshold: '100% of material controls have documented design rationale',
+          evidenceType: ['Design documentation', 'Risk assessments', 'Control matrices'],
+          frequency: 'annual',
+          status: 'in_review'
+        },
+        {
+          dimension: 'Implementation',
+          criteria: `Controls are implemented consistently across ${aiFormData.operatingModel} operating model`,
+          threshold: '95% implementation rate verified through testing',
+          evidenceType: ['Implementation logs', 'Test results', 'Evidence artifacts'],
+          frequency: 'quarterly',
+          status: 'in_review'
+        },
+        {
+          dimension: 'Operation',
+          criteria: `Controls operate effectively considering ${aiFormData.regulations} regulatory requirements`,
+          threshold: 'No critical exceptions; <3% high-severity exceptions',
+          evidenceType: ['Monitoring alerts', 'Exception reports', 'Remediation logs'],
+          frequency: 'continuous',
+          status: 'in_review'
+        }
+      ];
+
+      // Save all generated criteria
+      for (const criteria of generatedCriteria) {
+        await apiService.createEffectivenessCriteria(criteria);
+      }
+
+      setIsAiDialogOpen(false);
+      setAiFormData({ sector: '', operatingModel: '', riskProfile: '', regulations: '' });
+      await loadCriteria(); // Refresh the list
+      alert(`Successfully generated ${generatedCriteria.length} effectiveness criteria!`);
+    } catch (error) {
+      console.error('Failed to generate criteria:', error);
+      alert('Failed to generate criteria. Please try again.');
     }
   };
 
@@ -105,34 +157,34 @@ export default function EffectivenessCriteriaPage() {
               <div className="space-y-4">
                 <div>
                   <Label>Industry Sector</Label>
-                  <Select>
+                  <Select value={aiFormData.sector} onValueChange={(value) => setAiFormData({...aiFormData, sector: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select sector" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="financial">Financial Services</SelectItem>
-                      <SelectItem value="healthcare">Healthcare</SelectItem>
-                      <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                      <SelectItem value="technology">Technology</SelectItem>
+                      <SelectItem value="Financial Services">Financial Services</SelectItem>
+                      <SelectItem value="Healthcare">Healthcare</SelectItem>
+                      <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                      <SelectItem value="Technology">Technology</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label>Operating Model</Label>
-                  <Select>
+                  <Select value={aiFormData.operatingModel} onValueChange={(value) => setAiFormData({...aiFormData, operatingModel: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select model" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="centralized">Centralized</SelectItem>
-                      <SelectItem value="decentralized">Decentralized</SelectItem>
-                      <SelectItem value="hybrid">Hybrid</SelectItem>
+                      <SelectItem value="Centralized">Centralized</SelectItem>
+                      <SelectItem value="Decentralized">Decentralized</SelectItem>
+                      <SelectItem value="Hybrid">Hybrid</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label>Risk Profile</Label>
-                  <Select>
+                  <Select value={aiFormData.riskProfile} onValueChange={(value) => setAiFormData({...aiFormData, riskProfile: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select profile" />
                     </SelectTrigger>
@@ -145,12 +197,16 @@ export default function EffectivenessCriteriaPage() {
                 </div>
                 <div>
                   <Label>Regulatory Obligations</Label>
-                  <Textarea placeholder="List key regulations (e.g., SOX, GDPR, HIPAA)" />
+                  <Textarea 
+                    placeholder="List key regulations (e.g., SOX, GDPR, HIPAA)" 
+                    value={aiFormData.regulations}
+                    onChange={(e) => setAiFormData({...aiFormData, regulations: e.target.value})}
+                  />
                 </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAiDialogOpen(false)}>Cancel</Button>
-                <Button onClick={() => setIsAiDialogOpen(false)}>
+                <Button onClick={handleAiGenerate}>
                   <Sparkles className="h-4 w-4 mr-2" />
                   Generate Criteria
                 </Button>
