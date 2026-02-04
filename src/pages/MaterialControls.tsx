@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { apiService } from '@/services/api';
 import type { MaterialControl } from '@/types';
 import { Shield, Search, Plus, Download, Sparkles, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
@@ -11,10 +12,55 @@ import { Shield, Search, Plus, Download, Sparkles, CheckCircle, AlertTriangle, X
 export default function MaterialControls() {
   const [controls, setControls] = useState<MaterialControl[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAiScoringOpen, setIsAiScoringOpen] = useState(false);
+  const [isScoring, setIsScoring] = useState(false);
+  const [scoringProgress, setScoringProgress] = useState(0);
+
+  const loadControls = async () => {
+    const data = await apiService.getMaterialControls();
+    setControls(data);
+  };
 
   useEffect(() => {
-    apiService.getMaterialControls().then(setControls);
+    loadControls();
   }, []);
+
+  const handleAiScoring = async () => {
+    try {
+      setIsScoring(true);
+      setScoringProgress(0);
+
+      // Score each control using AI
+      const totalControls = controls.length;
+      for (let i = 0; i < totalControls; i++) {
+        const control = controls[i];
+        
+        // Call AI to score this control
+        const aiResult = await apiService.scoreControlWithAI({
+          controlName: control.name,
+          controlDescription: control.description,
+          testResults: control.effectiveness || 'Not yet tested'
+        });
+
+        // Update control with AI score and rationale
+        await apiService.updateMaterialControl(control.id, {
+          materialityScore: aiResult.score,
+          rationale: aiResult.reasoning
+        });
+
+        setScoringProgress(Math.round(((i + 1) / totalControls) * 100));
+      }
+
+      setIsAiScoringOpen(false);
+      setIsScoring(false);
+      await loadControls(); // Refresh controls
+      alert(`✨ AI successfully scored ${totalControls} controls!`);
+    } catch (error) {
+      console.error('Failed to score controls:', error);
+      alert('Failed to score controls with AI. Please try again.');
+      setIsScoring(false);
+    }
+  };
 
   const filteredControls = controls.filter(
     (control) =>
@@ -71,10 +117,79 @@ export default function MaterialControls() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Sparkles className="h-4 w-4 mr-2" />
-            AI Materiality Scoring
-          </Button>
+          <Dialog open={isAiScoringOpen} onOpenChange={setIsAiScoringOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Sparkles className="h-4 w-4 mr-2" />
+                AI Materiality Scoring
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>AI-Powered Materiality Scoring</DialogTitle>
+                <DialogDescription>
+                  Use GPT-4 to analyze and score all material controls based on multiple risk factors
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="border rounded-lg p-4 bg-muted/50">
+                  <h4 className="font-medium mb-2">Scoring Factors</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Impact Severity</span>
+                      <span className="text-muted-foreground">25%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Likelihood / Vulnerability</span>
+                      <span className="text-muted-foreground">20%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Velocity (Time to Impact)</span>
+                      <span className="text-muted-foreground">15%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Regulatory Sensitivity</span>
+                      <span className="text-muted-foreground">20%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Single Point of Failure</span>
+                      <span className="text-muted-foreground">10%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Historical Issues</span>
+                      <span className="text-muted-foreground">10%</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {isScoring && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Scoring in progress...</span>
+                      <span>{scoringProgress}%</span>
+                    </div>
+                    <Progress value={scoringProgress} />
+                  </div>
+                )}
+
+                <div className="text-sm text-muted-foreground">
+                  <p>
+                    This will analyze all {controls.length} controls and assign materiality scores (0-100) 
+                    based on AI assessment of risk factors. Existing scores will be updated.
+                  </p>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAiScoringOpen(false)} disabled={isScoring}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAiScoring} disabled={isScoring}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {isScoring ? 'Scoring...' : 'Start AI Scoring'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <Button variant="outline">
             <Download className="h-4 w-4 mr-2" />
             Export Register

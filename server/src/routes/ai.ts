@@ -20,9 +20,13 @@ aiRouter.post('/generate-criteria', async (req, res) => {
     });
 
     res.json({ criteria });
-  } catch (error) {
+  } catch (error: any) {
     console.error('AI generation error:', error);
-    res.status(500).json({ error: 'Failed to generate criteria' });
+    console.error('Error details:', error.message, error.response?.data);
+    res.status(500).json({ 
+      error: 'Failed to generate criteria',
+      details: error.message 
+    });
   }
 });
 
