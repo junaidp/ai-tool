@@ -129,9 +129,10 @@ export default function RiskControlLibrary() {
       });
       await loadData();
       alert('✨ AI successfully generated Risk-Control Library!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to generate library:', error);
-      alert('Failed to generate library. Please try again.');
+      console.error('Error details:', error.message, error.response);
+      alert(`Failed to generate library: ${error.message || 'Please try again.'}`);
       setIsGenerating(false);
     }
   };

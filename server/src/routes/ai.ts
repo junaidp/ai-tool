@@ -85,8 +85,12 @@ aiRouter.post('/generate-controls', async (req, res) => {
     );
 
     res.json({ controls });
-  } catch (error) {
+  } catch (error: any) {
     console.error('AI control generation error:', error);
-    res.status(500).json({ error: 'Failed to generate controls' });
+    console.error('Error details:', error.message, error.response?.data);
+    res.status(500).json({ 
+      error: 'Failed to generate controls',
+      details: error.message 
+    });
   }
 });
