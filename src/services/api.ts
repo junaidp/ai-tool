@@ -196,6 +196,50 @@ class ApiService {
   getDashboardData() {
     return this.request<any>('/dashboard');
   }
+
+  // AI-powered features
+  generateCriteriaWithAI(data: {
+    sector: string;
+    operatingModel: string;
+    riskProfile: string;
+    regulations: string;
+  }) {
+    return this.request<{ criteria: any[] }>('/ai/generate-criteria', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  scoreControlWithAI(data: {
+    controlName: string;
+    controlDescription: string;
+    testResults?: string;
+  }) {
+    return this.request<{ score: number; reasoning: string; recommendations: string[] }>('/ai/score-control', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  generateGapsWithAI(data: {
+    frameworkType: string;
+    existingControls: string[];
+  }) {
+    return this.request<{ gaps: any[] }>('/ai/generate-gaps', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  generateControlsWithAI(data: {
+    riskDescription: string;
+    riskLevel: string;
+  }) {
+    return this.request<{ controls: any[] }>('/ai/generate-controls', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export const apiService = new ApiService();

@@ -61,46 +61,32 @@ export default function EffectivenessCriteriaPage() {
 
   const handleAiGenerate = async () => {
     try {
-      // Generate sample criteria based on inputs (simulating AI)
-      const generatedCriteria = [
-        {
-          dimension: 'Design',
-          criteria: `Controls are designed to address ${aiFormData.sector} sector risks with ${aiFormData.riskProfile} risk profile`,
-          threshold: '100% of material controls have documented design rationale',
-          evidenceType: ['Design documentation', 'Risk assessments', 'Control matrices'],
-          frequency: 'annual',
-          status: 'in_review'
-        },
-        {
-          dimension: 'Implementation',
-          criteria: `Controls are implemented consistently across ${aiFormData.operatingModel} operating model`,
-          threshold: '95% implementation rate verified through testing',
-          evidenceType: ['Implementation logs', 'Test results', 'Evidence artifacts'],
-          frequency: 'quarterly',
-          status: 'in_review'
-        },
-        {
-          dimension: 'Operation',
-          criteria: `Controls operate effectively considering ${aiFormData.regulations} regulatory requirements`,
-          threshold: 'No critical exceptions; <3% high-severity exceptions',
-          evidenceType: ['Monitoring alerts', 'Exception reports', 'Remediation logs'],
-          frequency: 'continuous',
-          status: 'in_review'
-        }
-      ];
+      // Validate inputs
+      if (!aiFormData.sector || !aiFormData.operatingModel || !aiFormData.riskProfile) {
+        alert('Please fill in all required fields (sector, operating model, and risk profile)');
+        return;
+      }
 
-      // Save all generated criteria
-      for (const criteria of generatedCriteria) {
+      // Call OpenAI GPT-4 via backend
+      const response = await apiService.generateCriteriaWithAI({
+        sector: aiFormData.sector,
+        operatingModel: aiFormData.operatingModel,
+        riskProfile: aiFormData.riskProfile,
+        regulations: aiFormData.regulations
+      });
+
+      // Save all AI-generated criteria to database
+      for (const criteria of response.criteria) {
         await apiService.createEffectivenessCriteria(criteria);
       }
 
       setIsAiDialogOpen(false);
       setAiFormData({ sector: '', operatingModel: '', riskProfile: '', regulations: '' });
       await loadCriteria(); // Refresh the list
-      alert(`Successfully generated ${generatedCriteria.length} effectiveness criteria!`);
+      alert(`✨ AI successfully generated ${response.criteria.length} effectiveness criteria!`);
     } catch (error) {
       console.error('Failed to generate criteria:', error);
-      alert('Failed to generate criteria. Please try again.');
+      alert('Failed to generate criteria with AI. Please try again.');
     }
   };
 

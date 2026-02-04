@@ -13,6 +13,7 @@ import { controlGapsRouter } from './routes/controlGaps';
 import { approvalsRouter } from './routes/approvals';
 import { dashboardRouter } from './routes/dashboard';
 import { authRouter } from './routes/auth';
+import { aiRouter } from './routes/ai';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use(cors({
 app.use(express.json());
 
 app.use('/api/auth', authRouter);
+app.use('/api/ai', aiRouter);
 app.use('/api/effectiveness-criteria', effectivenessCriteriaRouter);
 app.use('/api/framework-components', frameworkComponentsRouter);
 app.use('/api/material-controls', materialControlsRouter);
