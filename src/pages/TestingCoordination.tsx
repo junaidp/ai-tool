@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { apiService } from '@/services/api';
 import type { TestPlan, Issue } from '@/types';
-import { FlaskConical, Calendar, CheckCircle, Clock, XCircle, AlertTriangle, Plus, Download, Sparkles } from 'lucide-react';
+import {  Calendar, CheckCircle, Clock, XCircle, AlertTriangle, Plus, Download, Sparkles } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 export default function TestingCoordination() {
@@ -72,7 +72,7 @@ export default function TestingCoordination() {
         }
 
         await apiService.createTestPlan({
-          controlId: `CTL-${control.id}`,
+          controlId: control.id,
           controlName: control.name,
           testType,
           tester: 'Internal Audit',
