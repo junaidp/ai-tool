@@ -90,9 +90,10 @@ export default function TestingCoordination() {
       setTestScope('');
       await loadData();
       alert(`✨ AI generated ${controlsToTest.length} test plans for ${testingPeriod}!`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to generate test plan:', error);
-      alert('Failed to generate test plan. Please try again.');
+      console.error('Error details:', error.message, error.stack);
+      alert(`Failed to generate test plan: ${error.message || 'Please try again.'}`);
       setIsGenerating(false);
     }
   };
