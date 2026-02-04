@@ -61,8 +61,24 @@ Make the criteria specific to the provided sector and regulations.`;
     throw new Error('No response from OpenAI');
   }
 
+  console.log('OpenAI Response:', response);
+  
   const parsed = JSON.parse(response);
-  const criteria = parsed.criteria || parsed.effectivenessCriteria || [];
+  console.log('Parsed Response:', JSON.stringify(parsed, null, 2));
+  
+  // Handle different possible response structures
+  let criteria = parsed.criteria || parsed.effectivenessCriteria || parsed.items || [];
+  
+  // If the entire parsed object is an array, use it directly
+  if (Array.isArray(parsed) && parsed.length > 0) {
+    criteria = parsed;
+  }
+  
+  // Ensure criteria is an array
+  if (!Array.isArray(criteria)) {
+    console.error('Criteria is not an array:', criteria);
+    throw new Error('OpenAI response does not contain a valid criteria array');
+  }
 
   return criteria.map((c: any) => ({
     dimension: c.dimension,
