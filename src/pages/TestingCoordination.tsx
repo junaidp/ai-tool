@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { apiService } from '@/services/api';
 import type { TestPlan, Issue } from '@/types';
 import {  Calendar, CheckCircle, Clock, XCircle, AlertTriangle, Plus, Download, Sparkles } from 'lucide-react';
@@ -24,6 +26,9 @@ export default function TestingCoordination() {
   const [isTestScriptOpen, setIsTestScriptOpen] = useState(false);
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const [newScheduledDate, setNewScheduledDate] = useState('');
+  const [isCompleteTestOpen, setIsCompleteTestOpen] = useState(false);
+  const [testResults, setTestResults] = useState('');
+  const [hasExceptions, setHasExceptions] = useState(false);
 
   const loadData = async () => {
     const [tests, issuesData] = await Promise.all([
@@ -75,6 +80,38 @@ export default function TestingCoordination() {
     } catch (error) {
       console.error('Failed to reschedule test:', error);
       alert('Failed to reschedule test. Please try again.');
+    }
+  };
+
+  const handleCompleteTest = (test: TestPlan) => {
+    setSelectedTest(test);
+    setTestResults('');
+    setHasExceptions(false);
+    setIsCompleteTestOpen(true);
+  };
+
+  const handleCompleteTestSubmit = async () => {
+    if (!selectedTest || !testResults) {
+      alert('Please enter test results');
+      return;
+    }
+    
+    try {
+      await apiService.updateTestPlan(selectedTest.id, { 
+        status: 'completed',
+        results: testResults,
+        remediationRequired: hasExceptions,
+        exceptions: hasExceptions ? ['Exceptions identified during testing - review required'] : []
+      });
+      setIsCompleteTestOpen(false);
+      setSelectedTest(null);
+      setTestResults('');
+      setHasExceptions(false);
+      await loadData();
+      alert('✅ Test completed successfully!');
+    } catch (error) {
+      console.error('Failed to complete test:', error);
+      alert('Failed to complete test. Please try again.');
     }
   };
 
@@ -388,7 +425,7 @@ export default function TestingCoordination() {
                       {test.status === 'in_progress' && (
                         <>
                           <Button size="sm">Upload Evidence</Button>
-                          <Button size="sm" variant="outline">Complete Test</Button>
+                          <Button size="sm" variant="outline" onClick={() => handleCompleteTest(test)}>Complete Test</Button>
                         </>
                       )}
                       {test.status === 'completed' && (
@@ -647,6 +684,76 @@ export default function TestingCoordination() {
               if (selectedTest) handleStartTest(selectedTest.id);
             }}>
               Start Test
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Complete Test Dialog */}
+      <Dialog open={isCompleteTestOpen} onOpenChange={setIsCompleteTestOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Complete Test: {selectedTest?.controlName}</DialogTitle>
+            <DialogDescription>
+              Document test results and conclusion
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Test Results *</Label>
+              <Textarea 
+                placeholder="Summarize your testing observations, sample size tested, evidence reviewed, and overall conclusion on control effectiveness..."
+                value={testResults}
+                onChange={(e) => setTestResults(e.target.value)}
+                className="mt-1 min-h-[120px]"
+              />
+            </div>
+
+            <div className="flex items-center space-x-2 border rounded-lg p-4">
+              <Checkbox 
+                id="exceptions" 
+                checked={hasExceptions}
+                onCheckedChange={(checked) => setHasExceptions(checked as boolean)}
+              />
+              <div className="flex-1">
+                <Label htmlFor="exceptions" className="font-medium cursor-pointer">
+                  Exceptions or issues identified during testing
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Check this if remediation is required
+                </p>
+              </div>
+            </div>
+
+            {hasExceptions && (
+              <div className="border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-yellow-900">Remediation Required</p>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      This test will be marked as requiring remediation. An issue will need to be created for tracking.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-muted/50 rounded-lg p-3 text-sm">
+              <p className="font-medium mb-1">Test Summary</p>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• Control: {selectedTest?.controlName}</li>
+                <li>• Test Type: {selectedTest?.testType}</li>
+                <li>• Tester: {selectedTest?.tester}</li>
+                <li>• Scheduled: {selectedTest ? formatDate(selectedTest.scheduledDate) : ''}</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCompleteTestOpen(false)}>Cancel</Button>
+            <Button onClick={handleCompleteTestSubmit}>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Complete Test
             </Button>
           </DialogFooter>
         </DialogContent>
