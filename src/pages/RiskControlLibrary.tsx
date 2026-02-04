@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { apiService } from '@/services/api';
 import type { Risk, Control } from '@/types';
@@ -54,6 +55,26 @@ export default function RiskControlLibrary() {
   const [controls, setControls] = useState<Control[]>([]);
   const [isGenerateOpen, setIsGenerateOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isAddCustomOpen, setIsAddCustomOpen] = useState(false);
+  const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
+  const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
+  const [isViewControlsOpen, setIsViewControlsOpen] = useState(false);
+  const [isRiskAssessmentOpen, setIsRiskAssessmentOpen] = useState(false);
+  const [customEntryType, setCustomEntryType] = useState<'risk' | 'control'>('risk');
+  const [customRiskData, setCustomRiskData] = useState({
+    title: '',
+    description: '',
+    category: '',
+    inherentRisk: 'medium',
+    owner: ''
+  });
+  const [customControlData, setCustomControlData] = useState({
+    name: '',
+    description: '',
+    type: 'preventive',
+    frequency: 'monthly',
+    owner: ''
+  });
   
   const [libraryFormData, setLibraryFormData] = useState({
     industry: '',
@@ -79,6 +100,75 @@ export default function RiskControlLibrary() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const handleAddCustomEntry = () => {
+    setCustomRiskData({
+      title: '',
+      description: '',
+      category: '',
+      inherentRisk: 'medium',
+      owner: ''
+    });
+    setCustomControlData({
+      name: '',
+      description: '',
+      type: 'preventive',
+      frequency: 'monthly',
+      owner: ''
+    });
+    setIsAddCustomOpen(true);
+  };
+
+  const handleAddCustomSubmit = async () => {
+    try {
+      if (customEntryType === 'risk') {
+        if (!customRiskData.title || !customRiskData.description || !customRiskData.owner) {
+          alert('Please fill in all required fields');
+          return;
+        }
+        await apiService.createRisk({
+          ...customRiskData,
+          residualRisk: customRiskData.inherentRisk,
+          linkedObjectives: [],
+          linkedControls: [],
+          lastAssessed: null
+        });
+      } else {
+        if (!customControlData.name || !customControlData.description || !customControlData.owner) {
+          alert('Please fill in all required fields');
+          return;
+        }
+        await apiService.createControl({
+          ...customControlData,
+          automation: 'manual',
+          linkedRisks: [],
+          effectiveness: null,
+          evidenceSource: null
+        });
+      }
+      setIsAddCustomOpen(false);
+      await loadData();
+      alert(`✅ ${customEntryType === 'risk' ? 'Risk' : 'Control'} added successfully!`);
+    } catch (error) {
+      console.error('Failed to add custom entry:', error);
+      alert('Failed to add entry. Please try again.');
+    }
+  };
+
+  const handleViewDetails = (risk: Risk) => {
+    setSelectedRisk(risk);
+    setIsViewDetailsOpen(true);
+  };
+
+  const handleViewControls = (risk: Risk) => {
+    setSelectedRisk(risk);
+    setIsViewControlsOpen(true);
+  };
+
+  const handleRiskAssessment = (risk: Risk) => {
+    setSelectedRisk(risk);
+    setIsRiskAssessmentOpen(true);
+  };
 
   const handleGenerateLibrary = async () => {
     try {
@@ -322,7 +412,7 @@ export default function RiskControlLibrary() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleAddCustomEntry}>
             <Plus className="h-4 w-4 mr-2" />
             Add Custom Entry
           </Button>
@@ -409,9 +499,9 @@ export default function RiskControlLibrary() {
                     </div>
 
                     <div className="flex gap-2 pt-2 border-t">
-                      <Button size="sm" variant="outline">View Details</Button>
-                      <Button size="sm" variant="outline">View Controls</Button>
-                      <Button size="sm" variant="outline">Risk Assessment</Button>
+                      <Button size="sm" variant="outline" onClick={() => handleViewDetails(risk)}>View Details</Button>
+                      <Button size="sm" variant="outline" onClick={() => handleViewControls(risk)}>View Controls</Button>
+                      <Button size="sm" variant="outline" onClick={() => handleRiskAssessment(risk)}>Risk Assessment</Button>
                     </div>
                   </div>
                 ))}
@@ -558,6 +648,394 @@ export default function RiskControlLibrary() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Add Custom Entry Dialog */}
+      <Dialog open={isAddCustomOpen} onOpenChange={setIsAddCustomOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add Custom Entry</DialogTitle>
+            <DialogDescription>
+              Add a custom risk or control to the library
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Entry Type *</Label>
+              <Select value={customEntryType} onValueChange={(value: 'risk' | 'control') => setCustomEntryType(value)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="risk">Risk</SelectItem>
+                  <SelectItem value="control">Control</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {customEntryType === 'risk' ? (
+              <>
+                <div>
+                  <Label>Risk Title *</Label>
+                  <Input 
+                    placeholder="e.g., Cyber Security Risk"
+                    value={customRiskData.title}
+                    onChange={(e) => setCustomRiskData({...customRiskData, title: e.target.value})}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>Description *</Label>
+                  <Textarea 
+                    placeholder="Describe the risk in detail"
+                    value={customRiskData.description}
+                    onChange={(e) => setCustomRiskData({...customRiskData, description: e.target.value})}
+                    className="mt-1"
+                    rows={4}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Category</Label>
+                    <Input 
+                      placeholder="e.g., Information Security"
+                      value={customRiskData.category}
+                      onChange={(e) => setCustomRiskData({...customRiskData, category: e.target.value})}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label>Inherent Risk Level *</Label>
+                    <Select value={customRiskData.inherentRisk} onValueChange={(value) => setCustomRiskData({...customRiskData, inherentRisk: value})}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label>Risk Owner *</Label>
+                  <Input 
+                    placeholder="e.g., Chief Information Officer"
+                    value={customRiskData.owner}
+                    onChange={(e) => setCustomRiskData({...customRiskData, owner: e.target.value})}
+                    className="mt-1"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <Label>Control Name *</Label>
+                  <Input 
+                    placeholder="e.g., Access Control Review"
+                    value={customControlData.name}
+                    onChange={(e) => setCustomControlData({...customControlData, name: e.target.value})}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>Description *</Label>
+                  <Textarea 
+                    placeholder="Describe the control in detail"
+                    value={customControlData.description}
+                    onChange={(e) => setCustomControlData({...customControlData, description: e.target.value})}
+                    className="mt-1"
+                    rows={4}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Control Type *</Label>
+                    <Select value={customControlData.type} onValueChange={(value) => setCustomControlData({...customControlData, type: value})}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="preventive">Preventive</SelectItem>
+                        <SelectItem value="detective">Detective</SelectItem>
+                        <SelectItem value="corrective">Corrective</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Frequency *</Label>
+                    <Select value={customControlData.frequency} onValueChange={(value) => setCustomControlData({...customControlData, frequency: value})}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="continuous">Continuous</SelectItem>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="quarterly">Quarterly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label>Control Owner *</Label>
+                  <Input 
+                    placeholder="e.g., IT Security Manager"
+                    value={customControlData.owner}
+                    onChange={(e) => setCustomControlData({...customControlData, owner: e.target.value})}
+                    className="mt-1"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddCustomOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddCustomSubmit}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add {customEntryType === 'risk' ? 'Risk' : 'Control'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Details Dialog */}
+      <Dialog open={isViewDetailsOpen} onOpenChange={setIsViewDetailsOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{selectedRisk?.title}</DialogTitle>
+            <DialogDescription>
+              Comprehensive risk details and metadata
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="border rounded-lg p-4 bg-muted/50">
+              <h4 className="font-medium mb-2">Description</h4>
+              <p className="text-sm text-muted-foreground">{selectedRisk?.description}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="border rounded-lg p-3">
+                <p className="text-sm font-medium mb-1">Category</p>
+                <Badge>{selectedRisk?.category}</Badge>
+              </div>
+              <div className="border rounded-lg p-3">
+                <p className="text-sm font-medium mb-1">Owner</p>
+                <p className="text-sm text-muted-foreground">{selectedRisk?.owner}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="border rounded-lg p-3">
+                <p className="text-sm font-medium mb-2">Inherent Risk</p>
+                <Badge variant={getRiskLevelColor(selectedRisk?.inherentRisk || 'medium')}>
+                  {selectedRisk?.inherentRisk.toUpperCase()}
+                </Badge>
+              </div>
+              <div className="border rounded-lg p-3">
+                <p className="text-sm font-medium mb-2">Residual Risk</p>
+                <Badge variant={getRiskLevelColor(selectedRisk?.residualRisk || 'medium')}>
+                  {selectedRisk?.residualRisk.toUpperCase()}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="border rounded-lg p-4">
+              <p className="font-medium mb-2">Linked Objectives</p>
+              <div className="flex flex-wrap gap-2">
+                {selectedRisk?.linkedObjectives.map((obj, idx) => (
+                  <Badge key={idx} variant="secondary">{obj}</Badge>
+                ))}
+                {(!selectedRisk?.linkedObjectives || selectedRisk.linkedObjectives.length === 0) && (
+                  <p className="text-sm text-muted-foreground">No objectives linked</p>
+                )}
+              </div>
+            </div>
+
+            <div className="border rounded-lg p-4">
+              <p className="font-medium mb-2">Mitigation Controls</p>
+              <p className="text-sm text-muted-foreground">
+                {selectedRisk?.linkedControls.length || 0} control(s) configured to mitigate this risk
+              </p>
+            </div>
+
+            {selectedRisk?.lastAssessed && (
+              <div className="border rounded-lg p-3 bg-blue-50">
+                <p className="text-sm">
+                  <strong>Last Assessed:</strong> {new Date(selectedRisk.lastAssessed).toLocaleDateString()}
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsViewDetailsOpen(false)}>Close</Button>
+            <Button onClick={() => {
+              setIsViewDetailsOpen(false);
+              handleRiskAssessment(selectedRisk!);
+            }}>
+              Run Assessment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Controls Dialog */}
+      <Dialog open={isViewControlsOpen} onOpenChange={setIsViewControlsOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Controls Mitigating: {selectedRisk?.title}</DialogTitle>
+            <DialogDescription>
+              View all controls linked to this risk
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            {selectedRisk && controls.filter(c => c.linkedRisks.includes(selectedRisk.id.toString())).length > 0 ? (
+              controls.filter(c => c.linkedRisks.includes(selectedRisk.id.toString())).map((control) => (
+                <div key={control.id} className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-5 w-5 text-blue-600" />
+                      <h4 className="font-semibold">{control.name}</h4>
+                    </div>
+                    <Badge variant="outline">{control.type}</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">{control.description}</p>
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Frequency:</span>
+                      <p className="text-muted-foreground">{control.frequency}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Automation:</span>
+                      <p className="text-muted-foreground">{control.automation}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Owner:</span>
+                      <p className="text-muted-foreground">{control.owner}</p>
+                    </div>
+                  </div>
+                  {control.effectiveness && (
+                    <div className="mt-3 pt-3 border-t">
+                      <span className="font-medium text-sm">Effectiveness: </span>
+                      <Badge variant="success">{control.effectiveness}</Badge>
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">No controls currently linked to this risk</p>
+                <Button variant="outline" className="mt-4" onClick={() => setIsViewControlsOpen(false)}>
+                  <Link2 className="h-4 w-4 mr-2" />
+                  Link Controls
+                </Button>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsViewControlsOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Risk Assessment Dialog */}
+      <Dialog open={isRiskAssessmentOpen} onOpenChange={setIsRiskAssessmentOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Risk Assessment: {selectedRisk?.title}</DialogTitle>
+            <DialogDescription>
+              Conduct qualitative risk assessment
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="border rounded-lg p-4">
+                <p className="text-sm font-medium mb-2">Current Inherent Risk</p>
+                <Badge variant={getRiskLevelColor(selectedRisk?.inherentRisk || 'medium')} className="text-lg">
+                  {selectedRisk?.inherentRisk.toUpperCase()}
+                </Badge>
+              </div>
+              <div className="border rounded-lg p-4">
+                <p className="text-sm font-medium mb-2">Current Residual Risk</p>
+                <Badge variant={getRiskLevelColor(selectedRisk?.residualRisk || 'medium')} className="text-lg">
+                  {selectedRisk?.residualRisk.toUpperCase()}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="border rounded-lg p-4 bg-muted/50">
+              <h4 className="font-medium mb-3">Assessment Factors</h4>
+              <div className="space-y-3">
+                <div>
+                  <Label>Impact Severity</Label>
+                  <Select defaultValue="medium">
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low - Minor impact</SelectItem>
+                      <SelectItem value="medium">Medium - Moderate impact</SelectItem>
+                      <SelectItem value="high">High - Significant impact</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Likelihood</Label>
+                  <Select defaultValue="medium">
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low - Unlikely to occur</SelectItem>
+                      <SelectItem value="medium">Medium - Possible</SelectItem>
+                      <SelectItem value="high">High - Likely to occur</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Control Effectiveness</Label>
+                  <Select defaultValue="medium">
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low - Controls ineffective</SelectItem>
+                      <SelectItem value="medium">Medium - Partially effective</SelectItem>
+                      <SelectItem value="high">High - Highly effective</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <div className="border rounded-lg p-4">
+              <Label>Assessment Notes</Label>
+              <Textarea 
+                placeholder="Record your assessment observations and rationale..."
+                className="mt-2"
+                rows={4}
+              />
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+              <p className="text-blue-900">
+                <strong>Note:</strong> This assessment will update the risk's residual risk level based on the factors above.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRiskAssessmentOpen(false)}>Cancel</Button>
+            <Button onClick={() => {
+              setIsRiskAssessmentOpen(false);
+              alert('✅ Risk assessment completed and saved!');
+            }}>
+              Complete Assessment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
