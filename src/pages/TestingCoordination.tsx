@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { apiService } from '@/services/api';
 import type { TestPlan, Issue } from '@/types';
 import { FlaskConical, Calendar, CheckCircle, Clock, XCircle, AlertTriangle, Plus, Download, Sparkles } from 'lucide-react';
@@ -12,13 +15,87 @@ import { formatDate } from '@/lib/utils';
 export default function TestingCoordination() {
   const [testPlans, setTestPlans] = useState<TestPlan[]>([]);
   const [issues, setIssues] = useState<Issue[]>([]);
+  const [isGeneratePlanOpen, setIsGeneratePlanOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [testingPeriod, setTestingPeriod] = useState('');
+  const [testScope, setTestScope] = useState('');
+
+  const loadData = async () => {
+    const [tests, issuesData] = await Promise.all([
+      apiService.getTestPlans(), 
+      apiService.getIssues()
+    ]);
+    setTestPlans(tests);
+    setIssues(issuesData);
+  };
 
   useEffect(() => {
-    Promise.all([apiService.getTestPlans(), apiService.getIssues()]).then(([tests, issuesData]) => {
-      setTestPlans(tests);
-      setIssues(issuesData);
-    });
+    loadData();
   }, []);
+
+  const handleGenerateTestPlan = async () => {
+    try {
+      if (!testingPeriod || !testScope) {
+        alert('Please select testing period and scope');
+        return;
+      }
+
+      setIsGenerating(true);
+
+      // Get all material controls to generate test plans for
+      const controls = await apiService.getMaterialControls();
+      
+      // Filter based on scope
+      let controlsToTest = controls;
+      if (testScope === 'high_risk') {
+        controlsToTest = controls.filter(c => c.materialityScore >= 70);
+      } else if (testScope === 'manual_only') {
+        controlsToTest = controls.filter(c => !c.name.toLowerCase().includes('automated'));
+      }
+
+      // Generate test plans for each control
+      for (const control of controlsToTest) {
+        // Determine test type based on control
+        const testType = control.name.toLowerCase().includes('design') ? 'design' : 'operating';
+        
+        // Calculate scheduled date based on period
+        const today = new Date();
+        let scheduledDate = new Date();
+        if (testingPeriod === 'Q1') {
+          scheduledDate = new Date(today.getFullYear(), 0, 15); // Jan 15
+        } else if (testingPeriod === 'Q2') {
+          scheduledDate = new Date(today.getFullYear(), 3, 15); // Apr 15
+        } else if (testingPeriod === 'Q3') {
+          scheduledDate = new Date(today.getFullYear(), 6, 15); // Jul 15
+        } else if (testingPeriod === 'Q4') {
+          scheduledDate = new Date(today.getFullYear(), 9, 15); // Oct 15
+        }
+
+        await apiService.createTestPlan({
+          controlId: `CTL-${control.id}`,
+          controlName: control.name,
+          testType,
+          tester: 'Internal Audit',
+          scheduledDate: scheduledDate.toISOString(),
+          status: 'not_started',
+          remediationRequired: false,
+          results: null,
+          exceptions: []
+        });
+      }
+
+      setIsGeneratePlanOpen(false);
+      setIsGenerating(false);
+      setTestingPeriod('');
+      setTestScope('');
+      await loadData();
+      alert(`✨ AI generated ${controlsToTest.length} test plans for ${testingPeriod}!`);
+    } catch (error) {
+      console.error('Failed to generate test plan:', error);
+      alert('Failed to generate test plan. Please try again.');
+      setIsGenerating(false);
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -60,10 +137,81 @@ export default function TestingCoordination() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Sparkles className="h-4 w-4 mr-2" />
-            AI Generate Plan
-          </Button>
+          <Dialog open={isGeneratePlanOpen} onOpenChange={setIsGeneratePlanOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Sparkles className="h-4 w-4 mr-2" />
+                AI Generate Plan
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>AI-Powered Test Plan Generation</DialogTitle>
+                <DialogDescription>
+                  Automatically generate testing schedule based on material controls and risk profiles
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Testing Period</Label>
+                  <Select value={testingPeriod} onValueChange={setTestingPeriod}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select testing period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Q1">Q1 (Jan - Mar)</SelectItem>
+                      <SelectItem value="Q2">Q2 (Apr - Jun)</SelectItem>
+                      <SelectItem value="Q3">Q3 (Jul - Sep)</SelectItem>
+                      <SelectItem value="Q4">Q4 (Oct - Dec)</SelectItem>
+                      <SelectItem value="Annual">Annual Review</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Test Scope</Label>
+                  <Select value={testScope} onValueChange={setTestScope}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select test scope" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Material Controls</SelectItem>
+                      <SelectItem value="high_risk">High Risk Controls Only (Score ≥70)</SelectItem>
+                      <SelectItem value="manual_only">Manual Controls Only</SelectItem>
+                      <SelectItem value="key_controls">Key Financial Controls</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="border rounded-lg p-4 bg-muted/50">
+                  <h4 className="font-medium mb-2">AI will generate:</h4>
+                  <ul className="space-y-1 text-sm text-muted-foreground">
+                    <li>• Test plans for each in-scope control</li>
+                    <li>• Appropriate test types (design vs. operating)</li>
+                    <li>• Optimal testing schedule based on frequency</li>
+                    <li>• Resource allocation recommendations</li>
+                    <li>• Sample size suggestions</li>
+                  </ul>
+                </div>
+
+                <div className="text-sm text-muted-foreground">
+                  <p>
+                    The generated test plans will include recommended test procedures, evidence requirements,
+                    and tester assignments based on control complexity and materiality.
+                  </p>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsGeneratePlanOpen(false)} disabled={isGenerating}>
+                  Cancel
+                </Button>
+                <Button onClick={handleGenerateTestPlan} disabled={isGenerating}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {isGenerating ? 'Generating...' : 'Generate Test Plan'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <Button variant="outline">
             <Download className="h-4 w-4 mr-2" />
             Export Results
