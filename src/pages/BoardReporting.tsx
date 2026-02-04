@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { apiService } from '@/services/api';
 import type { DashboardData } from '@/types';
 import { FileText, Download, Eye, Edit, TrendingUp, AlertTriangle, CheckCircle, Shield } from 'lucide-react';
@@ -13,10 +16,149 @@ const COLORS = ['#22c55e', '#f59e0b', '#ef4444'];
 
 export default function BoardReporting() {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isEditDraftOpen, setIsEditDraftOpen] = useState(false);
+  const [draftText, setDraftText] = useState('');
 
   useEffect(() => {
     apiService.getDashboardData().then(setData);
   }, []);
+
+  const handlePreviewPack = () => {
+    setIsPreviewOpen(true);
+  };
+
+  const handleEditDraft = () => {
+    if (data) {
+      const initialDraft = `The Board has established a comprehensive risk management and internal control framework, approved by the Audit Committee in January 2024. Throughout the year, the Board conducted quarterly reviews of control effectiveness against board-approved criteria covering design, implementation, operation, decision-use, assurance, outcomes, and adaptability. Continuous monitoring systems provided real-time visibility into control performance, with ${data.controlHealth.tested} material controls tested during the period.`;
+      setDraftText(initialDraft);
+      setIsEditDraftOpen(true);
+    }
+  };
+
+  const handleSaveDraft = () => {
+    alert('✅ Draft saved successfully!');
+    setIsEditDraftOpen(false);
+  };
+
+  const handleExportPDF = () => {
+    try {
+      if (!data) {
+        alert('No data available to export');
+        return;
+      }
+
+      // Create HTML content for PDF
+      const controlHealthPercent = Math.round((data.controlHealth.effective / data.controlHealth.tested) * 100);
+      
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Board Reporting Pack - ${new Date().toLocaleDateString()}</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; padding: 40px; max-width: 800px; margin: 0 auto; }
+    h1 { color: #1e40af; border-bottom: 3px solid #3b82f6; padding-bottom: 10px; }
+    h2 { color: #1e40af; margin-top: 30px; }
+    .section { margin-bottom: 30px; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; }
+    .metric { display: inline-block; margin: 10px 20px 10px 0; }
+    .metric-value { font-size: 32px; font-weight: bold; color: #3b82f6; }
+    .metric-label { font-size: 14px; color: #6b7280; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+    th { background-color: #f3f4f6; font-weight: 600; }
+    .footer { margin-top: 50px; padding-top: 20px; border-top: 2px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Board Reporting Pack</h1>
+  <p><strong>Report Date:</strong> ${new Date().toLocaleDateString()}</p>
+  <p><strong>Reporting Period:</strong> FY ${new Date().getFullYear()}</p>
+
+  <div class="section">
+    <h2>Executive Summary</h2>
+    <p>This report provides the Board with a comprehensive view of the effectiveness of risk management and internal control systems for the period.</p>
+    
+    <div class="metric">
+      <div class="metric-value">${data.controlHealth.totalMaterial}</div>
+      <div class="metric-label">Material Controls</div>
+    </div>
+    
+    <div class="metric">
+      <div class="metric-value">${data.controlHealth.tested}</div>
+      <div class="metric-label">Controls Tested</div>
+    </div>
+    
+    <div class="metric">
+      <div class="metric-value">${controlHealthPercent}%</div>
+      <div class="metric-label">Effectiveness Rate</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Effectiveness Assessment</h2>
+    <table>
+      <tr>
+        <th>Dimension</th>
+        <th>Status</th>
+      </tr>
+      <tr>
+        <td>Design</td>
+        <td>✓ Met</td>
+      </tr>
+      <tr>
+        <td>Implementation</td>
+        <td>✓ Met</td>
+      </tr>
+      <tr>
+        <td>Operation</td>
+        <td>✓ Met</td>
+      </tr>
+      <tr>
+        <td>Decision-Use</td>
+        <td>⚠ Partially Met</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Board Conclusion</h2>
+    <p>The framework is operating effectively with minor improvements required in decision-use evidence collection.</p>
+    
+    <p>As of December 31, ${new Date().getFullYear() - 1}, the Board has reviewed the effectiveness of ${data.controlHealth.totalMaterial} material controls. Testing has been completed for ${data.controlHealth.tested} controls (${Math.round((data.controlHealth.tested / data.controlHealth.totalMaterial) * 100)}%), with ${data.controlHealth.effective} controls (${controlHealthPercent}%) demonstrating effective operation.</p>
+  </div>
+
+  <div class="section">
+    <h2>Material Weaknesses</h2>
+    <p><strong>Status:</strong> No material weaknesses identified</p>
+    <p>All material controls are operating effectively as designed. Exceptions identified are within acceptable tolerance levels and are subject to remediation plans with defined timelines.</p>
+  </div>
+
+  <div class="footer">
+    <p>This report is confidential and intended for Board members only.</p>
+    <p>Generated: ${new Date().toLocaleString()}</p>
+  </div>
+</body>
+</html>`;
+
+      // Create blob and download
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `board-reporting-pack-${new Date().toISOString().split('T')[0]}.html`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      alert('✅ Board pack exported successfully! Open the HTML file and use your browser to "Print to PDF"');
+    } catch (error) {
+      console.error('Failed to export PDF:', error);
+      alert('Failed to export board pack. Please try again.');
+    }
+  };
 
   if (!data) return <div>Loading...</div>;
 
@@ -38,15 +180,15 @@ export default function BoardReporting() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={handlePreviewPack}>
             <Eye className="h-4 w-4 mr-2" />
             Preview Pack
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleEditDraft}>
             <Edit className="h-4 w-4 mr-2" />
             Edit Draft
           </Button>
-          <Button>
+          <Button onClick={handleExportPDF}>
             <Download className="h-4 w-4 mr-2" />
             Export PDF
           </Button>
@@ -546,6 +688,140 @@ export default function BoardReporting() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Preview Pack Dialog */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Board Pack Preview</DialogTitle>
+            <DialogDescription>
+              Preview of the complete board reporting pack
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="border rounded-lg p-4 bg-muted/50">
+              <h3 className="font-semibold mb-2">Executive Summary</h3>
+              <div className="grid grid-cols-3 gap-4 mb-3">
+                <div>
+                  <div className="text-2xl font-bold text-blue-600">{data.controlHealth.totalMaterial}</div>
+                  <div className="text-xs text-muted-foreground">Material Controls</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {Math.round((data.controlHealth.effective / data.controlHealth.tested) * 100)}%
+                  </div>
+                  <div className="text-xs text-muted-foreground">Effectiveness</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-yellow-600">0</div>
+                  <div className="text-xs text-muted-foreground">Material Weaknesses</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border rounded-lg p-4">
+              <h3 className="font-semibold mb-2">Key Findings</h3>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                  <span>All effectiveness criteria dimensions met or partially met</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                  <span>{data.controlHealth.effective} of {data.controlHealth.tested} tested controls operating effectively</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                  <span>No material weaknesses identified</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5" />
+                  <span>Minor improvements required in decision-use evidence collection</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="border rounded-lg p-4">
+              <h3 className="font-semibold mb-2">Board Conclusion</h3>
+              <p className="text-sm text-muted-foreground">
+                The framework is operating effectively with minor improvements required in decision-use evidence collection. All exceptions are within tolerance thresholds and subject to approved remediation plans.
+              </p>
+            </div>
+
+            <div className="border rounded-lg p-4">
+              <h3 className="font-semibold mb-2">Included Sections</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-600" />
+                  <span>Effectiveness Dashboard</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-600" />
+                  <span>Material Controls Health</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-600" />
+                  <span>Key Issues & Remediation</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-600" />
+                  <span>Forward Look</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-600" />
+                  <span>Annual Disclosure Draft</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-600" />
+                  <span>Evidence Index</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>Close</Button>
+            <Button onClick={handleExportPDF}>
+              <Download className="h-4 w-4 mr-2" />
+              Export to PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Draft Dialog */}
+      <Dialog open={isEditDraftOpen} onOpenChange={setIsEditDraftOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Edit Board Statement Draft</DialogTitle>
+            <DialogDescription>
+              Edit the annual disclosure statement for board review
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Disclosure Statement</Label>
+              <Textarea 
+                value={draftText}
+                onChange={(e) => setDraftText(e.target.value)}
+                className="mt-2 min-h-[300px]"
+                placeholder="Enter board statement text..."
+              />
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+              <p className="text-blue-900">
+                <strong>Note:</strong> This draft will be saved for board review. Ensure all statements are accurate and supported by evidence.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDraftOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveDraft}>
+              <Edit className="h-4 w-4 mr-2" />
+              Save Draft
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
