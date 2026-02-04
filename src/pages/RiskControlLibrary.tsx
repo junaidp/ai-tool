@@ -9,7 +9,45 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { apiService } from '@/services/api';
 import type { Risk, Control } from '@/types';
+import type { Risk as ApiRisk, Control as ApiControl } from '@/types/api.types';
 import { AlertTriangle, Shield, Search, Sparkles, Plus, Link2 } from 'lucide-react';
+
+const safeJsonParse = (value: string | string[], fallback: string[] = []): string[] => {
+  if (Array.isArray(value)) return value;
+  if (!value || value === '') return fallback;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const transformApiRisk = (apiRisk: ApiRisk): Risk => ({
+  id: apiRisk.id,
+  title: apiRisk.title,
+  description: apiRisk.description,
+  category: apiRisk.category,
+  inherentRisk: apiRisk.inherentRisk as Risk['inherentRisk'],
+  residualRisk: apiRisk.residualRisk as Risk['residualRisk'],
+  owner: apiRisk.owner,
+  linkedObjectives: safeJsonParse(apiRisk.linkedObjectives as any),
+  linkedControls: safeJsonParse(apiRisk.linkedControls as any),
+  lastAssessed: apiRisk.lastAssessed,
+});
+
+const transformApiControl = (apiControl: ApiControl): Control => ({
+  id: apiControl.id,
+  name: apiControl.name,
+  description: apiControl.description,
+  type: apiControl.type as Control['type'],
+  automation: apiControl.automation as Control['automation'],
+  frequency: apiControl.frequency,
+  owner: apiControl.owner,
+  linkedRisks: safeJsonParse(apiControl.linkedRisks as any),
+  effectiveness: apiControl.effectiveness as Control['effectiveness'],
+  evidenceSource: apiControl.evidenceSource,
+});
 
 export default function RiskControlLibrary() {
   const [risks, setRisks] = useState<Risk[]>([]);
@@ -34,8 +72,8 @@ export default function RiskControlLibrary() {
       apiService.getRisks(), 
       apiService.getControls()
     ]);
-    setRisks(risksData);
-    setControls(controlsData);
+    setRisks(risksData.map(transformApiRisk));
+    setControls(controlsData.map(transformApiControl));
   };
 
   useEffect(() => {
@@ -51,15 +89,8 @@ export default function RiskControlLibrary() {
 
       setIsGenerating(true);
 
-      // Generate risks based on organizational context
-      const riskPrompt = `Generate 5-7 key risks for a ${libraryFormData.companySize} ${libraryFormData.industry} company with:
-- Products/Services: ${libraryFormData.products}
-- Operating in: ${libraryFormData.geographies}
-- Key Systems: ${libraryFormData.systems}
-- Regulations: ${libraryFormData.regulations}
-- Strategic Initiatives: ${libraryFormData.initiatives}`;
-
-      // For each generated risk, create controls
+      // Create sample risks based on organizational context
+      // TODO: Add AI risk generation endpoint and use it here
       const sampleRisks = [
         {
           title: `Data Security & Privacy Risk`,
@@ -89,8 +120,8 @@ export default function RiskControlLibrary() {
         const newRisk = await apiService.createRisk({
           ...risk,
           owner: 'Risk Management',
-          linkedObjectives: [libraryFormData.industry, 'Operational Excellence'],
-          linkedControls: [],
+          linkedObjectives: JSON.stringify([libraryFormData.industry, 'Operational Excellence']),
+          linkedControls: JSON.stringify([]),
           lastAssessed: new Date().toISOString()
         });
 
@@ -103,13 +134,15 @@ export default function RiskControlLibrary() {
         // Create the generated controls
         for (const control of controlsResponse.controls.slice(0, 3)) {
           await apiService.createControl({
-            controlId: control.controlId || `CTL-${Date.now()}`,
             name: control.name,
             description: control.description,
             type: control.type || 'preventive',
+            automation: control.automation || 'manual',
             frequency: control.frequency || 'monthly',
             owner: control.owner || 'Control Owner',
-            linkedRisks: [newRisk.id]
+            linkedRisks: JSON.stringify([newRisk.id]),
+            effectiveness: 'not_tested',
+            evidenceSource: 'TBD'
           });
         }
       }
@@ -129,10 +162,11 @@ export default function RiskControlLibrary() {
       });
       await loadData();
       alert('✨ AI successfully generated Risk-Control Library!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to generate library:', error);
-      console.error('Error details:', error.message, error.response);
-      alert(`Failed to generate library: ${error.message || 'Please try again.'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Please try again.';
+      console.error('Error details:', errorMessage, error);
+      alert(`Failed to generate library: ${errorMessage}`);
       setIsGenerating(false);
     }
   };

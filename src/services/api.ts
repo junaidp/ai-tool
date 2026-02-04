@@ -1,3 +1,23 @@
+import type {
+  User,
+  EffectivenessCriteria,
+  FrameworkComponent,
+  MaterialControl,
+  Risk,
+  Control,
+  TestPlan,
+  Issue,
+  IntegrationStatus,
+  ControlGap,
+  ApprovalWorkflow,
+  DashboardData,
+  AuthResponse,
+  AIGenerateCriteriaResponse,
+  AIScoreControlResponse,
+  AIGenerateGapsResponse,
+  AIGenerateControlsResponse,
+} from '../types/api.types';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 class ApiService {
@@ -8,9 +28,9 @@ class ApiService {
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     if (this.token) {
@@ -41,7 +61,7 @@ class ApiService {
   }
 
   async login(email: string, password: string) {
-    const data = await this.request<{ token: string; user: any }>('/auth/login', {
+    const data = await this.request<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
@@ -50,7 +70,7 @@ class ApiService {
   }
 
   async register(email: string, password: string, name: string, role: string) {
-    const data = await this.request<{ token: string; user: any }>('/auth/register', {
+    const data = await this.request<AuthResponse>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password, name, role }),
     });
@@ -59,21 +79,21 @@ class ApiService {
   }
 
   async getCurrentUser() {
-    return this.request<any>('/auth/me');
+    return this.request<User>('/auth/me');
   }
 
   getEffectivenessCriteria() {
-    return this.request<any[]>('/effectiveness-criteria');
+    return this.request<EffectivenessCriteria[]>('/effectiveness-criteria');
   }
 
-  createEffectivenessCriteria(data: any) {
+  createEffectivenessCriteria(data: Omit<EffectivenessCriteria, 'id' | 'createdAt' | 'updatedAt'>) {
     return this.request('/effectiveness-criteria', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  updateEffectivenessCriteria(id: string, data: any) {
+  updateEffectivenessCriteria(id: string, data: Partial<EffectivenessCriteria>) {
     return this.request(`/effectiveness-criteria/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -81,21 +101,21 @@ class ApiService {
   }
 
   getFrameworkComponents() {
-    return this.request<any[]>('/framework-components');
+    return this.request<FrameworkComponent[]>('/framework-components');
   }
 
   getMaterialControls() {
-    return this.request<any[]>('/material-controls');
+    return this.request<MaterialControl[]>('/material-controls');
   }
 
-  createMaterialControl(data: any) {
+  createMaterialControl(data: Omit<MaterialControl, 'id' | 'createdAt' | 'updatedAt'>) {
     return this.request('/material-controls', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  updateMaterialControl(id: string, data: any) {
+  updateMaterialControl(id: string, data: Partial<MaterialControl>) {
     return this.request(`/material-controls/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -103,25 +123,39 @@ class ApiService {
   }
 
   getRisks() {
-    return this.request<any[]>('/risks');
+    return this.request<Risk[]>('/risks');
+  }
+
+  createRisk(data: Omit<Risk, 'id' | 'createdAt' | 'updatedAt'>) {
+    return this.request<Risk>('/risks', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
   getControls() {
-    return this.request<any[]>('/controls');
+    return this.request<Control[]>('/controls');
+  }
+
+  createControl(data: Omit<Control, 'id' | 'createdAt' | 'updatedAt'>) {
+    return this.request<Control>('/controls', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
   getTestPlans() {
-    return this.request<any[]>('/test-plans');
+    return this.request<TestPlan[]>('/test-plans');
   }
 
-  createTestPlan(data: any) {
+  createTestPlan(data: Omit<TestPlan, 'id' | 'createdAt' | 'updatedAt'>) {
     return this.request('/test-plans', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  updateTestPlan(id: string, data: any) {
+  updateTestPlan(id: string, data: Partial<TestPlan>) {
     return this.request(`/test-plans/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -129,17 +163,17 @@ class ApiService {
   }
 
   getIssues() {
-    return this.request<any[]>('/issues');
+    return this.request<Issue[]>('/issues');
   }
 
-  createIssue(data: any) {
+  createIssue(data: Omit<Issue, 'id' | 'createdAt' | 'updatedAt'>) {
     return this.request('/issues', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  updateIssue(id: string, data: any) {
+  updateIssue(id: string, data: Partial<Issue>) {
     return this.request(`/issues/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -147,10 +181,10 @@ class ApiService {
   }
 
   getIntegrations() {
-    return this.request<any[]>('/integrations');
+    return this.request<IntegrationStatus[]>('/integrations');
   }
 
-  updateIntegration(id: string, data: any) {
+  updateIntegration(id: string, data: Partial<IntegrationStatus>) {
     return this.request(`/integrations/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -158,17 +192,17 @@ class ApiService {
   }
 
   getControlGaps() {
-    return this.request<any[]>('/control-gaps');
+    return this.request<ControlGap[]>('/control-gaps');
   }
 
-  createControlGap(data: any) {
+  createControlGap(data: Omit<ControlGap, 'id' | 'createdAt' | 'updatedAt'>) {
     return this.request('/control-gaps', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  updateControlGap(id: string, data: any) {
+  updateControlGap(id: string, data: Partial<ControlGap>) {
     return this.request(`/control-gaps/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -176,17 +210,17 @@ class ApiService {
   }
 
   getApprovals() {
-    return this.request<any[]>('/approvals');
+    return this.request<ApprovalWorkflow[]>('/approvals');
   }
 
-  createApproval(data: any) {
+  createApproval(data: Omit<ApprovalWorkflow, 'id' | 'createdAt' | 'updatedAt'>) {
     return this.request('/approvals', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  updateApproval(id: string, data: any) {
+  updateApproval(id: string, data: Partial<ApprovalWorkflow>) {
     return this.request(`/approvals/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -194,7 +228,7 @@ class ApiService {
   }
 
   getDashboardData() {
-    return this.request<any>('/dashboard');
+    return this.request<DashboardData>('/dashboard');
   }
 
   // AI-powered features
@@ -204,7 +238,7 @@ class ApiService {
     riskProfile: string;
     regulations: string;
   }) {
-    return this.request<{ criteria: any[] }>('/ai/generate-criteria', {
+    return this.request<AIGenerateCriteriaResponse>('/ai/generate-criteria', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -215,7 +249,7 @@ class ApiService {
     controlDescription: string;
     testResults?: string;
   }) {
-    return this.request<{ score: number; reasoning: string; recommendations: string[] }>('/ai/score-control', {
+    return this.request<AIScoreControlResponse>('/ai/score-control', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -225,7 +259,7 @@ class ApiService {
     frameworkType: string;
     existingControls: string[];
   }) {
-    return this.request<{ gaps: any[] }>('/ai/generate-gaps', {
+    return this.request<AIGenerateGapsResponse>('/ai/generate-gaps', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -235,7 +269,7 @@ class ApiService {
     riskDescription: string;
     riskLevel: string;
   }) {
-    return this.request<{ controls: any[] }>('/ai/generate-controls', {
+    return this.request<AIGenerateControlsResponse>('/ai/generate-controls', {
       method: 'POST',
       body: JSON.stringify(data),
     });

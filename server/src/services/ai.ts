@@ -185,36 +185,69 @@ Risk: ${riskDescription}
 Risk Level: ${riskLevel}
 
 For each control, provide:
-1. Control ID (e.g., AC-001)
-2. Name
-3. Description
-4. Type (preventive, detective, corrective)
-5. Frequency
-6. Owner role
+1. controlId (e.g., AC-001)
+2. name
+3. description
+4. type (preventive, detective, corrective)
+5. frequency (daily, weekly, monthly, quarterly, annual)
+6. owner (owner role)
 
-Return as JSON array with these fields.`;
+Return as valid JSON with a "controls" array containing objects with these exact field names: controlId, name, description, type, frequency, owner.`;
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4-turbo-preview',
-    messages: [
-      {
-        role: 'system',
-        content: 'You are an expert in risk management and control design.',
-      },
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ],
-    response_format: { type: 'json_object' },
-    temperature: 0.6,
-  });
+  console.log('Generating controls for risk:', { riskDescription, riskLevel });
 
-  const response = completion.choices[0].message.content;
-  if (!response) {
-    throw new Error('No response from OpenAI');
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4-turbo-preview',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert in risk management and control design. Always return valid JSON with a "controls" array.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.6,
+    });
+
+    const response = completion.choices[0].message.content;
+    if (!response) {
+      throw new Error('No response from OpenAI');
+    }
+
+    console.log('OpenAI Response for controls:', response);
+
+    const parsed = JSON.parse(response);
+    console.log('Parsed Response:', JSON.stringify(parsed, null, 2));
+
+    // Handle different possible response structures
+    let controls = parsed.controls || parsed.suggestedControls || parsed.items || [];
+    
+    // If the entire parsed object is an array, use it directly
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      controls = parsed;
+    }
+    
+    if (!Array.isArray(controls)) {
+      console.error('Controls is not an array:', controls);
+      throw new Error('OpenAI response does not contain a valid controls array');
+    }
+
+    if (controls.length === 0) {
+      console.warn('OpenAI returned an empty controls array');
+    }
+
+    return controls;
+  } catch (error: any) {
+    console.error('Error in generateRiskControlMapping:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    if (error.response) {
+      console.error('OpenAI API error response:', JSON.stringify(error.response, null, 2));
+    }
+    throw error;
   }
-
-  const parsed = JSON.parse(response);
-  return parsed.controls || parsed.suggestedControls || [];
 }
