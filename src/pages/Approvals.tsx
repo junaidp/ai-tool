@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { mockApiService } from '@/services/mockApi';
+import { apiService } from '@/services/api';
 import type { ApprovalWorkflow } from '@/types';
 import { CheckSquare, Clock, CheckCircle, XCircle, MessageSquare, FileText } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
@@ -17,7 +17,7 @@ export default function Approvals() {
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   useEffect(() => {
-    mockApiService.getApprovals().then(setApprovals);
+    apiService.getApprovals().then(setApprovals);
   }, []);
 
   const getStatusBadge = (status: string) => {

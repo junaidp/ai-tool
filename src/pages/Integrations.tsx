@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { mockApiService } from '@/services/mockApi';
+import { apiService } from '@/services/api';
 import type { IntegrationStatus } from '@/types';
 import { Plug, CheckCircle, XCircle, AlertCircle, Plus, Settings, Activity, Database } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
@@ -11,7 +11,7 @@ export default function Integrations() {
   const [integrations, setIntegrations] = useState<IntegrationStatus[]>([]);
 
   useEffect(() => {
-    mockApiService.getIntegrations().then(setIntegrations);
+    apiService.getIntegrations().then(setIntegrations);
   }, []);
 
   const getStatusIcon = (status: string) => {

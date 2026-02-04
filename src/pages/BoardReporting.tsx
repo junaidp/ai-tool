@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockApiService } from '@/services/mockApi';
+import { apiService } from '@/services/api';
 import type { DashboardData } from '@/types';
 import { FileText, Download, Eye, Edit, TrendingUp, AlertTriangle, CheckCircle, Shield } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
@@ -15,7 +15,7 @@ export default function BoardReporting() {
   const [data, setData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
-    mockApiService.getDashboardData().then(setData);
+    apiService.getDashboardData().then(setData);
   }, []);
 
   if (!data) return <div>Loading...</div>;

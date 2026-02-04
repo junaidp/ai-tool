@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { mockApiService } from '@/services/mockApi';
+import { apiService } from '@/services/api';
 import type { EffectivenessCriteria } from '@/types';
 import { Plus, CheckCircle, Clock, XCircle, Sparkles, FileText } from 'lucide-react';
 
@@ -15,10 +15,42 @@ export default function EffectivenessCriteriaPage() {
   const [criteria, setCriteria] = useState<EffectivenessCriteria[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    dimension: '',
+    criteria: '',
+    threshold: '',
+    evidenceType: '',
+    frequency: ''
+  });
+
+  const loadCriteria = async () => {
+    const data = await apiService.getEffectivenessCriteria();
+    setCriteria(data);
+  };
 
   useEffect(() => {
-    mockApiService.getEffectivenessCriteria().then(setCriteria);
+    loadCriteria();
   }, []);
+
+  const handleSave = async () => {
+    try {
+      await apiService.createEffectivenessCriteria({
+        dimension: formData.dimension,
+        criteria: formData.criteria,
+        threshold: formData.threshold,
+        evidenceType: formData.evidenceType.split(',').map(e => e.trim()),
+        frequency: formData.frequency,
+        status: 'in_review'
+      });
+      setIsDialogOpen(false);
+      setFormData({ dimension: '', criteria: '', threshold: '', evidenceType: '', frequency: '' });
+      await loadCriteria(); // Refresh the list
+    } catch (error) {
+      console.error('Failed to save criteria:', error);
+      alert('Failed to save criteria. Please try again.');
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -143,36 +175,48 @@ export default function EffectivenessCriteriaPage() {
               <div className="space-y-4">
                 <div>
                   <Label>Dimension</Label>
-                  <Select>
+                  <Select value={formData.dimension} onValueChange={(value) => setFormData({...formData, dimension: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select dimension" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="design">Design</SelectItem>
-                      <SelectItem value="implementation">Implementation</SelectItem>
-                      <SelectItem value="operation">Operation</SelectItem>
-                      <SelectItem value="decision-use">Decision-Use</SelectItem>
-                      <SelectItem value="assurance">Assurance</SelectItem>
-                      <SelectItem value="outcomes">Outcomes</SelectItem>
-                      <SelectItem value="adaptability">Adaptability</SelectItem>
+                      <SelectItem value="Design">Design</SelectItem>
+                      <SelectItem value="Implementation">Implementation</SelectItem>
+                      <SelectItem value="Operation">Operation</SelectItem>
+                      <SelectItem value="Decision-Use">Decision-Use</SelectItem>
+                      <SelectItem value="Assurance">Assurance</SelectItem>
+                      <SelectItem value="Outcomes">Outcomes</SelectItem>
+                      <SelectItem value="Adaptability">Adaptability</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label>Criteria</Label>
-                  <Textarea placeholder="What defines effectiveness for this dimension?" />
+                  <Textarea 
+                    placeholder="What defines effectiveness for this dimension?" 
+                    value={formData.criteria}
+                    onChange={(e) => setFormData({...formData, criteria: e.target.value})}
+                  />
                 </div>
                 <div>
                   <Label>Threshold</Label>
-                  <Input placeholder="Quantifiable threshold (e.g., 95% compliance)" />
+                  <Input 
+                    placeholder="Quantifiable threshold (e.g., 95% compliance)" 
+                    value={formData.threshold}
+                    onChange={(e) => setFormData({...formData, threshold: e.target.value})}
+                  />
                 </div>
                 <div>
                   <Label>Evidence Types</Label>
-                  <Input placeholder="Required evidence (comma-separated)" />
+                  <Input 
+                    placeholder="Required evidence (comma-separated)" 
+                    value={formData.evidenceType}
+                    onChange={(e) => setFormData({...formData, evidenceType: e.target.value})}
+                  />
                 </div>
                 <div>
                   <Label>Frequency</Label>
-                  <Select>
+                  <Select value={formData.frequency} onValueChange={(value) => setFormData({...formData, frequency: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select frequency" />
                     </SelectTrigger>
@@ -186,7 +230,7 @@ export default function EffectivenessCriteriaPage() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button onClick={() => setIsDialogOpen(false)}>Submit for Approval</Button>
+                <Button onClick={handleSave}>Submit for Approval</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

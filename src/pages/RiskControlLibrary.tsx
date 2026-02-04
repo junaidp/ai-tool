@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { mockApiService } from '@/services/mockApi';
+import { apiService } from '@/services/api';
 import type { Risk, Control } from '@/types';
 import { AlertTriangle, Shield, Search, Sparkles, Plus, Link2 } from 'lucide-react';
 
@@ -17,7 +17,7 @@ export default function RiskControlLibrary() {
   const [isGenerateOpen, setIsGenerateOpen] = useState(false);
 
   useEffect(() => {
-    Promise.all([mockApiService.getRisks(), mockApiService.getControls()]).then(([risksData, controlsData]) => {
+    Promise.all([apiService.getRisks(), apiService.getControls()]).then(([risksData, controlsData]) => {
       setRisks(risksData);
       setControls(controlsData);
     });

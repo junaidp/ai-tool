@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockApiService } from '@/services/mockApi';
+import { apiService } from '@/services/api';
 import type { ControlGap } from '@/types';
 import { AlertTriangle, TrendingUp, FileText, ExternalLink, Plus, Sparkles } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
@@ -12,7 +12,7 @@ export default function ControlGapRadar() {
   const [gaps, setGaps] = useState<ControlGap[]>([]);
 
   useEffect(() => {
-    mockApiService.getControlGaps().then(setGaps);
+    apiService.getControlGaps().then(setGaps);
   }, []);
 
   const getSeverityBadge = (priority: string) => {

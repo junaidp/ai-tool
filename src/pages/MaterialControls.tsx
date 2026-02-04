@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { mockApiService } from '@/services/mockApi';
+import { apiService } from '@/services/api';
 import type { MaterialControl } from '@/types';
 import { Shield, Search, Plus, Download, Sparkles, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 
@@ -13,7 +13,7 @@ export default function MaterialControls() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    mockApiService.getMaterialControls().then(setControls);
+    apiService.getMaterialControls().then(setControls);
   }, []);
 
   const filteredControls = controls.filter(

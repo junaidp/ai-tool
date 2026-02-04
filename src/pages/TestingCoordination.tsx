@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockApiService } from '@/services/mockApi';
+import { apiService } from '@/services/api';
 import type { TestPlan, Issue } from '@/types';
 import { FlaskConical, Calendar, CheckCircle, Clock, XCircle, AlertTriangle, Plus, Download, Sparkles } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
@@ -14,7 +14,7 @@ export default function TestingCoordination() {
   const [issues, setIssues] = useState<Issue[]>([]);
 
   useEffect(() => {
-    Promise.all([mockApiService.getTestPlans(), mockApiService.getIssues()]).then(([tests, issuesData]) => {
+    Promise.all([apiService.getTestPlans(), apiService.getIssues()]).then(([tests, issuesData]) => {
       setTestPlans(tests);
       setIssues(issuesData);
     });

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockApiService } from '@/services/mockApi';
+import { apiService } from '@/services/api';
 import type { FrameworkComponent } from '@/types';
 import { Building2, Users, Target, Shield, FileText, TrendingUp, Plus, Download } from 'lucide-react';
 
@@ -21,7 +21,7 @@ export default function FrameworkBuilder() {
   const [components, setComponents] = useState<FrameworkComponent[]>([]);
 
   useEffect(() => {
-    mockApiService.getFrameworkComponents().then(setComponents);
+    apiService.getFrameworkComponents().then(setComponents);
   }, []);
 
   const groupedComponents = components.reduce((acc, component) => {
