@@ -3,6 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { apiService } from '@/services/api';
 import type { FrameworkComponent } from '@/types';
 import { Building2, Users, Target, Shield, FileText, TrendingUp, Plus, Download } from 'lucide-react';
@@ -19,10 +24,146 @@ const componentIcons = {
 
 export default function FrameworkBuilder() {
   const [components, setComponents] = useState<FrameworkComponent[]>([]);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [isAddComponentOpen, setIsAddComponentOpen] = useState(false);
+  const [selectedComponent, setSelectedComponent] = useState<FrameworkComponent | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1);
+  const [componentFormData, setComponentFormData] = useState({
+    name: '',
+    type: 'governance',
+    description: '',
+    owner: ''
+  });
 
   useEffect(() => {
     apiService.getFrameworkComponents().then(setComponents);
   }, []);
+
+  const loadComponents = async () => {
+    const data = await apiService.getFrameworkComponents();
+    setComponents(data);
+  };
+
+  const handleExportBlueprint = () => {
+    try {
+      const blueprintContent = `
+# RISK MANAGEMENT & INTERNAL CONTROLS FRAMEWORK BLUEPRINT
+
+Generated: ${new Date().toLocaleDateString()}
+
+## Framework Components
+
+${components.map(c => `
+### ${c.name}
+**Type:** ${c.type}
+**Status:** ${c.status}
+**Owner:** ${c.owner}
+**Description:** ${c.description}
+${c.lastReviewed ? `**Last Reviewed:** ${new Date(c.lastReviewed).toLocaleDateString()}` : ''}
+`).join('\n')}
+
+## Framework Structure
+
+This framework consists of ${components.length} components across governance, risk, control, and assurance domains.
+
+---
+*This document is confidential and proprietary*
+      `;
+
+      const blob = new Blob([blueprintContent], { type: 'text/markdown' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `framework-blueprint-${new Date().toISOString().split('T')[0]}.md`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      alert('✅ Framework blueprint exported successfully!');
+    } catch (error) {
+      console.error('Failed to export blueprint:', error);
+      alert('Failed to export blueprint. Please try again.');
+    }
+  };
+
+  const handleAddComponent = () => {
+    setComponentFormData({
+      name: '',
+      type: 'governance',
+      description: '',
+      owner: ''
+    });
+    setIsAddComponentOpen(true);
+  };
+
+  const handleAddComponentSubmit = async () => {
+    if (!componentFormData.name || !componentFormData.description || !componentFormData.owner) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      await apiService.createFrameworkComponent({
+        ...componentFormData,
+        status: 'in_review',
+        lastReviewed: null
+      });
+      setIsAddComponentOpen(false);
+      await loadComponents();
+      alert('✅ Component added successfully!');
+    } catch (error) {
+      console.error('Failed to add component:', error);
+      alert('Failed to add component. Please try again.');
+    }
+  };
+
+  const handleEditComponent = (component: FrameworkComponent) => {
+    setSelectedComponent(component);
+    setComponentFormData({
+      name: component.name,
+      type: component.type,
+      description: component.description,
+      owner: component.owner
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleEditSubmit = async () => {
+    if (!selectedComponent) return;
+
+    try {
+      await apiService.updateFrameworkComponent(selectedComponent.id, componentFormData);
+      setIsEditOpen(false);
+      setSelectedComponent(null);
+      await loadComponents();
+      alert('✅ Component updated successfully!');
+    } catch (error) {
+      console.error('Failed to update component:', error);
+      alert('Failed to update component. Please try again.');
+    }
+  };
+
+  const handleViewDetails = (component: FrameworkComponent) => {
+    setSelectedComponent(component);
+    setIsViewDetailsOpen(true);
+  };
+
+  const handleLaunchWizard = () => {
+    setWizardStep(1);
+    setIsWizardOpen(true);
+  };
+
+  const handleWizardNext = () => {
+    if (wizardStep < 3) {
+      setWizardStep(wizardStep + 1);
+    } else {
+      setIsWizardOpen(false);
+      alert('✅ Framework wizard completed! Your framework configuration has been saved.');
+    }
+  };
 
   const groupedComponents = components.reduce((acc, component) => {
     if (!acc[component.type]) acc[component.type] = [];
@@ -40,11 +181,11 @@ export default function FrameworkBuilder() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleExportBlueprint}>
             <Download className="h-4 w-4 mr-2" />
             Export Blueprint
           </Button>
-          <Button>
+          <Button onClick={handleAddComponent}>
             <Plus className="h-4 w-4 mr-2" />
             Add Component
           </Button>
@@ -59,7 +200,7 @@ export default function FrameworkBuilder() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button>Launch Framework Wizard</Button>
+          <Button onClick={handleLaunchWizard}>Launch Framework Wizard</Button>
         </CardContent>
       </Card>
 
@@ -104,8 +245,8 @@ export default function FrameworkBuilder() {
                       )}
                     </div>
                     <div className="flex gap-2 mt-4">
-                      <Button size="sm" variant="outline" className="flex-1">Edit</Button>
-                      <Button size="sm" variant="outline" className="flex-1">View Details</Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleEditComponent(component)}>Edit</Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleViewDetails(component)}>View Details</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -255,6 +396,340 @@ export default function FrameworkBuilder() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Framework Wizard Dialog */}
+      <Dialog open={isWizardOpen} onOpenChange={setIsWizardOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Framework Wizard - Step {wizardStep} of 3</DialogTitle>
+            <DialogDescription>
+              {wizardStep === 1 && 'Define your organizational context'}
+              {wizardStep === 2 && 'Configure risk and control parameters'}
+              {wizardStep === 3 && 'Set up governance structure'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {wizardStep === 1 && (
+              <>
+                <div>
+                  <Label>Industry / Sector *</Label>
+                  <Select>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select industry" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="financial">Financial Services</SelectItem>
+                      <SelectItem value="technology">Technology</SelectItem>
+                      <SelectItem value="healthcare">Healthcare</SelectItem>
+                      <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                      <SelectItem value="retail">Retail</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Company Size *</Label>
+                  <Select>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="small">Small (1-50 employees)</SelectItem>
+                      <SelectItem value="medium">Medium (51-500 employees)</SelectItem>
+                      <SelectItem value="large">Large (501+ employees)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Operating Model</Label>
+                  <Textarea 
+                    placeholder="Describe your operating model (e.g., centralized, decentralized, matrix)"
+                    className="mt-1"
+                  />
+                </div>
+              </>
+            )}
+
+            {wizardStep === 2 && (
+              <>
+                <div>
+                  <Label>Risk Appetite Level *</Label>
+                  <Select>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low - Conservative approach</SelectItem>
+                      <SelectItem value="moderate">Moderate - Balanced approach</SelectItem>
+                      <SelectItem value="high">High - Aggressive approach</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Primary Control Framework *</Label>
+                  <Select>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select framework" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="coso">COSO Internal Control</SelectItem>
+                      <SelectItem value="iso27001">ISO 27001</SelectItem>
+                      <SelectItem value="nist">NIST Cybersecurity Framework</SelectItem>
+                      <SelectItem value="sox">SOX Compliance</SelectItem>
+                      <SelectItem value="custom">Custom Framework</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Key Risk Categories</Label>
+                  <Textarea 
+                    placeholder="List your main risk categories (e.g., Strategic, Financial, Operational, Compliance)"
+                    className="mt-1"
+                  />
+                </div>
+              </>
+            )}
+
+            {wizardStep === 3 && (
+              <>
+                <div>
+                  <Label>Governance Structure *</Label>
+                  <Select>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select structure" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="board">Board-led</SelectItem>
+                      <SelectItem value="committee">Committee-based</SelectItem>
+                      <SelectItem value="hybrid">Hybrid Model</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Three Lines Model *</Label>
+                  <Select>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select implementation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="traditional">Traditional Three Lines</SelectItem>
+                      <SelectItem value="iia2020">IIA 2020 Model</SelectItem>
+                      <SelectItem value="custom">Custom Model</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Reporting Frequency *</Label>
+                  <Select>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select frequency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="annual">Annual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+              <p className="text-blue-900">
+                <strong>Note:</strong> Your inputs will be used to configure framework components and generate tailored templates.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsWizardOpen(false)}>Cancel</Button>
+            <Button onClick={handleWizardNext}>
+              {wizardStep < 3 ? 'Next Step' : 'Complete Wizard'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Component Dialog */}
+      <Dialog open={isAddComponentOpen} onOpenChange={setIsAddComponentOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add Framework Component</DialogTitle>
+            <DialogDescription>
+              Create a new component for your risk management framework
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Component Name *</Label>
+              <Input 
+                placeholder="e.g., Risk Assessment Process"
+                value={componentFormData.name}
+                onChange={(e) => setComponentFormData({...componentFormData, name: e.target.value})}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Component Type *</Label>
+              <Select value={componentFormData.type} onValueChange={(value) => setComponentFormData({...componentFormData, type: value})}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="governance">Governance</SelectItem>
+                  <SelectItem value="risk_taxonomy">Risk Taxonomy</SelectItem>
+                  <SelectItem value="risk_appetite">Risk Appetite</SelectItem>
+                  <SelectItem value="control_model">Control Model</SelectItem>
+                  <SelectItem value="three_lines">Three Lines</SelectItem>
+                  <SelectItem value="policy">Policy</SelectItem>
+                  <SelectItem value="reporting">Reporting</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Description *</Label>
+              <Textarea 
+                placeholder="Describe the component's purpose and scope"
+                value={componentFormData.description}
+                onChange={(e) => setComponentFormData({...componentFormData, description: e.target.value})}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Owner *</Label>
+              <Input 
+                placeholder="e.g., Chief Risk Officer"
+                value={componentFormData.owner}
+                onChange={(e) => setComponentFormData({...componentFormData, owner: e.target.value})}
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddComponentOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddComponentSubmit}>Add Component</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Component Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Component</DialogTitle>
+            <DialogDescription>
+              Update component details
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Component Name *</Label>
+              <Input 
+                value={componentFormData.name}
+                onChange={(e) => setComponentFormData({...componentFormData, name: e.target.value})}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Component Type *</Label>
+              <Select value={componentFormData.type} onValueChange={(value) => setComponentFormData({...componentFormData, type: value})}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="governance">Governance</SelectItem>
+                  <SelectItem value="risk_taxonomy">Risk Taxonomy</SelectItem>
+                  <SelectItem value="risk_appetite">Risk Appetite</SelectItem>
+                  <SelectItem value="control_model">Control Model</SelectItem>
+                  <SelectItem value="three_lines">Three Lines</SelectItem>
+                  <SelectItem value="policy">Policy</SelectItem>
+                  <SelectItem value="reporting">Reporting</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Description *</Label>
+              <Textarea 
+                value={componentFormData.description}
+                onChange={(e) => setComponentFormData({...componentFormData, description: e.target.value})}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Owner *</Label>
+              <Input 
+                value={componentFormData.owner}
+                onChange={(e) => setComponentFormData({...componentFormData, owner: e.target.value})}
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
+            <Button onClick={handleEditSubmit}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Details Dialog */}
+      <Dialog open={isViewDetailsOpen} onOpenChange={setIsViewDetailsOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{selectedComponent?.name}</DialogTitle>
+            <DialogDescription>
+              Component details and configuration
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="border rounded-lg p-3">
+                <p className="text-sm font-medium mb-1">Type</p>
+                <Badge>{selectedComponent?.type}</Badge>
+              </div>
+              <div className="border rounded-lg p-3">
+                <p className="text-sm font-medium mb-1">Status</p>
+                <Badge variant={selectedComponent?.status === 'approved' ? 'success' : 'warning'}>
+                  {selectedComponent?.status === 'approved' ? 'Approved' : 'In Review'}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="border rounded-lg p-4">
+              <p className="font-medium mb-2">Description</p>
+              <p className="text-sm text-muted-foreground">{selectedComponent?.description}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="border rounded-lg p-3">
+                <p className="text-sm font-medium mb-1">Owner</p>
+                <p className="text-sm text-muted-foreground">{selectedComponent?.owner}</p>
+              </div>
+              <div className="border rounded-lg p-3">
+                <p className="text-sm font-medium mb-1">Last Reviewed</p>
+                <p className="text-sm text-muted-foreground">
+                  {selectedComponent?.lastReviewed 
+                    ? new Date(selectedComponent.lastReviewed).toLocaleDateString() 
+                    : 'Not reviewed yet'}
+                </p>
+              </div>
+            </div>
+
+            <div className="border rounded-lg p-4 bg-muted/50">
+              <p className="font-medium mb-2">Related Components</p>
+              <p className="text-sm text-muted-foreground">
+                This component integrates with other framework elements in the {selectedComponent?.type} domain.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsViewDetailsOpen(false)}>Close</Button>
+            <Button onClick={() => {
+              setIsViewDetailsOpen(false);
+              if (selectedComponent) handleEditComponent(selectedComponent);
+            }}>
+              Edit Component
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
