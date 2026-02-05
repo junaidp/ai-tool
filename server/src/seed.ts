@@ -4,6 +4,21 @@ import bcrypt from 'bcryptjs';
 async function main() {
   console.log('🌱 Seeding database...');
 
+  // Clear existing data
+  console.log('🧹 Clearing existing data...');
+  await prisma.approvalWorkflow.deleteMany();
+  await prisma.controlGap.deleteMany();
+  await prisma.integrationStatus.deleteMany();
+  await prisma.issue.deleteMany();
+  await prisma.testPlan.deleteMany();
+  await prisma.materialControl.deleteMany();
+  await prisma.control.deleteMany();
+  await prisma.risk.deleteMany();
+  await prisma.frameworkComponent.deleteMany();
+  await prisma.effectivenessCriteria.deleteMany();
+  await prisma.user.deleteMany();
+  console.log('✅ Cleared existing data');
+
   const hashedPassword = await bcrypt.hash('demo123', 10);
   
   // Create 5 demo users with different roles
