@@ -21,7 +21,7 @@ const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
 
 app.use(cors({
-  origin: 'http://localhost:5175',
+  origin: ['http://localhost:5175', 'https://risk-tlmk.onrender.com'],
   credentials: true
 }));
 app.use(express.json());
