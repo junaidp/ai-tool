@@ -17,8 +17,8 @@ import type {
   AIGenerateGapsResponse,
   AIGenerateControlsResponse,
 } from '../types/api.types';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+//'http://localhost:3001/api'
+const API_URL = import.meta.env.VITE_API_URL || 'https://ai-tool-9o3q.onrender.com/api';
 
 class ApiService {
   private token: string | null = null;
