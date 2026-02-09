@@ -9,12 +9,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { apiService } from '@/services/api';
 import type { EffectivenessCriteria } from '@/types';
-import { Plus, CheckCircle, Clock, XCircle, Sparkles, FileText } from 'lucide-react';
+import { Plus, CheckCircle, Clock, XCircle, Sparkles, FileText, Pencil, Trash2 } from 'lucide-react';
 
 export default function EffectivenessCriteriaPage() {
   const [criteria, setCriteria] = useState<EffectivenessCriteria[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
+  const [editingCriteria, setEditingCriteria] = useState<EffectivenessCriteria | null>(null);
   
   const [formData, setFormData] = useState({
     dimension: '',
@@ -42,20 +43,67 @@ export default function EffectivenessCriteriaPage() {
 
   const handleSave = async () => {
     try {
-      await apiService.createEffectivenessCriteria({
-        dimension: formData.dimension,
-        criteria: formData.criteria,
-        threshold: formData.threshold,
-        evidenceType: formData.evidenceType.split(',').map(e => e.trim()),
-        frequency: formData.frequency,
-        status: 'in_review'
-      });
+      if (editingCriteria) {
+        // Update existing criteria
+        await apiService.updateEffectivenessCriteria(editingCriteria.id, {
+          dimension: formData.dimension,
+          criteria: formData.criteria,
+          threshold: formData.threshold,
+          evidenceType: formData.evidenceType.split(',').map(e => e.trim()),
+          frequency: formData.frequency,
+          status: 'in_review'
+        });
+      } else {
+        // Create new criteria
+        await apiService.createEffectivenessCriteria({
+          dimension: formData.dimension,
+          criteria: formData.criteria,
+          threshold: formData.threshold,
+          evidenceType: formData.evidenceType.split(',').map(e => e.trim()),
+          frequency: formData.frequency,
+          status: 'in_review'
+        });
+      }
       setIsDialogOpen(false);
+      setEditingCriteria(null);
       setFormData({ dimension: '', criteria: '', threshold: '', evidenceType: '', frequency: '' });
-      await loadCriteria(); // Refresh the list
+      await loadCriteria();
     } catch (error) {
       console.error('Failed to save criteria:', error);
       alert('Failed to save criteria. Please try again.');
+    }
+  };
+
+  const handleEdit = (item: EffectivenessCriteria) => {
+    setEditingCriteria(item);
+    setFormData({
+      dimension: item.dimension,
+      criteria: item.criteria,
+      threshold: item.threshold,
+      evidenceType: Array.isArray(item.evidenceType) ? item.evidenceType.join(', ') : item.evidenceType,
+      frequency: item.frequency
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this criteria? This action cannot be undone.')) {
+      return;
+    }
+    try {
+      await apiService.deleteEffectivenessCriteria(id);
+      await loadCriteria();
+    } catch (error) {
+      console.error('Failed to delete criteria:', error);
+      alert('Failed to delete criteria. Please try again.');
+    }
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setEditingCriteria(null);
+      setFormData({ dimension: '', criteria: '', threshold: '', evidenceType: '', frequency: '' });
     }
   };
 
@@ -200,7 +248,7 @@ export default function EffectivenessCriteriaPage() {
             </DialogContent>
           </Dialog>
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -209,9 +257,9 @@ export default function EffectivenessCriteriaPage() {
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Add Effectiveness Criteria</DialogTitle>
+                <DialogTitle>{editingCriteria ? 'Edit' : 'Add'} Effectiveness Criteria</DialogTitle>
                 <DialogDescription>
-                  Define a new effectiveness criterion for board approval
+                  {editingCriteria ? 'Update the effectiveness criterion' : 'Define a new effectiveness criterion for board approval'}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
@@ -271,8 +319,8 @@ export default function EffectivenessCriteriaPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleSave}>Submit for Approval</Button>
+                <Button variant="outline" onClick={() => handleDialogClose(false)}>Cancel</Button>
+                <Button onClick={handleSave}>{editingCriteria ? 'Update' : 'Submit for Approval'}</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -298,6 +346,14 @@ export default function EffectivenessCriteriaPage() {
                       {getStatusBadge(item.status)}
                     </div>
                     <p className="text-sm text-muted-foreground">{item.criteria}</p>
+                  </div>
+                  <div className="flex gap-2 ml-4">
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)}>
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
                   </div>
                 </div>
 
