@@ -16,6 +16,7 @@ import type {
   AIScoreControlResponse,
   AIGenerateGapsResponse,
   AIGenerateControlsResponse,
+  AIEditCriteriaResponse,
 } from '../types/api.types';
 //'http://localhost:3001/api'
 const API_URL = import.meta.env.VITE_API_URL || 'https://ai-tool-9o3q.onrender.com/api';
@@ -284,6 +285,23 @@ class ApiService {
     riskLevel: string;
   }) {
     return this.request<AIGenerateControlsResponse>('/ai/generate-controls', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  editCriteriaWithAI(data: {
+    criteriaId: string;
+    currentCriteria: {
+      dimension: string;
+      criteria: string;
+      threshold: string;
+      evidenceType: string | string[];
+      frequency: string;
+    };
+    editPrompt: string;
+  }) {
+    return this.request<AIEditCriteriaResponse>('/ai/edit-criteria', {
       method: 'POST',
       body: JSON.stringify(data),
     });

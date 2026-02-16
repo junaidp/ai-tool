@@ -94,3 +94,28 @@ aiRouter.post('/generate-controls', async (req, res) => {
     });
   }
 });
+
+// Edit effectiveness criteria using AI conversational prompt
+aiRouter.post('/edit-criteria', async (req, res) => {
+  try {
+    const { currentCriteria, editPrompt } = req.body;
+
+    if (!currentCriteria || !editPrompt) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const result = await aiService.editCriteriaWithAI(
+      currentCriteria,
+      editPrompt
+    );
+
+    res.json(result);
+  } catch (error: any) {
+    console.error('AI criteria edit error:', error);
+    console.error('Error details:', error.message, error.response?.data);
+    res.status(500).json({ 
+      error: 'Failed to edit criteria with AI',
+      details: error.message 
+    });
+  }
+});

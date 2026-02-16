@@ -251,3 +251,85 @@ Return as valid JSON with a "controls" array containing objects with these exact
     throw error;
   }
 }
+
+export async function editCriteriaWithAI(
+  currentCriteria: {
+    dimension: string;
+    criteria: string;
+    threshold: string;
+    evidenceType: string | string[];
+    frequency: string;
+  },
+  editPrompt: string
+): Promise<{
+  updatedCriteria: {
+    dimension: string;
+    criteria: string;
+    threshold: string;
+    evidenceType: string[];
+    frequency: string;
+  };
+  explanation: string;
+}> {
+  const evidenceTypeStr = Array.isArray(currentCriteria.evidenceType) 
+    ? currentCriteria.evidenceType.join(', ') 
+    : currentCriteria.evidenceType;
+
+  const prompt = `You are an expert in risk management and internal controls. A user wants to modify an effectiveness criterion based on their specific requirements.
+
+Current Criterion:
+- Dimension: ${currentCriteria.dimension}
+- Criteria: ${currentCriteria.criteria}
+- Threshold: ${currentCriteria.threshold}
+- Evidence Types: ${evidenceTypeStr}
+- Frequency: ${currentCriteria.frequency}
+
+User's Edit Request:
+"${editPrompt}"
+
+Based on the user's request, provide an updated version of this criterion. Maintain the same structure and ensure all fields are filled appropriately. The dimension should be one of: Design, Implementation, Operation, Decision-Use, Assurance, Outcomes, or Adaptability. The frequency should be one of: continuous, quarterly, or annual.
+
+Return as JSON with:
+- updatedCriteria: object with fields (dimension, criteria, threshold, evidenceType as array, frequency)
+- explanation: brief explanation of the changes made
+
+Ensure the updated criterion is specific, measurable, and aligned with the user's request.`;
+
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4-turbo-preview',
+    messages: [
+      {
+        role: 'system',
+        content: 'You are an expert in risk management, internal controls, and regulatory compliance. You help users refine and improve their effectiveness criteria based on their specific needs.',
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
+    response_format: { type: 'json_object' },
+    temperature: 0.7,
+  });
+
+  const response = completion.choices[0].message.content;
+  if (!response) {
+    throw new Error('No response from OpenAI');
+  }
+
+  console.log('AI Edit Response:', response);
+
+  const parsed = JSON.parse(response);
+  
+  return {
+    updatedCriteria: {
+      dimension: parsed.updatedCriteria.dimension,
+      criteria: parsed.updatedCriteria.criteria,
+      threshold: parsed.updatedCriteria.threshold,
+      evidenceType: Array.isArray(parsed.updatedCriteria.evidenceType) 
+        ? parsed.updatedCriteria.evidenceType 
+        : [parsed.updatedCriteria.evidenceType],
+      frequency: parsed.updatedCriteria.frequency,
+    },
+    explanation: parsed.explanation || 'Criteria updated based on your request.',
+  };
+}

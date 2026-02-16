@@ -179,3 +179,14 @@ export interface AIGenerateGapsResponse {
 export interface AIGenerateControlsResponse {
   controls: Control[];
 }
+
+export interface AIEditCriteriaResponse {
+  updatedCriteria: {
+    dimension: string;
+    criteria: string;
+    threshold: string;
+    evidenceType: string[];
+    frequency: string;
+  };
+  explanation: string;
+}

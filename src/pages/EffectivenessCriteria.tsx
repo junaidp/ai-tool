@@ -9,13 +9,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { apiService } from '@/services/api';
 import type { EffectivenessCriteria } from '@/types';
-import { Plus, CheckCircle, Clock, XCircle, Sparkles, FileText, Pencil, Trash2 } from 'lucide-react';
+import { Plus, CheckCircle, Clock, XCircle, Sparkles, FileText, Pencil, Trash2, Wand2 } from 'lucide-react';
 
 export default function EffectivenessCriteriaPage() {
   const [criteria, setCriteria] = useState<EffectivenessCriteria[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
+  const [isAiEditDialogOpen, setIsAiEditDialogOpen] = useState(false);
   const [editingCriteria, setEditingCriteria] = useState<EffectivenessCriteria | null>(null);
+  const [aiEditingCriteria, setAiEditingCriteria] = useState<EffectivenessCriteria | null>(null);
+  const [aiEditPrompt, setAiEditPrompt] = useState('');
+  const [isAiEditLoading, setIsAiEditLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     dimension: '',
@@ -84,6 +88,55 @@ export default function EffectivenessCriteriaPage() {
       frequency: item.frequency
     });
     setIsDialogOpen(true);
+  };
+
+  const handleAiEdit = (item: EffectivenessCriteria) => {
+    setAiEditingCriteria(item);
+    setAiEditPrompt('');
+    setIsAiEditDialogOpen(true);
+  };
+
+  const handleAiEditSubmit = async () => {
+    if (!aiEditPrompt.trim() || !aiEditingCriteria) {
+      alert('Please enter your editing instructions');
+      return;
+    }
+
+    setIsAiEditLoading(true);
+    try {
+      const response = await apiService.editCriteriaWithAI({
+        criteriaId: aiEditingCriteria.id,
+        currentCriteria: {
+          dimension: aiEditingCriteria.dimension,
+          criteria: aiEditingCriteria.criteria,
+          threshold: aiEditingCriteria.threshold,
+          evidenceType: aiEditingCriteria.evidenceType,
+          frequency: aiEditingCriteria.frequency
+        },
+        editPrompt: aiEditPrompt
+      });
+
+      // Update the criteria with AI-generated changes
+      await apiService.updateEffectivenessCriteria(aiEditingCriteria.id, {
+        dimension: response.updatedCriteria.dimension,
+        criteria: response.updatedCriteria.criteria,
+        threshold: response.updatedCriteria.threshold,
+        evidenceType: response.updatedCriteria.evidenceType,
+        frequency: response.updatedCriteria.frequency,
+        status: 'in_review'
+      });
+
+      setIsAiEditDialogOpen(false);
+      setAiEditingCriteria(null);
+      setAiEditPrompt('');
+      await loadCriteria();
+      alert('✨ Criteria updated successfully with AI!');
+    } catch (error) {
+      console.error('Failed to edit criteria with AI:', error);
+      alert('Failed to edit criteria with AI. Please try again.');
+    } finally {
+      setIsAiEditLoading(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -248,6 +301,79 @@ export default function EffectivenessCriteriaPage() {
             </DialogContent>
           </Dialog>
 
+          <Dialog open={isAiEditDialogOpen} onOpenChange={setIsAiEditDialogOpen}>
+            <DialogContent className="max-w-xl">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Wand2 className="h-5 w-5 text-purple-600" />
+                  Edit Criteria with AI
+                </DialogTitle>
+                <DialogDescription>
+                  Describe how you'd like to modify this criterion. AI will update it based on your instructions.
+                </DialogDescription>
+              </DialogHeader>
+              
+              {aiEditingCriteria && (
+                <div className="space-y-4">
+                  <div className="bg-muted p-3 rounded-lg space-y-2">
+                    <div>
+                      <span className="text-sm font-medium">Current Dimension:</span>
+                      <p className="text-sm text-muted-foreground">{aiEditingCriteria.dimension}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium">Current Criteria:</span>
+                      <p className="text-sm text-muted-foreground">{aiEditingCriteria.criteria}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium">Current Threshold:</span>
+                      <p className="text-sm text-muted-foreground">{aiEditingCriteria.threshold}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Your Instructions</Label>
+                    <Textarea 
+                      placeholder="E.g., 'Make the criteria more specific to a high growth company' or 'Adjust threshold to be more stringent' or 'Add focus on quarterly reviews'"
+                      value={aiEditPrompt}
+                      onChange={(e) => setAiEditPrompt(e.target.value)}
+                      rows={4}
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Describe the changes you want in natural language
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsAiEditDialogOpen(false)}
+                  disabled={isAiEditLoading}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleAiEditSubmit}
+                  disabled={isAiEditLoading || !aiEditPrompt.trim()}
+                >
+                  {isAiEditLoading ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="h-4 w-4 mr-2" />
+                      Apply AI Changes
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
               <Button>
@@ -348,10 +474,13 @@ export default function EffectivenessCriteriaPage() {
                     <p className="text-sm text-muted-foreground">{item.criteria}</p>
                   </div>
                   <div className="flex gap-2 ml-4">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(item)} title="Edit">
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)}>
+                    <Button variant="ghost" size="sm" onClick={() => handleAiEdit(item)} title="Edit with AI">
+                      <Wand2 className="h-4 w-4 text-purple-600" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} title="Delete">
                       <Trash2 className="h-4 w-4 text-red-600" />
                     </Button>
                   </div>
