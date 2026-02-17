@@ -248,10 +248,10 @@ class ApiService {
 
   // AI-powered features
   generateCriteriaWithAI(data: {
-    sector: string;
-    operatingModel: string;
-    riskProfile: string;
-    regulations: string;
+    regulatoryPosture: string;
+    operatingStage: string;
+    complexity: string;
+    governanceMaturity: string;
   }) {
     return this.request<AIGenerateCriteriaResponse>('/ai/generate-criteria', {
       method: 'POST',
@@ -305,6 +305,55 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  }
+
+  // Principal Risks
+  getPrincipalRisks() {
+    return this.request<any[]>('/principal-risks');
+  }
+
+  createPrincipalRisk(data: any) {
+    return this.request('/principal-risks', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  updatePrincipalRisk(id: string, data: any) {
+    return this.request(`/principal-risks/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  deletePrincipalRisk(id: string) {
+    return this.request(`/principal-risks/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Processes
+  getProcesses() {
+    return this.request<any[]>('/processes');
+  }
+
+  createProcess(data: any) {
+    return this.request('/processes', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Risk-Process Links
+  linkRiskToProcess(data: any) {
+    return this.request('/risk-process-links', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  getRiskProcessLinks(riskId: string) {
+    return this.request<any[]>(`/risk-process-links/risk/${riskId}`);
   }
 }
 

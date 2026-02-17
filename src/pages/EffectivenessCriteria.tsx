@@ -30,10 +30,10 @@ export default function EffectivenessCriteriaPage() {
   });
 
   const [aiFormData, setAiFormData] = useState({
-    sector: '',
-    operatingModel: '',
-    riskProfile: '',
-    regulations: ''
+    regulatoryPosture: '',
+    operatingStage: '',
+    complexity: '',
+    governanceMaturity: ''
   });
 
   const loadCriteria = async () => {
@@ -163,17 +163,17 @@ export default function EffectivenessCriteriaPage() {
   const handleAiGenerate = async () => {
     try {
       // Validate inputs
-      if (!aiFormData.sector || !aiFormData.operatingModel || !aiFormData.riskProfile) {
-        alert('Please fill in all required fields (sector, operating model, and risk profile)');
+      if (!aiFormData.regulatoryPosture || !aiFormData.operatingStage || !aiFormData.complexity || !aiFormData.governanceMaturity) {
+        alert('Please fill in all required fields');
         return;
       }
 
-      // Call OpenAI GPT-4 via backend
+      // Call AI to generate criteria with categorization
       const response = await apiService.generateCriteriaWithAI({
-        sector: aiFormData.sector,
-        operatingModel: aiFormData.operatingModel,
-        riskProfile: aiFormData.riskProfile,
-        regulations: aiFormData.regulations
+        regulatoryPosture: aiFormData.regulatoryPosture,
+        operatingStage: aiFormData.operatingStage,
+        complexity: aiFormData.complexity,
+        governanceMaturity: aiFormData.governanceMaturity
       });
 
       // Save all AI-generated criteria to database
@@ -182,9 +182,9 @@ export default function EffectivenessCriteriaPage() {
       }
 
       setIsAiDialogOpen(false);
-      setAiFormData({ sector: '', operatingModel: '', riskProfile: '', regulations: '' });
-      await loadCriteria(); // Refresh the list
-      alert(`✨ AI successfully generated ${response.criteria.length} effectiveness criteria!`);
+      setAiFormData({ regulatoryPosture: '', operatingStage: '', complexity: '', governanceMaturity: '' });
+      await loadCriteria();
+      alert(`✨ AI successfully generated ${response.criteria.length} effectiveness criteria with categorization!`);
     } catch (error) {
       console.error('Failed to generate criteria:', error);
       alert('Failed to generate criteria with AI. Please try again.');
@@ -243,52 +243,55 @@ export default function EffectivenessCriteriaPage() {
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label>Industry Sector</Label>
-                  <Select value={aiFormData.sector} onValueChange={(value) => setAiFormData({...aiFormData, sector: value})}>
+                  <Label>Regulatory Posture</Label>
+                  <Select value={aiFormData.regulatoryPosture} onValueChange={(value) => setAiFormData({...aiFormData, regulatoryPosture: value})}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select sector" />
+                      <SelectValue placeholder="Select regulatory posture" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Financial Services">Financial Services</SelectItem>
-                      <SelectItem value="Healthcare">Healthcare</SelectItem>
-                      <SelectItem value="Manufacturing">Manufacturing</SelectItem>
-                      <SelectItem value="Technology">Technology</SelectItem>
+                      <SelectItem value="Regulated">Regulated</SelectItem>
+                      <SelectItem value="Lightly regulated">Lightly regulated</SelectItem>
+                      <SelectItem value="Unregulated">Unregulated</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label>Operating Model</Label>
-                  <Select value={aiFormData.operatingModel} onValueChange={(value) => setAiFormData({...aiFormData, operatingModel: value})}>
+                  <Label>Operating Stage</Label>
+                  <Select value={aiFormData.operatingStage} onValueChange={(value) => setAiFormData({...aiFormData, operatingStage: value})}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select model" />
+                      <SelectValue placeholder="Select operating stage" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Centralized">Centralized</SelectItem>
-                      <SelectItem value="Decentralized">Decentralized</SelectItem>
-                      <SelectItem value="Hybrid">Hybrid</SelectItem>
+                      <SelectItem value="High-growth/Transformation">High-growth/Transformation</SelectItem>
+                      <SelectItem value="Steady-state">Steady-state</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label>Risk Profile</Label>
-                  <Select value={aiFormData.riskProfile} onValueChange={(value) => setAiFormData({...aiFormData, riskProfile: value})}>
+                  <Label>Complexity</Label>
+                  <Select value={aiFormData.complexity} onValueChange={(value) => setAiFormData({...aiFormData, complexity: value})}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select profile" />
+                      <SelectValue placeholder="Select complexity level" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="low">Low Risk</SelectItem>
-                      <SelectItem value="moderate">Moderate Risk</SelectItem>
-                      <SelectItem value="high">High Risk</SelectItem>
+                      <SelectItem value="Single entity">Single entity</SelectItem>
+                      <SelectItem value="Group (moderate)">Group (moderate)</SelectItem>
+                      <SelectItem value="Group (complex)">Group (complex)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label>Regulatory Obligations</Label>
-                  <Textarea 
-                    placeholder="List key regulations (e.g., SOX, GDPR, HIPAA)" 
-                    value={aiFormData.regulations}
-                    onChange={(e) => setAiFormData({...aiFormData, regulations: e.target.value})}
-                  />
+                  <Label>Governance Maturity</Label>
+                  <Select value={aiFormData.governanceMaturity} onValueChange={(value) => setAiFormData({...aiFormData, governanceMaturity: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select governance maturity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Immature">Immature</SelectItem>
+                      <SelectItem value="Developing">Developing</SelectItem>
+                      <SelectItem value="Mature">Mature</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <DialogFooter>
@@ -470,6 +473,9 @@ export default function EffectivenessCriteriaPage() {
                       {getStatusIcon(item.status)}
                       <h3 className="font-semibold">{item.dimension}</h3>
                       {getStatusBadge(item.status)}
+                      <Badge variant={item.categorization === 'C' ? 'destructive' : item.categorization === 'H' ? 'default' : 'secondary'}>
+                        {item.categorization === 'B' ? 'Baseline' : item.categorization === 'H' ? 'High' : 'Critical'}
+                      </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{item.criteria}</p>
                   </div>

@@ -15,6 +15,7 @@ export interface EffectivenessCriteria {
   evidenceType: string;
   frequency: string;
   status: string;
+  categorization: string;
   approvedBy?: string | null;
   approvedDate?: string | null;
   createdAt: string;
@@ -189,4 +190,35 @@ export interface AIEditCriteriaResponse {
     frequency: string;
   };
   explanation: string;
+}
+
+export interface AIGenerateProcessesResponse {
+  processes: Array<{
+    processName: string;
+    relevance: 'primary' | 'secondary';
+    rationale: string;
+  }>;
+}
+
+export interface AIGenerateStandardControlsResponse {
+  controls: Array<{
+    controlName: string;
+    controlObjective: string;
+    controlType: string;
+    domainTag: string;
+    typicalFrequency: string;
+    typicalEvidence: string;
+  }>;
+}
+
+export interface AIGenerateToBeControlsResponse {
+  controls: Array<{
+    controlObjective: string;
+    ownerRole: string;
+    frequency: string;
+    evidenceType: string;
+    controlType: string;
+    domainTag: string;
+    implementationGuidance: string;
+  }>;
 }

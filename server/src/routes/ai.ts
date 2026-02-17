@@ -6,17 +6,17 @@ export const aiRouter = Router();
 // Generate effectiveness criteria using AI
 aiRouter.post('/generate-criteria', async (req, res) => {
   try {
-    const { sector, operatingModel, riskProfile, regulations } = req.body;
+    const { regulatoryPosture, operatingStage, complexity, governanceMaturity } = req.body;
 
-    if (!sector || !operatingModel || !riskProfile) {
+    if (!regulatoryPosture || !operatingStage || !complexity || !governanceMaturity) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
     const criteria = await aiService.generateEffectivenessCriteria({
-      sector,
-      operatingModel,
-      riskProfile,
-      regulations: regulations || '',
+      regulatoryPosture,
+      operatingStage,
+      complexity,
+      governanceMaturity,
     });
 
     res.json({ criteria });

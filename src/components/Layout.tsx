@@ -23,6 +23,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Effectiveness Criteria', href: '/effectiveness-criteria', icon: Target },
   { name: 'Framework Builder', href: '/framework-builder', icon: Building2 },
+  { name: 'Principal Risks', href: '/principal-risks', icon: AlertTriangle },
   { name: 'Material Controls', href: '/material-controls', icon: Shield },
   { name: 'Risk-Control Library', href: '/risk-control-library', icon: Library },
   { name: 'System Integrations', href: '/integrations', icon: Plug },

@@ -31,6 +31,7 @@ model EffectivenessCriteria {
   evidenceType  String
   frequency     String
   status        String
+  categorization String  @default("B") // B (Baseline), H (High), C (Critical)
   approvedBy    String?
   approvedDate  DateTime?
   createdAt     DateTime @default(now())
@@ -191,4 +192,169 @@ model AuditLog {
   entityId  String
   changes   String
   timestamp DateTime @default(now())
+}
+
+// Principal Risks and Material Controls Workflow Models
+
+model PrincipalRisk {
+  id                String   @id @default(uuid())
+  riskTitle         String
+  riskStatement     String
+  domainTags        String   // JSON array: ops/reporting/financial/compliance
+  threatLensTags    String   // JSON array: business_model/performance/solvency/liquidity
+  riskOwner         String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  riskProcessLinks  RiskProcessLink[]
+  gaps              Gap[]
+  riskControlLinks  RiskControlLink[]
+}
+
+model Process {
+  id                String   @id @default(uuid())
+  processName       String
+  processScope      String   // BU / entity / geography
+  systemsInScope    String?  // JSON array
+  processOwner      String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  riskProcessLinks  RiskProcessLink[]
+  maturityAssessments ProcessMaturityAssessment[]
+  asIsControls      AsIsControl[]
+  gaps              Gap[]
+  toBeControls      ToBeControl[]
+}
+
+model RiskProcessLink {
+  id          String   @id @default(uuid())
+  riskId      String
+  processId   String
+  relevance   String   // primary / secondary
+  rationale   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  risk        PrincipalRisk @relation(fields: [riskId], references: [id], onDelete: Cascade)
+  process     Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  @@unique([riskId, processId])
+}
+
+model ProcessMaturityAssessment {
+  id                String   @id @default(uuid())
+  processId         String
+  assessmentVersion Int      @default(1)
+  assessmentDate    DateTime @default(now())
+  answers           String   // JSON key-value pairs
+  maturityProfile   String   // derived classification
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  process     Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+}
+
+model StandardControl {
+  id                String   @id @default(uuid())
+  controlName       String
+  controlObjective  String
+  controlType       String   // preventive / detective / corrective
+  domainTag         String   // ops / reporting / financial / compliance
+  typicalFrequency  String
+  typicalEvidence   String
+  applicabilityRules String? // JSON conditions
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  asIsControls AsIsControl[]
+  gaps         Gap[]
+}
+
+model AsIsControl {
+  id                  String   @id @default(uuid())
+  processId           String
+  controlName         String
+  controlObjective    String
+  controlType         String   // preventive / detective / corrective
+  domainTag           String
+  frequency           String
+  evidenceSource      String?
+  owner               String?
+  status              String   // exists / partial / not_exist
+  mappedStdControlId  String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  process           Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+  mappedStdControl  StandardControl? @relation(fields: [mappedStdControlId], references: [id])
+  riskControlLinks  RiskControlLink[]
+}
+
+model Gap {
+  id                    String   @id @default(uuid())
+  processId             String
+  riskId                String?
+  stdControlId          String?
+  gapType               String   // missing / weak_design / weak_operation / no_owner / no_evidence
+  recommendedToBeControlId String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  process         Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+  risk            PrincipalRisk? @relation(fields: [riskId], references: [id], onDelete: Cascade)
+  stdControl      StandardControl? @relation(fields: [stdControlId], references: [id])
+  toBeControl     ToBeControl? @relation(fields: [recommendedToBeControlId], references: [id])
+}
+
+model ToBeControl {
+  id                    String   @id @default(uuid())
+  processId             String
+  controlObjective      String
+  ownerRole             String?
+  frequency             String
+  evidenceType          String
+  controlType           String   // preventive / detective / corrective
+  domainTag             String
+  implementationGuidance String?
+  targetDate            DateTime?
+  implementationStatus  String   @default("planned") // planned / in_progress / live
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  process           Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+  gaps              Gap[]
+  riskControlLinks  RiskControlLink[]
+}
+
+model RiskControlLink {
+  id              String   @id @default(uuid())
+  riskId          String
+  asIsControlId   String?
+  toBeControlId   String?
+  controlSource   String   // as_is / to_be
+  linkType        String   // mitigates / detects / corrects
+  isMaterial      Boolean  @default(false)
+  rationale       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  risk            PrincipalRisk @relation(fields: [riskId], references: [id], onDelete: Cascade)
+  asIsControl     AsIsControl? @relation(fields: [asIsControlId], references: [id], map: "RiskControlLink_asIsControl_fkey")
+  toBeControl     ToBeControl? @relation(fields: [toBeControlId], references: [id], map: "RiskControlLink_toBeControl_fkey")
+
+  @@unique([riskId, asIsControlId, toBeControlId, controlSource])
+}
+
+model FrameworkDocument {
+  id              String   @id @default(uuid())
+  title           String
+  version         String   @default("1.0")
+  sections        String   // JSON structure of all sections
+  boardSummary    String?
+  approvalStatus  String   @default("draft")
+  approvedBy      String?
+  approvedDate    DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

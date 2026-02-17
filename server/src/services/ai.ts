@@ -5,10 +5,10 @@ const openai = new OpenAI({
 });
 
 export interface GenerateCriteriaInput {
-  sector: string;
-  operatingModel: string;
-  riskProfile: string;
-  regulations: string;
+  regulatoryPosture: string;
+  operatingStage: string;
+  complexity: string;
+  governanceMaturity: string;
 }
 
 export interface EffectivenessCriteria {
@@ -17,35 +17,47 @@ export interface EffectivenessCriteria {
   threshold: string;
   evidenceType: string[];
   frequency: string;
+  categorization: string;
   status: string;
 }
 
 export async function generateEffectivenessCriteria(
   input: GenerateCriteriaInput
 ): Promise<EffectivenessCriteria[]> {
-  const prompt = `You are an expert in risk management and internal controls. Generate 3-5 effectiveness criteria for a control framework based on the following organization profile:
+  const prompt = `You are an expert in risk management and internal controls. Generate 5-7 effectiveness criteria for a control framework based on the following organization profile:
 
-Industry Sector: ${input.sector}
-Operating Model: ${input.operatingModel}
-Risk Profile: ${input.riskProfile}
-Regulatory Obligations: ${input.regulations}
+Regulatory Posture: ${input.regulatoryPosture}
+Operating Stage: ${input.operatingStage}
+Complexity: ${input.complexity}
+Governance Maturity: ${input.governanceMaturity}
 
 For each criterion, provide:
 1. Dimension (choose from: Design, Implementation, Operation, Decision-Use, Assurance, Outcomes, Adaptability)
 2. Criteria (clear, measurable description)
 3. Threshold (quantifiable target, e.g., "95% compliance")
-4. Evidence Type (list 2-3 types of evidence needed)
+4. Evidence Type (list effectiveness measurement criteria as array):
+   - Use these 4 types: "Input/Identification", "Assessment/Translation", "Action/Execution", "Reliability/Improvement"
+   - Select 2-3 that are most relevant to the criterion
 5. Frequency (continuous, quarterly, or annual)
+6. Categorization (B, H, or C):
+   - B (Baseline): Standard depth, must exist
+   - H (High): Higher governance attention, more design depth, tighter cadence
+   - C (Critical): Board-level priority, maximum depth, strict evidence and escalation
 
-Return the response as a valid JSON array of objects with these exact fields: dimension, criteria, threshold, evidenceType (array), frequency.
-Make the criteria specific to the provided sector and regulations.`;
+CATEGORIZATION LOGIC:
+- If Regulated + High-growth/Transformation + Group(complex) + Immature/Developing: More H and C
+- If Regulated + Steady-state + Single entity + Mature: More B and some H
+- If Unregulated + Steady-state + Single entity + Mature: Mostly B
+- Critical (C) should be reserved for compliance-heavy, complex, or high-risk dimensions
+
+Return as valid JSON with a "criteria" array containing objects with these exact fields: dimension, criteria, threshold, evidenceType (array), frequency, categorization.`;
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4-turbo-preview',
     messages: [
       {
         role: 'system',
-        content: 'You are an expert in risk management, internal controls, and regulatory compliance. You provide structured, actionable criteria for control effectiveness frameworks.',
+        content: 'You are an expert in risk management, internal controls, and regulatory compliance. You provide structured, actionable criteria for control effectiveness frameworks with appropriate categorization.',
       },
       {
         role: 'user',
@@ -66,15 +78,12 @@ Make the criteria specific to the provided sector and regulations.`;
   const parsed = JSON.parse(response);
   console.log('Parsed Response:', JSON.stringify(parsed, null, 2));
   
-  // Handle different possible response structures
   let criteria = parsed.criteria || parsed.effectivenessCriteria || parsed.items || [];
   
-  // If the entire parsed object is an array, use it directly
   if (Array.isArray(parsed) && parsed.length > 0) {
     criteria = parsed;
   }
   
-  // Ensure criteria is an array
   if (!Array.isArray(criteria)) {
     console.error('Criteria is not an array:', criteria);
     throw new Error('OpenAI response does not contain a valid criteria array');
@@ -86,6 +95,7 @@ Make the criteria specific to the provided sector and regulations.`;
     threshold: c.threshold,
     evidenceType: Array.isArray(c.evidenceType) ? c.evidenceType : [c.evidenceType],
     frequency: c.frequency,
+    categorization: c.categorization || 'B',
     status: 'in_review',
   }));
 }

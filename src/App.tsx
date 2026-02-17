@@ -6,7 +6,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
 import EffectivenessCriteria from './pages/EffectivenessCriteria';
 import FrameworkBuilder from './pages/FrameworkBuilder';
-import MaterialControls from './pages/MaterialControls';
+import PrincipalRisks from './pages/PrincipalRisks';
+import MaterialControls from './pages/MaterialControlsWorkflow';
 import RiskControlLibrary from './pages/RiskControlLibrary';
 import Integrations from './pages/Integrations';
 import ControlGapRadar from './pages/ControlGapRadar';
@@ -46,6 +47,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="effectiveness-criteria" element={<EffectivenessCriteria />} />
           <Route path="framework-builder" element={<FrameworkBuilder />} />
+          <Route path="principal-risks" element={<PrincipalRisks />} />
           <Route path="material-controls" element={<MaterialControls />} />
           <Route path="risk-control-library" element={<RiskControlLibrary />} />
           <Route path="integrations" element={<Integrations />} />

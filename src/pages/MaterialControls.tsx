@@ -3,40 +3,72 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { apiService } from '@/services/api';
-import type { MaterialControl } from '@/types';
-import type { MaterialControl as ApiMaterialControl } from '@/types/api.types';
-import { Shield, Search, Plus, Download, Sparkles, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import type { PrincipalRisk, Process, AsIsControl, Gap, ToBeControl } from '@/types';
+import { AlertTriangle, Building2, ChevronRight, ChevronLeft, CheckCircle2, Sparkles, Target, FileText, Download } from 'lucide-react';
 
-const safeJsonParse = (value: string | string[], fallback: string[] = []): string[] => {
-  if (Array.isArray(value)) return value;
-  if (!value || value === '') return fallback;
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : fallback;
-  } catch {
-    return fallback;
-  }
-};
+type WorkflowStep = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-const transformApiMaterialControl = (apiControl: ApiMaterialControl): MaterialControl => ({
-  id: apiControl.id,
-  name: apiControl.name,
-  description: apiControl.description,
-  materialityScore: apiControl.materialityScore,
-  rationale: apiControl.rationale,
-  owner: apiControl.owner,
-  evidenceSource: apiControl.evidenceSource,
-  testingFrequency: apiControl.testingFrequency,
-  dependencies: safeJsonParse(apiControl.dependencies as any),
-  effectiveness: apiControl.effectiveness as MaterialControl['effectiveness'],
-  lastTested: apiControl.lastTested || undefined,
-});
+interface MaturityAnswers {
+  processStructure: string;
+  procedureExists: string;
+  rolesDefinition: string;
+  automation: string;
+  dataSources: string;
+  interfaces: string;
+  volumeCriticality: string;
+  failureImpact: string;
+  changeFrequency: string;
+  monitoring: string;
+  priorIssues: string;
+}
+
+export default function MaterialControls() {
+  // Step navigation
+  const [currentStep, setCurrentStep] = useState<WorkflowStep>(0);
+  
+  // Step 0: Select Principal Risk
+  const [principalRisks, setPrincipalRisks] = useState<PrincipalRisk[]>([]);
+  const [selectedRisk, setSelectedRisk] = useState<PrincipalRisk | null>(null);
+  
+  // Step 1: Process Mapping
+  const [allProcesses, setAllProcesses] = useState<Process[]>([]);
+  const [selectedProcesses, setSelectedProcesses] = useState<Array<{processId: string, relevance: 'primary' | 'secondary', rationale: string}>>([]);
+  const [newProcessName, setNewProcessName] = useState('');
+  const [isAddingProcess, setIsAddingProcess] = useState(false);
+  
+  // Step 2: Maturity Assessment
+  const [currentProcessId, setCurrentProcessId] = useState<string>('');
+  const [maturityAnswers, setMaturityAnswers] = useState<MaturityAnswers>({
+    processStructure: '',
+    procedureExists: '',
+    rolesDefinition: '',
+    automation: '',
+    dataSources: '',
+    interfaces: '',
+    volumeCriticality: '',
+    failureImpact: '',
+    changeFrequency: '',
+    monitoring: '',
+    priorIssues: ''
+  });
+  
+  // Step 3: Standard Controls
+  const [standardControls, setStandardControls] = useState<any[]>([]);
+  const [selectedStandardControls, setSelectedStandardControls] = useState<string[]>([]);
+  
+  // Step 4: As-Is Controls
+  const [asIsControls, setAsIsControls] = useState<AsIsControl[]>([]);
+  
+  // Step 5: Gaps
+  const [gaps, setGaps] = useState<Gap[]>([]);
+  
+  // Step 6: To-Be Controls & RCM
+  const [toBeControls, setToBeControls] = useState<ToBeControl[]>([]);
 
 export default function MaterialControls() {
   const [controls, setControls] = useState<MaterialControl[]>([]);
