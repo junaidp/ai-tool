@@ -307,6 +307,67 @@ class ApiService {
     });
   }
 
+  // AI Principal Risk Workflow
+  generatePrincipalRisksWithAI(data: {
+    industry: string;
+    annualRevenue: string;
+    employeeCount: string;
+    isProfitable: string;
+    fundingType: string;
+    customerDescription: string;
+    strategicPriorities: string[];
+  }) {
+    return this.request<{ risks: any[] }>('/ai/generate-principal-risks', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  editRiskDefinitionWithAI(data: {
+    originalRisk: { title: string; definition: string; causes: string[]; impacts: string[] };
+    userEdits: { editType: string; details: string };
+    businessContext: {
+      industry: string;
+      annualRevenue: string;
+      employeeCount: string;
+      customerDescription: string;
+    };
+  }) {
+    return this.request<{
+      title: string;
+      definition: string;
+      causes: string[];
+      impacts: string[];
+      explanation: string;
+    }>('/ai/edit-risk-definition', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  scoreRiskWithAI(data: {
+    riskTitle: string;
+    riskDefinition: string;
+    businessContext: {
+      industry: string;
+      annualRevenue: string;
+      employeeCount: string;
+      isProfitable: string;
+      fundingType: string;
+      customerDescription: string;
+    };
+  }) {
+    return this.request<{
+      likelihoodScore: number;
+      likelihoodReasoning: string;
+      impactScore: number;
+      impactReasoning: string;
+    }>('/ai/score-risk', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Principal Risks
   getPrincipalRisks() {
     return this.request<any[]>('/principal-risks');

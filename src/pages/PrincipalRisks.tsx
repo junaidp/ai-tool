@@ -7,14 +7,17 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { apiService } from '@/services/api';
-import type { PrincipalRisk } from '@/types';
-import { Plus, AlertTriangle, Pencil, Trash2, TrendingDown, DollarSign, Target, Building2 } from 'lucide-react';
+import type { PrincipalRisk, AIRiskCandidate } from '@/types';
+import { Plus, AlertTriangle, Pencil, Trash2, TrendingDown, DollarSign, Target, Building2, Sparkles } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import AIRiskWizard from '@/components/AIRiskWizard';
 
 export default function PrincipalRisksPage() {
   const [risks, setRisks] = useState<PrincipalRisk[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRisk, setEditingRisk] = useState<PrincipalRisk | null>(null);
+  const [showAIWizard, setShowAIWizard] = useState(false);
+  const [isSavingAIRisks, setIsSavingAIRisks] = useState(false);
   
   const [formData, setFormData] = useState({
     riskTitle: '',
@@ -75,6 +78,33 @@ export default function PrincipalRisksPage() {
     }
   };
 
+  const handleAIWizardComplete = async (aiRisks: AIRiskCandidate[]) => {
+    setIsSavingAIRisks(true);
+    try {
+      for (const aiRisk of aiRisks) {
+        await apiService.createPrincipalRisk({
+          riskTitle: aiRisk.title,
+          riskStatement: aiRisk.definition
+            + '\n\nCauses: ' + aiRisk.causes.join('; ')
+            + '\n\nImpacts: ' + aiRisk.impacts.join('; ')
+            + '\n\nLikelihood: ' + (aiRisk.userLikelihoodScore || aiRisk.likelihoodScore) + '/5'
+            + ' | Impact: ' + (aiRisk.userImpactScore || aiRisk.impactScore) + '/5'
+            + ' | Score: ' + ((aiRisk.userLikelihoodScore || aiRisk.likelihoodScore) * (aiRisk.userImpactScore || aiRisk.impactScore)) + '/25',
+          domainTags: aiRisk.domainTags,
+          threatLensTags: aiRisk.threatCategories,
+          riskOwner: 'To be assigned',
+        });
+      }
+      setShowAIWizard(false);
+      await loadRisks();
+    } catch (error) {
+      console.error('Failed to save AI-generated risks:', error);
+      alert('Failed to save some risks. Please try again.');
+    } finally {
+      setIsSavingAIRisks(false);
+    }
+  };
+
   const getThreatIcon = (tag: string) => {
     switch (tag) {
       case 'business_model':
@@ -108,6 +138,17 @@ export default function PrincipalRisksPage() {
     }));
   };
 
+  if (showAIWizard) {
+    return (
+      <div className="space-y-6">
+        <AIRiskWizard
+          onComplete={handleAIWizardComplete}
+          onCancel={() => setShowAIWizard(false)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -117,13 +158,18 @@ export default function PrincipalRisksPage() {
             Risks that could threaten business model, performance, solvency, or liquidity
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Principal Risk
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowAIWizard(true)} className="border-blue-300 text-blue-700 hover:bg-blue-50">
+            <Sparkles className="h-4 w-4 mr-2" />
+            AI Risk Identification
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Manual Risk
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>{editingRisk ? 'Edit' : 'Add'} Principal Risk</DialogTitle>
@@ -207,7 +253,8 @@ export default function PrincipalRisksPage() {
               <Button onClick={handleSave}>{editingRisk ? 'Update' : 'Create'} Risk</Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       <Card>
@@ -222,7 +269,15 @@ export default function PrincipalRisksPage() {
             <div className="text-center py-12 text-muted-foreground">
               <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No principal risks defined yet.</p>
-              <p className="text-sm mt-2">Click "Add Principal Risk" to get started.</p>
+              <p className="text-sm mt-2">Click &quot;Add Manual Risk&quot; or use &quot;AI Risk Identification&quot; to get started.</p>
+              <Button
+                variant="outline"
+                className="mt-4 border-blue-300 text-blue-700 hover:bg-blue-50"
+                onClick={() => setShowAIWizard(true)}
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Start AI-Powered Risk Identification (5 min)
+              </Button>
             </div>
           ) : (
             <div className="space-y-4">

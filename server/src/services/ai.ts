@@ -262,6 +262,273 @@ Return as valid JSON with a "controls" array containing objects with these exact
   }
 }
 
+// ==================== PRINCIPAL RISK AI FUNCTIONS ====================
+
+export interface BusinessContext {
+  industry: string;
+  annualRevenue: string;
+  employeeCount: string;
+  isProfitable: string;
+  fundingType: string;
+  customerDescription: string;
+  strategicPriorities: string[];
+}
+
+export interface AIRiskCandidate {
+  id: string;
+  category: string;
+  title: string;
+  definition: string;
+  causes: string[];
+  impacts: string[];
+  threatCategories: string[];
+  domainTags: string[];
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  recommendation: 'INCLUDE' | 'CONSIDER' | 'SKIP';
+  confidenceReasoning: string;
+  likelihoodScore: number;
+  likelihoodReasoning: string;
+  impactScore: number;
+  impactReasoning: string;
+}
+
+export async function generatePrincipalRisks(
+  context: BusinessContext
+): Promise<AIRiskCandidate[]> {
+  const prompt = `You are an expert in enterprise risk management, FRC guidance, and principal risk identification for UK companies.
+
+Based on the following business context, generate 10-15 potential PRINCIPAL RISKS with complete, board-quality definitions.
+
+BUSINESS CONTEXT:
+- Industry: ${context.industry}
+- Annual Revenue: ${context.annualRevenue}
+- Number of Employees: ${context.employeeCount}
+- Profitable: ${context.isProfitable}
+- Funding/Ownership: ${context.fundingType}
+- Customer Base: "${context.customerDescription}"
+- Strategic Priorities: ${context.strategicPriorities.join(', ')}
+
+REQUIREMENTS FOR EACH RISK:
+1. Generate COMPLETE, BOARD-QUALITY risk definitions (not just titles)
+2. Each definition should reference specific details from the business context (revenue figures, customer details, industry specifics)
+3. Include specific causes/drivers
+4. Include specific financial/operational impacts with estimated figures where possible
+5. Classify threats using FRC categories: business_model, performance, solvency, liquidity
+6. Classify control domains: ops, reporting, financial, compliance
+7. Rate confidence (HIGH/MEDIUM/LOW) based on how clearly the context supports this risk
+8. Provide likelihood score (1-5) and impact score (1-5) with reasoning
+9. Recommend: INCLUDE (clearly relevant), CONSIDER (possibly relevant), SKIP (unlikely relevant)
+
+RISK CATEGORIES TO CONSIDER:
+- Customer/Revenue risks (concentration, loss, market changes)
+- Operational risks (supply chain, production, technology, infrastructure)
+- Financial risks (liquidity, solvency, covenant, currency, commodity)
+- People risks (talent, key person dependency, culture)
+- Strategic risks (competition, market disruption, failed initiatives)
+- Regulatory/Compliance risks (legal, regulatory changes, data protection)
+- Technology/Cyber risks (data breach, system failure, digital transformation)
+- External risks (economic downturn, geopolitical, pandemic, climate)
+
+Return as JSON with a "risks" array containing objects with these exact fields:
+- id (string, e.g. "risk_1", "risk_2")
+- category (string, the threat category e.g. "LIQUIDITY THREAT", "PERFORMANCE THREAT", "SOLVENCY THREAT", "BUSINESS MODEL THREAT")
+- title (string, concise risk title)
+- definition (string, FULL board-quality definition paragraph, 3-5 sentences minimum, referencing specific business details)
+- causes (string array, 3-5 specific causes/drivers)
+- impacts (string array, 3-5 specific impacts with financial estimates where possible)
+- threatCategories (string array from: business_model, performance, solvency, liquidity)
+- domainTags (string array from: ops, reporting, financial, compliance)
+- confidence (string: HIGH, MEDIUM, or LOW)
+- recommendation (string: INCLUDE, CONSIDER, or SKIP)
+- confidenceReasoning (string, why this confidence level)
+- likelihoodScore (number 1-5)
+- likelihoodReasoning (string)
+- impactScore (number 1-5)
+- impactReasoning (string)`;
+
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4-turbo-preview',
+    messages: [
+      {
+        role: 'system',
+        content: 'You are an expert in enterprise risk management, FRC UK Corporate Governance Code compliance, and principal risk identification. You generate comprehensive, board-quality risk definitions that are specific to the business context provided. Always return valid JSON.',
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
+    response_format: { type: 'json_object' },
+    temperature: 0.7,
+    max_tokens: 4096,
+  });
+
+  const response = completion.choices[0].message.content;
+  if (!response) {
+    throw new Error('No response from OpenAI');
+  }
+
+  console.log('Principal Risk Generation Response length:', response.length);
+
+  const parsed = JSON.parse(response);
+  let risks = parsed.risks || parsed.principalRisks || parsed.risk_candidates || [];
+
+  if (Array.isArray(parsed) && parsed.length > 0) {
+    risks = parsed;
+  }
+
+  if (!Array.isArray(risks)) {
+    console.error('Risks is not an array:', risks);
+    throw new Error('OpenAI response does not contain a valid risks array');
+  }
+
+  return risks.map((r: any, index: number) => ({
+    id: r.id || `risk_${index + 1}`,
+    category: r.category || 'GENERAL THREAT',
+    title: r.title,
+    definition: r.definition,
+    causes: Array.isArray(r.causes) ? r.causes : [],
+    impacts: Array.isArray(r.impacts) ? r.impacts : [],
+    threatCategories: Array.isArray(r.threatCategories) ? r.threatCategories : [],
+    domainTags: Array.isArray(r.domainTags) ? r.domainTags : [],
+    confidence: r.confidence || 'MEDIUM',
+    recommendation: r.recommendation || 'CONSIDER',
+    confidenceReasoning: r.confidenceReasoning || '',
+    likelihoodScore: Number(r.likelihoodScore) || 3,
+    likelihoodReasoning: r.likelihoodReasoning || '',
+    impactScore: Number(r.impactScore) || 3,
+    impactReasoning: r.impactReasoning || '',
+  }));
+}
+
+export async function editRiskDefinition(
+  originalRisk: { title: string; definition: string; causes: string[]; impacts: string[] },
+  userEdits: { editType: string; details: string },
+  businessContext: BusinessContext
+): Promise<{
+  title: string;
+  definition: string;
+  causes: string[];
+  impacts: string[];
+  explanation: string;
+}> {
+  const prompt = `You are an expert in enterprise risk management. A user wants to modify a principal risk definition.
+
+ORIGINAL RISK:
+Title: ${originalRisk.title}
+Definition: ${originalRisk.definition}
+Causes: ${originalRisk.causes.join('; ')}
+Impacts: ${originalRisk.impacts.join('; ')}
+
+BUSINESS CONTEXT:
+- Industry: ${businessContext.industry}
+- Revenue: ${businessContext.annualRevenue}
+- Employees: ${businessContext.employeeCount}
+- Customers: "${businessContext.customerDescription}"
+
+USER'S EDIT REQUEST:
+Type: ${userEdits.editType}
+Details: "${userEdits.details}"
+
+Regenerate the risk definition incorporating the user's changes. Maintain board-quality language and specificity.
+
+Return as JSON with:
+- title (string)
+- definition (string, full updated definition)
+- causes (string array)
+- impacts (string array)
+- explanation (string, brief description of what changed)`;
+
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4-turbo-preview',
+    messages: [
+      {
+        role: 'system',
+        content: 'You are an expert in enterprise risk management. You help users refine principal risk definitions while maintaining board-quality language.',
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
+    response_format: { type: 'json_object' },
+    temperature: 0.6,
+  });
+
+  const response = completion.choices[0].message.content;
+  if (!response) {
+    throw new Error('No response from OpenAI');
+  }
+
+  const parsed = JSON.parse(response);
+  return {
+    title: parsed.title || originalRisk.title,
+    definition: parsed.definition || originalRisk.definition,
+    causes: Array.isArray(parsed.causes) ? parsed.causes : originalRisk.causes,
+    impacts: Array.isArray(parsed.impacts) ? parsed.impacts : originalRisk.impacts,
+    explanation: parsed.explanation || 'Risk updated based on your request.',
+  };
+}
+
+export async function scoreRisk(
+  riskTitle: string,
+  riskDefinition: string,
+  businessContext: BusinessContext
+): Promise<{
+  likelihoodScore: number;
+  likelihoodReasoning: string;
+  impactScore: number;
+  impactReasoning: string;
+}> {
+  const prompt = `Score this principal risk for a business:
+
+RISK: ${riskTitle}
+DEFINITION: ${riskDefinition}
+
+BUSINESS CONTEXT:
+- Industry: ${businessContext.industry}
+- Revenue: ${businessContext.annualRevenue}
+- Employees: ${businessContext.employeeCount}
+- Profitable: ${businessContext.isProfitable}
+- Funding: ${businessContext.fundingType}
+- Customers: "${businessContext.customerDescription}"
+
+Score on two dimensions (1-5 scale):
+- Likelihood: 1=Rare, 2=Unlikely, 3=Possible, 4=Likely, 5=Almost Certain
+- Impact: 1=Insignificant, 2=Minor, 3=Moderate, 4=Major, 5=Catastrophic
+
+Return as JSON with: likelihoodScore, likelihoodReasoning, impactScore, impactReasoning`;
+
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4-turbo-preview',
+    messages: [
+      {
+        role: 'system',
+        content: 'You are an expert in risk assessment and scoring.',
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
+    response_format: { type: 'json_object' },
+    temperature: 0.5,
+  });
+
+  const response = completion.choices[0].message.content;
+  if (!response) {
+    throw new Error('No response from OpenAI');
+  }
+
+  const parsed = JSON.parse(response);
+  return {
+    likelihoodScore: Number(parsed.likelihoodScore) || 3,
+    likelihoodReasoning: parsed.likelihoodReasoning || '',
+    impactScore: Number(parsed.impactScore) || 3,
+    impactReasoning: parsed.impactReasoning || '',
+  };
+}
+
 export async function editCriteriaWithAI(
   currentCriteria: {
     dimension: string;

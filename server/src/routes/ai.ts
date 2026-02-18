@@ -95,6 +95,75 @@ aiRouter.post('/generate-controls', async (req, res) => {
   }
 });
 
+// Generate principal risks from business context
+aiRouter.post('/generate-principal-risks', async (req, res) => {
+  try {
+    const { industry, annualRevenue, employeeCount, isProfitable, fundingType, customerDescription, strategicPriorities } = req.body;
+
+    if (!industry || !annualRevenue || !customerDescription) {
+      return res.status(400).json({ error: 'Missing required business context fields' });
+    }
+
+    const risks = await aiService.generatePrincipalRisks({
+      industry,
+      annualRevenue,
+      employeeCount: employeeCount || '',
+      isProfitable: isProfitable || '',
+      fundingType: fundingType || '',
+      customerDescription,
+      strategicPriorities: strategicPriorities || [],
+    });
+
+    res.json({ risks });
+  } catch (error: any) {
+    console.error('AI principal risk generation error:', error);
+    res.status(500).json({
+      error: 'Failed to generate principal risks',
+      details: error.message,
+    });
+  }
+});
+
+// Edit a principal risk definition with AI
+aiRouter.post('/edit-risk-definition', async (req, res) => {
+  try {
+    const { originalRisk, userEdits, businessContext } = req.body;
+
+    if (!originalRisk || !userEdits || !businessContext) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const result = await aiService.editRiskDefinition(originalRisk, userEdits, businessContext);
+    res.json(result);
+  } catch (error: any) {
+    console.error('AI risk edit error:', error);
+    res.status(500).json({
+      error: 'Failed to edit risk definition',
+      details: error.message,
+    });
+  }
+});
+
+// Score a principal risk
+aiRouter.post('/score-risk', async (req, res) => {
+  try {
+    const { riskTitle, riskDefinition, businessContext } = req.body;
+
+    if (!riskTitle || !riskDefinition || !businessContext) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const result = await aiService.scoreRisk(riskTitle, riskDefinition, businessContext);
+    res.json(result);
+  } catch (error: any) {
+    console.error('AI risk scoring error:', error);
+    res.status(500).json({
+      error: 'Failed to score risk',
+      details: error.message,
+    });
+  }
+});
+
 // Edit effectiveness criteria using AI conversational prompt
 aiRouter.post('/edit-criteria', async (req, res) => {
   try {

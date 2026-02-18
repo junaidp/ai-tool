@@ -279,6 +279,41 @@ export interface FrameworkDocument {
   updatedAt?: string;
 }
 
+// AI-Driven Principal Risk Workflow Types
+
+export interface BusinessContext {
+  industry: string;
+  annualRevenue: string;
+  employeeCount: string;
+  isProfitable: string;
+  fundingType: string;
+  customerDescription: string;
+  strategicPriorities: string[];
+}
+
+export interface AIRiskCandidate {
+  id: string;
+  category: string;
+  title: string;
+  definition: string;
+  causes: string[];
+  impacts: string[];
+  threatCategories: string[];
+  domainTags: string[];
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  recommendation: 'INCLUDE' | 'CONSIDER' | 'SKIP';
+  confidenceReasoning: string;
+  likelihoodScore: number;
+  likelihoodReasoning: string;
+  impactScore: number;
+  impactReasoning: string;
+  // Client-side state
+  selected?: boolean;
+  edited?: boolean;
+  userLikelihoodScore?: number;
+  userImpactScore?: number;
+}
+
 export interface RCMEntry {
   riskId: string;
   riskTitle: string;
