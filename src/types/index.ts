@@ -281,6 +281,8 @@ export interface FrameworkDocument {
 
 // AI-Driven Principal Risk Workflow Types
 
+export type ThreatCategory = 'business_model' | 'performance' | 'solvency' | 'liquidity';
+
 export interface BusinessContext {
   industry: string;
   annualRevenue: string;
@@ -289,6 +291,10 @@ export interface BusinessContext {
   fundingType: string;
   customerDescription: string;
   strategicPriorities: string[];
+}
+
+export interface CategoryAnswers {
+  [questionId: string]: string | string[];
 }
 
 export interface AIRiskCandidate {

@@ -274,6 +274,10 @@ export interface BusinessContext {
   strategicPriorities: string[];
 }
 
+export interface CategoryAnswers {
+  [questionId: string]: string | string[];
+}
+
 export interface AIRiskCandidate {
   id: string;
   category: string;
@@ -292,12 +296,43 @@ export interface AIRiskCandidate {
   impactReasoning: string;
 }
 
-export async function generatePrincipalRisks(
-  context: BusinessContext
-): Promise<AIRiskCandidate[]> {
-  const prompt = `You are an expert in enterprise risk management, FRC guidance, and principal risk identification for UK companies.
+type ThreatCategory = 'business_model' | 'performance' | 'solvency' | 'liquidity';
 
-Based on the following business context, generate 10-15 potential PRINCIPAL RISKS with complete, board-quality definitions.
+const CATEGORY_LABELS: Record<ThreatCategory, string> = {
+  business_model: 'BUSINESS MODEL',
+  performance: 'PERFORMANCE',
+  solvency: 'SOLVENCY',
+  liquidity: 'LIQUIDITY',
+};
+
+const CATEGORY_DESCRIPTIONS: Record<ThreatCategory, string> = {
+  business_model: 'Risks that could fundamentally undermine how the company creates and delivers value, potentially making the business unviable.',
+  performance: 'Risks that could materially impair the ability to achieve strategic objectives or maintain competitive position.',
+  solvency: 'Risks that could threaten the ability to meet obligations or result in negative net assets.',
+  liquidity: 'Risks that could threaten access to cash or funding for short-term obligations.',
+};
+
+function buildCategoryPrompt(
+  threatCategory: ThreatCategory,
+  context: BusinessContext,
+  categoryAnswers: CategoryAnswers
+): string {
+  const label = CATEGORY_LABELS[threatCategory];
+  const description = CATEGORY_DESCRIPTIONS[threatCategory];
+
+  const answersText = Object.entries(categoryAnswers)
+    .map(([key, val]) => {
+      const value = Array.isArray(val) ? val.join(', ') : val;
+      return `- ${key}: ${value}`;
+    })
+    .join('\n');
+
+  return `You are an expert in enterprise risk management, FRC guidance, and principal risk identification for UK companies.
+
+Generate 2-5 ${label} THREAT risks with complete, board-quality definitions based on the business context AND the user's targeted answers for this threat category.
+
+THREAT CATEGORY: ${label}
+${description}
 
 BUSINESS CONTEXT:
 - Industry: ${context.industry}
@@ -308,50 +343,54 @@ BUSINESS CONTEXT:
 - Customer Base: "${context.customerDescription}"
 - Strategic Priorities: ${context.strategicPriorities.join(', ')}
 
-REQUIREMENTS FOR EACH RISK:
-1. Generate COMPLETE, BOARD-QUALITY risk definitions (not just titles)
-2. Each definition should reference specific details from the business context (revenue figures, customer details, industry specifics)
-3. Include specific causes/drivers
-4. Include specific financial/operational impacts with estimated figures where possible
-5. Classify threats using FRC categories: business_model, performance, solvency, liquidity
-6. Classify control domains: ops, reporting, financial, compliance
-7. Rate confidence (HIGH/MEDIUM/LOW) based on how clearly the context supports this risk
-8. Provide likelihood score (1-5) and impact score (1-5) with reasoning
-9. Recommend: INCLUDE (clearly relevant), CONSIDER (possibly relevant), SKIP (unlikely relevant)
+USER'S ANSWERS TO ${label} THREAT QUESTIONS:
+${answersText}
 
-RISK CATEGORIES TO CONSIDER:
-- Customer/Revenue risks (concentration, loss, market changes)
-- Operational risks (supply chain, production, technology, infrastructure)
-- Financial risks (liquidity, solvency, covenant, currency, commodity)
-- People risks (talent, key person dependency, culture)
-- Strategic risks (competition, market disruption, failed initiatives)
-- Regulatory/Compliance risks (legal, regulatory changes, data protection)
-- Technology/Cyber risks (data breach, system failure, digital transformation)
-- External risks (economic downturn, geopolitical, pandemic, climate)
+REQUIREMENTS:
+1. Generate ONLY risks that fall under the ${label} threat category
+2. Generate 2-5 risks (not more) based on the user's answers
+3. Each risk MUST have a FULL, board-quality definition (5-10 sentences minimum)
+4. Reference SPECIFIC details from the business context (revenue figures, customer details, employee counts, industry specifics)
+5. Reference SPECIFIC details from the user's answers
+6. Include detailed causes/drivers (4-6 per risk)
+7. Include detailed impacts with financial estimates where possible (4-6 per risk)
+8. The primary threatCategory MUST be "${threatCategory}", but you may add secondary threat categories if the risk cascades
+9. Classify control domains: ops, reporting, financial, compliance
+10. Rate confidence (HIGH/MEDIUM/LOW) based on how clearly the answers support this risk
+11. Provide likelihood score (1-5) and impact score (1-5) with detailed reasoning
+12. Recommend: INCLUDE (clearly relevant based on answers), CONSIDER (possibly relevant), SKIP (user didn't indicate concern)
 
 Return as JSON with a "risks" array containing objects with these exact fields:
-- id (string, e.g. "risk_1", "risk_2")
-- category (string, the threat category e.g. "LIQUIDITY THREAT", "PERFORMANCE THREAT", "SOLVENCY THREAT", "BUSINESS MODEL THREAT")
-- title (string, concise risk title)
-- definition (string, FULL board-quality definition paragraph, 3-5 sentences minimum, referencing specific business details)
-- causes (string array, 3-5 specific causes/drivers)
-- impacts (string array, 3-5 specific impacts with financial estimates where possible)
-- threatCategories (string array from: business_model, performance, solvency, liquidity)
+- id (string, e.g. "${threatCategory}_1", "${threatCategory}_2")
+- category (string, always "${label} THREAT")
+- title (string, concise but descriptive risk title)
+- definition (string, FULL board-quality definition, 5-10 sentences, referencing specific business details and user answers)
+- causes (string array, 4-6 specific causes/drivers)
+- impacts (string array, 4-6 specific impacts with financial estimates)
+- threatCategories (string array, primary: "${threatCategory}", plus any secondary)
 - domainTags (string array from: ops, reporting, financial, compliance)
 - confidence (string: HIGH, MEDIUM, or LOW)
 - recommendation (string: INCLUDE, CONSIDER, or SKIP)
-- confidenceReasoning (string, why this confidence level)
+- confidenceReasoning (string, referencing which user answers support this)
 - likelihoodScore (number 1-5)
-- likelihoodReasoning (string)
+- likelihoodReasoning (string, detailed)
 - impactScore (number 1-5)
-- impactReasoning (string)`;
+- impactReasoning (string, detailed with financial estimates)`;
+}
+
+export async function generateRisksByCategory(
+  context: BusinessContext,
+  threatCategory: ThreatCategory,
+  categoryAnswers: CategoryAnswers
+): Promise<AIRiskCandidate[]> {
+  const prompt = buildCategoryPrompt(threatCategory, context, categoryAnswers);
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4-turbo-preview',
     messages: [
       {
         role: 'system',
-        content: 'You are an expert in enterprise risk management, FRC UK Corporate Governance Code compliance, and principal risk identification. You generate comprehensive, board-quality risk definitions that are specific to the business context provided. Always return valid JSON.',
+        content: `You are an expert in enterprise risk management, FRC UK Corporate Governance Code compliance, and principal risk identification. You are generating ${CATEGORY_LABELS[threatCategory]} THREAT risks specifically. Generate comprehensive, board-quality risk definitions that are specific to the business context and user answers provided. Always return valid JSON.`,
       },
       {
         role: 'user',
@@ -368,7 +407,7 @@ Return as JSON with a "risks" array containing objects with these exact fields:
     throw new Error('No response from OpenAI');
   }
 
-  console.log('Principal Risk Generation Response length:', response.length);
+  console.log(`[${threatCategory}] Risk Generation Response length:`, response.length);
 
   const parsed = JSON.parse(response);
   let risks = parsed.risks || parsed.principalRisks || parsed.risk_candidates || [];
@@ -383,13 +422,13 @@ Return as JSON with a "risks" array containing objects with these exact fields:
   }
 
   return risks.map((r: any, index: number) => ({
-    id: r.id || `risk_${index + 1}`,
-    category: r.category || 'GENERAL THREAT',
+    id: r.id || `${threatCategory}_${index + 1}`,
+    category: r.category || `${CATEGORY_LABELS[threatCategory]} THREAT`,
     title: r.title,
     definition: r.definition,
     causes: Array.isArray(r.causes) ? r.causes : [],
     impacts: Array.isArray(r.impacts) ? r.impacts : [],
-    threatCategories: Array.isArray(r.threatCategories) ? r.threatCategories : [],
+    threatCategories: Array.isArray(r.threatCategories) ? r.threatCategories : [threatCategory],
     domainTags: Array.isArray(r.domainTags) ? r.domainTags : [],
     confidence: r.confidence || 'MEDIUM',
     recommendation: r.recommendation || 'CONSIDER',

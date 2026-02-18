@@ -307,17 +307,21 @@ class ApiService {
     });
   }
 
-  // AI Principal Risk Workflow
-  generatePrincipalRisksWithAI(data: {
-    industry: string;
-    annualRevenue: string;
-    employeeCount: string;
-    isProfitable: string;
-    fundingType: string;
-    customerDescription: string;
-    strategicPriorities: string[];
+  // AI Principal Risk Workflow (structured by threat category)
+  generateRisksByCategoryWithAI(data: {
+    businessContext: {
+      industry: string;
+      annualRevenue: string;
+      employeeCount: string;
+      isProfitable: string;
+      fundingType: string;
+      customerDescription: string;
+      strategicPriorities: string[];
+    };
+    threatCategory: string;
+    categoryAnswers: Record<string, string | string[]>;
   }) {
-    return this.request<{ risks: any[] }>('/ai/generate-principal-risks', {
+    return this.request<{ risks: any[] }>('/ai/generate-risks-by-category', {
       method: 'POST',
       body: JSON.stringify(data),
     });

@@ -95,30 +95,31 @@ aiRouter.post('/generate-controls', async (req, res) => {
   }
 });
 
-// Generate principal risks from business context
-aiRouter.post('/generate-principal-risks', async (req, res) => {
+// Generate risks by threat category (structured FRC approach)
+aiRouter.post('/generate-risks-by-category', async (req, res) => {
   try {
-    const { industry, annualRevenue, employeeCount, isProfitable, fundingType, customerDescription, strategicPriorities } = req.body;
+    const { businessContext, threatCategory, categoryAnswers } = req.body;
 
-    if (!industry || !annualRevenue || !customerDescription) {
-      return res.status(400).json({ error: 'Missing required business context fields' });
+    if (!businessContext || !threatCategory || !categoryAnswers) {
+      return res.status(400).json({ error: 'Missing required fields: businessContext, threatCategory, categoryAnswers' });
     }
 
-    const risks = await aiService.generatePrincipalRisks({
-      industry,
-      annualRevenue,
-      employeeCount: employeeCount || '',
-      isProfitable: isProfitable || '',
-      fundingType: fundingType || '',
-      customerDescription,
-      strategicPriorities: strategicPriorities || [],
-    });
+    const validCategories = ['business_model', 'performance', 'solvency', 'liquidity'];
+    if (!validCategories.includes(threatCategory)) {
+      return res.status(400).json({ error: `Invalid threatCategory. Must be one of: ${validCategories.join(', ')}` });
+    }
+
+    const risks = await aiService.generateRisksByCategory(
+      businessContext,
+      threatCategory,
+      categoryAnswers
+    );
 
     res.json({ risks });
   } catch (error: any) {
-    console.error('AI principal risk generation error:', error);
+    console.error(`AI risk generation error [${req.body.threatCategory}]:`, error);
     res.status(500).json({
-      error: 'Failed to generate principal risks',
+      error: 'Failed to generate risks for category',
       details: error.message,
     });
   }
