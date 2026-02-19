@@ -22,6 +22,7 @@ import { standardControlsRouter } from './routes/standardControls';
 import { asIsControlsRouter } from './routes/asIsControls';
 import { gapsRouter } from './routes/gaps';
 import { toBeControlsRouter } from './routes/toBeControls';
+import { section2Router } from './routes/section2';
 
 dotenv.config();
 
@@ -55,6 +56,7 @@ app.use('/api/standard-controls', standardControlsRouter);
 app.use('/api/as-is-controls', asIsControlsRouter);
 app.use('/api/gaps', gapsRouter);
 app.use('/api/to-be-controls', toBeControlsRouter);
+app.use('/api/section2', section2Router);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

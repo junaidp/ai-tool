@@ -420,6 +420,70 @@ class ApiService {
   getRiskProcessLinks(riskId: string) {
     return this.request<any[]>(`/risk-process-links/risk/${riskId}`);
   }
+
+  // Section 2: Material Controls Mapping - Maturity Spectrum
+  saveMaturitySelection(data: {
+    riskId: string;
+    selectedLevel: number;
+    targetLevel: number;
+    currentMaturityScore: number;
+    targetMaturityScore: number;
+  }) {
+    return this.request('/section2/maturity-selection', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  getMaturitySelection(riskId: string) {
+    return this.request<any>(`/section2/maturity-selection/${riskId}`);
+  }
+
+  saveSection2Control(data: any) {
+    return this.request('/section2/controls', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  getSection2Controls(riskId: string) {
+    return this.request<any[]>(`/section2/controls/${riskId}`);
+  }
+
+  generateGapAnalysis(data: {
+    riskId: string;
+    riskType: string;
+    currentLevel: number;
+    targetLevel: number;
+    existingControls: any[];
+  }) {
+    return this.request<any>('/section2/gap-analysis', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  acceptSuggestedControl(data: {
+    riskId: string;
+    templateId: string;
+    customizations?: any;
+  }) {
+    return this.request('/section2/accept-control', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  getImplementationPlan() {
+    return this.request<any>('/section2/implementation-plan');
+  }
+
+  generateSection2Documentation(data: { documentTypes: string[] }) {
+    return this.request<{ downloadUrls: Record<string, string> }>('/section2/generate-documentation', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export const apiService = new ApiService();

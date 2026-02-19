@@ -335,3 +335,182 @@ export interface RCMEntry {
   isMaterial: boolean;
   status?: string;
 }
+
+// ============================================================
+// Section 2: Material Controls Mapping - Maturity Spectrum Types
+// ============================================================
+
+export type MaturityLevel = 1 | 2 | 3 | 4;
+
+export type ControlType = 'preventive' | 'detective' | 'corrective';
+
+export type ControlObjective = 'operations' | 'reporting' | 'financial' | 'compliance';
+
+export type ControlFrequency =
+  | 'continuous'
+  | 'daily'
+  | 'weekly'
+  | 'monthly'
+  | 'quarterly'
+  | 'annually'
+  | 'ad_hoc';
+
+export type ControlStatus =
+  | 'existing'
+  | 'to_be_enhanced'
+  | 'planned'
+  | 'implemented'
+  | 'rejected';
+
+export type ControlSource =
+  | 'existing_documented'
+  | 'ai_suggested'
+  | 'user_created';
+
+export type Effort = 'low' | 'medium' | 'high';
+export type Confidence = 'low' | 'medium' | 'high' | 'very_high';
+export type Priority = 'HIGH' | 'MEDIUM' | 'LOWER';
+
+export interface MaturityLevelSelection {
+  id: string;
+  riskId: string;
+  selectedLevel: MaturityLevel;
+  targetLevel: MaturityLevel;
+  currentMaturityScore: number;
+  targetMaturityScore: number;
+  selectedAt?: string;
+}
+
+export interface Section2Control {
+  id: string;
+  riskId: string;
+  title: string;
+  description: string;
+  type: ControlType;
+  objectives: ControlObjective[];
+  owner: string;
+  reviewer?: string;
+  frequency: ControlFrequency;
+  evidence: string;
+  evidenceLocation?: string;
+  status: ControlStatus;
+  maturityLevel: MaturityLevel;
+  source: ControlSource;
+  templateId?: string;
+  implementationPhase?: number;
+  implementationEffort?: Effort;
+  implementationTimeline?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  implementedAt?: string;
+}
+
+export interface ControlTemplate {
+  id: string;
+  riskType: string;
+  maturityLevel: MaturityLevel;
+  title: string;
+  description: string;
+  type: ControlType;
+  objectives: ControlObjective[];
+  defaultOwner: string;
+  defaultFrequency: ControlFrequency;
+  defaultEvidence: string;
+  variables?: TemplateVariable[];
+  applicability: 'always' | { condition: string };
+  buildsOn?: string;
+  enhancement?: string;
+  implementationEffort: Effort;
+  estimatedSetupTime?: string;
+  aiConfidence: Confidence;
+  priority: number;
+}
+
+export interface TemplateVariable {
+  name: string;
+  type: 'text' | 'number' | 'list';
+  source: 'risk_description' | 'company_context' | 'user_input';
+  extractionPattern?: string;
+}
+
+export interface MaturityPackage {
+  id: string;
+  riskType: string;
+  level: MaturityLevel;
+  name: string;
+  maturityRange: [number, number];
+  description: string;
+  characteristics: string[];
+  controlTemplates: ControlTemplate[];
+  typicalControlCount: number;
+  exampleCompanies?: string[];
+}
+
+export interface GapAnalysisResult {
+  id: string;
+  riskId: string;
+  currentLevel: MaturityLevel;
+  targetLevel: MaturityLevel;
+  currentScore: number;
+  targetScore: number;
+  existingControls: Section2Control[];
+  missingControls: ControlTemplate[];
+  missingObjectives: ControlObjective[];
+  missingTypes: ControlType[];
+  suggestedControls: SuggestedControl[];
+  gapCount: number;
+  effortEstimate: Effort;
+  timelineEstimate: string;
+}
+
+export interface SuggestedControl {
+  templateId: string;
+  template: ControlTemplate;
+  priority: number;
+  implementationPhase: number;
+  reasoning: string;
+  fillsGap: string;
+  accepted?: boolean;
+  rejected?: boolean;
+  customizations?: Partial<Section2Control>;
+}
+
+export interface ImplementationPhase {
+  phase: number;
+  name: string;
+  timeline: string;
+  controls: Section2Control[];
+  enhancements: number;
+  newControls: number;
+  targetMaturity: number;
+  effort: Effort;
+}
+
+export interface ImplementationPlan {
+  id: string;
+  totalControls: number;
+  existingControls: number;
+  newControls: number;
+  currentAverageMaturity: number;
+  targetAverageMaturity: number;
+  phases: ImplementationPhase[];
+  totalTimelineMonths: number;
+}
+
+export interface RiskWorkflowProgress {
+  riskId: string;
+  riskTitle: string;
+  status: 'not_started' | 'in_progress' | 'complete';
+  currentLevel?: MaturityLevel;
+  targetLevel?: MaturityLevel;
+  controlCount?: number;
+  currentScore?: number;
+  targetScore?: number;
+}
+
+export interface CoverageAnalysis {
+  byObjective: { objective: ControlObjective; count: number; percentage: number; status: 'good' | 'acceptable' | 'low' }[];
+  byType: { type: ControlType; count: number; percentage: number; status: 'good' | 'acceptable' | 'low' }[];
+  byRisk: { riskId: string; riskTitle: string; count: number; status: 'good' | 'acceptable' | 'low' }[];
+  warnings: string[];
+}

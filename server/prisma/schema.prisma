@@ -358,3 +358,72 @@ model FrameworkDocument {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+// Section 2: Material Controls Mapping - Maturity Spectrum Models
+
+model MaturitySelection {
+  id                   String   @id @default(uuid())
+  riskId               String
+  selectedLevel        Int      // 1-4
+  targetLevel          Int      // 1-4
+  currentMaturityScore Float
+  targetMaturityScore  Float
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([riskId])
+}
+
+model Section2Control {
+  id                    String   @id @default(uuid())
+  riskId                String
+  title                 String
+  description           String
+  controlType           String   // preventive / detective / corrective
+  objectives            String   // JSON array
+  owner                 String
+  reviewer              String?
+  frequency             String
+  evidence              String
+  evidenceLocation      String?
+  status                String   // existing / to_be_enhanced / planned / implemented / rejected
+  maturityLevel         Int
+  source                String   // existing_documented / ai_suggested / user_created
+  templateId            String?
+  implementationPhase   Int?
+  implementationEffort  String?  // low / medium / high
+  implementationTimeline String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  implementedAt         DateTime?
+}
+
+model Section2GapAnalysis {
+  id                String   @id @default(uuid())
+  riskId            String
+  currentLevel      Int
+  targetLevel       Int
+  currentScore      Float
+  targetScore       Float
+  missingControls   String   // JSON array of template IDs
+  suggestedControls String   // JSON array of SuggestedControl objects
+  gapCount          Int
+  effortEstimate    String   // low / medium / high
+  timelineEstimate  String
+  createdAt         DateTime @default(now())
+
+  @@unique([riskId])
+}
+
+model Section2ImplementationPlan {
+  id                     String   @id @default(uuid())
+  riskId                 String?
+  totalControls          Int
+  existingControls       Int
+  newControls            Int
+  currentAverageMaturity Float
+  targetAverageMaturity  Float
+  phases                 String   // JSON array of ImplementationPhase objects
+  totalTimelineMonths    Int
+  createdAt              DateTime @default(now())
+}
