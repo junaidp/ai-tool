@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -30,6 +29,16 @@ const FUNDING_TYPES = [
   'Bank debt / Loans', 'Public company (listed)', 'Other',
 ];
 
+const REVENUE_RANGES = [
+  'Under £1M', '£1M - £5M', '£5M - £10M', '£10M - £25M',
+  '£25M - £50M', '£50M - £100M', '£100M - £250M', '£250M - £500M', 'Over £500M',
+];
+
+const EMPLOYEE_RANGES = [
+  '1 - 10', '11 - 50', '51 - 100', '101 - 250',
+  '251 - 500', '501 - 1,000', '1,001 - 5,000', 'Over 5,000',
+];
+
 const STRATEGIC_PRIORITIES = [
   'Achieve/maintain profitability', 'Grow revenue', 'Launch new products/services',
   'Enter new markets/geographies', 'Raise funding (next round)',
@@ -47,37 +56,307 @@ const THREAT_CATEGORIES: { key: ThreatCategory; label: string; description: stri
 interface CategoryQuestion {
   id: string;
   question: string;
-  type: 'text' | 'textarea' | 'radio' | 'checkbox';
-  placeholder?: string;
-  options?: string[];
+  type: 'radio' | 'checkbox';
+  options: string[];
 }
 
-const CATEGORY_QUESTIONS: Record<ThreatCategory, CategoryQuestion[]> = {
-  business_model: [
-    { id: 'core_value', question: 'What is the ONE thing your business MUST be able to do to survive?', type: 'textarea', placeholder: 'e.g., Deliver precision-engineered components to automotive OEMs on time and to spec' },
-    { id: 'customer_dependency', question: 'How dependent are you on your top customers?', type: 'radio', options: ['High - loss of top customers would threaten viability', 'Moderate - painful but we would survive', 'Low - we could replace them relatively easily'] },
-    { id: 'competitive_threats', question: 'What could fundamentally disrupt your competitive position? (Select all that apply)', type: 'checkbox', options: ['New technology making our products/services obsolete', 'Low-cost competitors we cannot compete with on price', 'Loss of key intellectual property or proprietary advantage', 'Regulatory changes making our business model unviable', 'Major partner/supplier failure we cannot replace', 'None of these are significant threats'] },
-    { id: 'critical_dependencies', question: 'Does your business model depend critically on any of these? (Select all that apply)', type: 'checkbox', options: ['A specific technology platform or infrastructure provider', 'A key partnership or distribution channel', 'Intellectual property (patents, trade secrets, brand)', 'Regulatory licenses or permissions', 'A specific geography or market', 'None of these'] },
-  ],
-  performance: [
-    { id: 'strategic_risks', question: 'For your strategic priorities, what could prevent you from achieving them?', type: 'textarea', placeholder: 'e.g., Need 15% cost reduction but risk production inefficiencies, or launching new product but risk technical delays' },
-    { id: 'operational_concerns', question: 'What operational issues could significantly impact performance? (Select all that apply)', type: 'checkbox', options: ['Major production efficiency/quality problems', 'Supply chain disruptions affecting delivery', 'Key talent loss (critical skills/people)', 'IT systems failure or cybersecurity breach', 'Major equipment/facility failure', 'Health & safety incident'] },
-    { id: 'market_position', question: 'What could cause significant market share loss? (Select all that apply)', type: 'checkbox', options: ['Product quality issues leading to customer losses', 'Inability to innovate/keep up with competitors', 'Pricing pressure eroding margins', 'New market entrants taking share', 'Customer needs shifting away from our offerings'] },
-  ],
-  solvency: [
-    { id: 'major_loss_events', question: 'What single event could cause losses exceeding 10% of your net worth? (Select all that apply)', type: 'checkbox', options: ['Major lawsuit or regulatory fine', 'Product liability or warranty claims', 'Asset impairment (inventory, equipment, goodwill)', 'Customer bankruptcy causing bad debt', 'Environmental liability or cleanup costs', 'Fraud or embezzlement', 'Uninsured catastrophic loss (fire, flood, etc.)', 'None of these are likely'] },
-    { id: 'asset_risk', question: 'Do you carry significant inventory or assets at risk of impairment?', type: 'textarea', placeholder: 'e.g., £18M inventory with risk of obsolescence from automotive production cuts' },
-    { id: 'liability_exposure', question: 'What is your uninsured liability exposure if a major incident occurred?', type: 'radio', options: ['Under £1M (covered by insurance)', '£1-5M (partially covered)', '£5-10M (largely uninsured)', 'Over £10M (catastrophic uninsured exposure)', 'Not sure'] },
-    { id: 'covenant_position', question: 'Do you have debt covenants, and how tight is the headroom?', type: 'radio', options: ['No debt or no covenants', 'Yes - comfortable headroom (>20%)', 'Yes - moderate headroom (10-20%)', 'Yes - tight headroom (<10%)', 'Not sure'] },
-  ],
-  liquidity: [
-    { id: 'cash_position', question: 'Describe your current cash position and available facilities.', type: 'textarea', placeholder: 'e.g., £3M cash, £5M overdraft (£4M drawn), so £4M total liquidity' },
-    { id: 'revenue_loss_impact', question: 'If you lost your largest customer, what would happen to your cash position?', type: 'radio', options: ['We would survive - 12+ months runway without them', 'Major problem - 6-12 months runway', 'Immediate crisis - less than 6 months runway', 'Not sure'] },
-    { id: 'working_capital', question: 'Are you experiencing working capital pressure? (Select all that apply)', type: 'checkbox', options: ['Customers extending payment terms', 'Suppliers requiring faster payment', 'Inventory building up', 'Seasonal fluctuations creating cash gaps', 'Growth requiring investment in working capital', 'No significant working capital issues'] },
-    { id: 'largest_receivable', question: 'What is your largest single receivable and would a default create a liquidity crisis?', type: 'textarea', placeholder: 'e.g., £4M from Acme Corp - default would wipe out our cash position' },
-    { id: 'covenant_breach_impact', question: 'If you breached a loan covenant, what would happen?', type: 'radio', options: ['No debt or no covenants', 'Bank would likely call the loan immediately', 'Bank would negotiate a waiver but restrict operations', 'Bank has historically been flexible', 'Not sure'] },
-  ],
-};
+function getCategoryQuestions(industry: string): Record<ThreatCategory, CategoryQuestion[]> {
+  // Industry-specific options for core value proposition
+  const coreValueOptions: Record<string, string[]> = {
+    'Manufacturing': [
+      'Deliver precision-engineered products on time and to spec',
+      'Maintain production capacity and efficiency at scale',
+      'Provide cost-competitive manufacturing vs. overseas alternatives',
+      'Ensure consistent product quality and certification compliance',
+      'Operate and maintain specialised machinery and skilled workforce',
+    ],
+    'SaaS / Technology': [
+      'Maintain platform uptime, reliability, and security',
+      'Continuously innovate and ship new features ahead of competitors',
+      'Acquire and retain customers at scale with low churn',
+      'Protect and monetise our intellectual property and data',
+      'Scale infrastructure to handle rapid user growth',
+    ],
+    'Retail': [
+      'Attract and convert customers in-store and/or online',
+      'Maintain competitive pricing while protecting margins',
+      'Manage inventory levels and supply chain efficiency',
+      'Deliver a consistent and compelling customer experience',
+      'Adapt quickly to changing consumer trends and demand',
+    ],
+    'Professional Services': [
+      'Attract, retain, and develop specialist professional talent',
+      'Maintain our reputation and trusted advisor status with clients',
+      'Deliver high-quality advisory work consistently at scale',
+      'Win and renew contracts in a competitive market',
+      'Ensure regulatory and professional standards compliance',
+    ],
+    'Financial Services': [
+      'Maintain regulatory compliance and licence to operate',
+      'Manage credit, market, and operational risk exposures',
+      'Retain customer trust and protect sensitive financial data',
+      'Ensure system resilience and transaction processing accuracy',
+      'Maintain adequate capital and liquidity buffers',
+    ],
+    'Healthcare': [
+      'Deliver safe, effective patient care and outcomes',
+      'Maintain regulatory compliance and clinical standards',
+      'Recruit and retain qualified clinical and specialist staff',
+      'Protect patient data and maintain system security',
+      'Manage costs while maintaining quality of care',
+    ],
+    'Real Estate': [
+      'Maintain occupancy rates and secure quality tenants',
+      'Manage property values and avoid impairment',
+      'Secure financing and manage debt service obligations',
+      'Navigate planning, environmental, and regulatory requirements',
+      'Maintain and develop properties cost-effectively',
+    ],
+    'Construction': [
+      'Deliver projects on time, on budget, and to specification',
+      'Manage subcontractor relationships and supply chain',
+      'Win profitable contracts in a competitive tender market',
+      'Maintain health & safety standards and compliance',
+      'Manage cash flow across long project lifecycles',
+    ],
+    'Energy & Utilities': [
+      'Ensure continuous and reliable supply to customers',
+      'Maintain regulatory compliance and licence conditions',
+      'Manage commodity price volatility and hedging',
+      'Invest in infrastructure modernisation and transition',
+      'Navigate energy transition and net-zero requirements',
+    ],
+  };
+
+  const coreValueOpts = coreValueOptions[industry] || [
+    'Deliver our core product/service reliably and competitively',
+    'Maintain and grow our customer base',
+    'Retain key talent and institutional knowledge',
+    'Comply with all regulatory requirements',
+    'Protect our competitive advantage and market position',
+  ];
+
+  // Industry-specific competitive threats
+  const competitiveThreatsBase = [
+    'New technology making our products/services obsolete',
+    'Low-cost competitors we cannot compete with on price',
+    'Loss of key intellectual property or proprietary advantage',
+    'Regulatory changes making our business model unviable',
+    'Major partner/supplier failure we cannot replace',
+  ];
+  const competitiveThreatsIndustry: Record<string, string[]> = {
+    'Manufacturing': [...competitiveThreatsBase, 'Offshoring/nearshoring by customers to cheaper geographies', 'Automation/robotics making our processes uncompetitive'],
+    'SaaS / Technology': [...competitiveThreatsBase, 'Open-source alternatives eroding our paid product', 'Platform dependency risk (app store, cloud provider)'],
+    'Retail': [...competitiveThreatsBase, 'Shift to online/D2C channels bypassing our model', 'Changing consumer preferences we cannot adapt to'],
+    'Financial Services': [...competitiveThreatsBase, 'Fintech disruptors offering lower-cost alternatives', 'Loss of regulatory licence or permissions'],
+    'Healthcare': [...competitiveThreatsBase, 'NHS policy or funding changes reducing demand', 'New treatment methods making our services obsolete'],
+    'Construction': [...competitiveThreatsBase, 'Modern methods of construction (MMC) disrupting traditional approaches', 'Large competitors squeezing us out of framework agreements'],
+    'Energy & Utilities': [...competitiveThreatsBase, 'Energy transition making fossil-fuel assets stranded', 'Government policy changes to subsidies or tariffs'],
+  };
+  const competitiveOpts = [...(competitiveThreatsIndustry[industry] || competitiveThreatsBase), 'None of these are significant threats'];
+
+  // Industry-specific operational concerns
+  const operationalBase = ['Key talent loss (critical skills/people)', 'IT systems failure or cybersecurity breach', 'Health & safety incident'];
+  const operationalIndustry: Record<string, string[]> = {
+    'Manufacturing': ['Major production efficiency/quality problems', 'Supply chain disruptions affecting delivery', 'Major equipment/plant failure', 'Raw material price volatility or shortages', ...operationalBase],
+    'SaaS / Technology': ['Platform outage or data loss', 'Security breach or data privacy violation', 'Technical debt slowing product development', 'Cloud infrastructure failure', ...operationalBase],
+    'Retail': ['Inventory management failures (overstock/stockout)', 'Supply chain or logistics disruptions', 'Store/site operational disruptions', 'E-commerce platform failures', ...operationalBase],
+    'Professional Services': ['Failure to deliver quality work on time', 'Loss of key client relationships', 'Professional negligence or malpractice', 'Knowledge management failures', ...operationalBase],
+    'Financial Services': ['Transaction processing errors', 'Regulatory compliance failures', 'Fraud (internal or external)', 'Model risk and credit assessment failures', ...operationalBase],
+    'Healthcare': ['Patient safety incidents', 'Clinical staff shortages', 'Regulatory inspection failures', 'Medical equipment failures', ...operationalBase],
+    'Construction': ['Project delays and cost overruns', 'Subcontractor failure or disputes', 'Site safety incidents', 'Material shortages or price increases', ...operationalBase],
+    'Energy & Utilities': ['Infrastructure failure or outage', 'Environmental incident or spill', 'Regulatory compliance breach', 'Commodity price or supply disruption', ...operationalBase],
+  };
+  const operationalOpts = operationalIndustry[industry] || ['Major operational efficiency/quality problems', 'Supply chain disruptions', 'Major equipment/infrastructure failure', ...operationalBase];
+
+  // Industry-specific market threats
+  const marketBase = ['Pricing pressure eroding margins', 'New market entrants taking share'];
+  const marketIndustry: Record<string, string[]> = {
+    'Manufacturing': ['Product quality issues leading to customer losses', 'Inability to invest in automation/innovation', 'Customer insourcing or reshoring decisions', ...marketBase],
+    'SaaS / Technology': ['High customer churn rates', 'Failure to achieve product-market fit for new features', 'Competitors offering free/cheaper alternatives', ...marketBase],
+    'Retail': ['Shift in consumer spending patterns', 'Loss of footfall to online competitors', 'Brand reputation damage from quality/service issues', ...marketBase],
+    'Professional Services': ['Commoditisation of our advisory services', 'Clients bringing work in-house', 'Reputation damage from failed engagements', ...marketBase],
+    'Financial Services': ['Regulatory changes reducing fee income', 'Customer migration to digital-first competitors', 'Credit market deterioration affecting demand', ...marketBase],
+    'Healthcare': ['Changes in commissioner/payer requirements', 'Reputational damage from clinical incidents', 'Competitor facilities attracting our patients/clients', ...marketBase],
+    'Construction': ['Reduced pipeline of contract opportunities', 'Competitors undercutting on price', 'Client insolvency or project cancellation', ...marketBase],
+    'Energy & Utilities': ['Demand reduction from efficiency/renewables', 'Regulatory price controls squeezing margins', 'Customer switching in deregulated markets', ...marketBase],
+  };
+  const marketOpts = [...(marketIndustry[industry] || ['Product/service quality issues', 'Inability to innovate/keep up with competitors', 'Customer needs shifting away from our offerings', ...marketBase]), 'None of these are significant concerns'];
+
+  // Industry-specific solvency loss events
+  const solvencyBase = ['Major lawsuit or regulatory fine', 'Fraud or embezzlement', 'Uninsured catastrophic loss (fire, flood, etc.)'];
+  const solvencyIndustry: Record<string, string[]> = {
+    'Manufacturing': ['Product liability or warranty claims', 'Inventory obsolescence or write-down', 'Customer bankruptcy causing major bad debt', 'Environmental liability or cleanup costs', ...solvencyBase],
+    'SaaS / Technology': ['Intellectual property litigation', 'Data breach resulting in regulatory fines and claims', 'Goodwill impairment from failed acquisitions', 'Customer contract disputes', ...solvencyBase],
+    'Retail': ['Inventory write-down from unsold stock', 'Lease obligations on underperforming stores', 'Product recall or safety claims', 'Brand damage resulting in revenue collapse', ...solvencyBase],
+    'Professional Services': ['Professional negligence claims', 'Goodwill impairment from failed acquisitions', 'Key client bankruptcy causing bad debt', 'Regulatory sanctions and fines', ...solvencyBase],
+    'Financial Services': ['Credit losses exceeding provisions', 'Regulatory fines and redress costs', 'Trading losses from market events', 'Goodwill impairment from acquisitions', ...solvencyBase],
+    'Healthcare': ['Clinical negligence claims', 'Regulatory fines or licence revocation costs', 'Property/equipment impairment', 'Staff-related litigation', ...solvencyBase],
+    'Construction': ['Major project loss or dispute', 'Contractor/subcontractor insolvency chain', 'Defects liability claims on completed projects', 'Bond or guarantee calls', ...solvencyBase],
+    'Energy & Utilities': ['Environmental contamination liability', 'Asset stranding from energy transition', 'Regulatory fines for compliance breaches', 'Infrastructure failure causing third-party losses', ...solvencyBase],
+  };
+  const solvencyOpts = [...(solvencyIndustry[industry] || ['Asset impairment (inventory, equipment, goodwill)', 'Customer bankruptcy causing bad debt', 'Product/service liability claims', 'Environmental liability or cleanup costs', ...solvencyBase]), 'None of these are likely'];
+
+  // Industry-specific asset risk
+  const assetRiskIndustry: Record<string, string[]> = {
+    'Manufacturing': ['Large raw material/WIP inventory at risk of obsolescence', 'Specialist machinery/equipment at risk of impairment', 'Goodwill from acquisitions that may need write-down', 'Property assets that may be overvalued', 'No significant asset impairment risk'],
+    'SaaS / Technology': ['Capitalised development costs that may not generate returns', 'Goodwill from acquisitions that may need write-down', 'Hardware/infrastructure assets at risk of obsolescence', 'Customer contracts/intangibles that may be impaired', 'No significant asset impairment risk'],
+    'Retail': ['Large finished goods inventory at risk of markdowns', 'Store fixtures and fitout costs at risk of impairment', 'Right-of-use lease assets on underperforming locations', 'Brand/goodwill intangibles that may be impaired', 'No significant asset impairment risk'],
+    'Financial Services': ['Loan book with exposure to credit losses', 'Investment portfolio exposed to market volatility', 'Goodwill from acquisitions that may need write-down', 'Intangible assets (software, licences) at risk', 'No significant asset impairment risk'],
+    'Healthcare': ['Medical equipment at risk of obsolescence', 'Property assets that may be overvalued', 'Goodwill from practice/clinic acquisitions', 'Capitalised development costs for new services', 'No significant asset impairment risk'],
+    'Construction': ['Work-in-progress on loss-making contracts', 'Plant and equipment at risk of impairment', 'Land bank that may be overvalued', 'Retentions/receivables at risk of non-recovery', 'No significant asset impairment risk'],
+    'Energy & Utilities': ['Fossil fuel assets at risk of stranding', 'Infrastructure assets requiring replacement', 'Commodity inventory exposed to price drops', 'Exploration/development costs that may not pay off', 'No significant asset impairment risk'],
+  };
+  const assetRiskOpts = assetRiskIndustry[industry] || [
+    'Large inventory at risk of obsolescence or write-down',
+    'Significant fixed assets at risk of impairment',
+    'Goodwill/intangibles from acquisitions that may need write-down',
+    'Receivables at risk of non-recovery',
+    'No significant asset impairment risk',
+  ];
+
+  // Industry-specific working capital pressures
+  const workingCapitalBase = ['Seasonal fluctuations creating cash gaps', 'Growth requiring investment in working capital', 'No significant working capital issues'];
+  const workingCapitalIndustry: Record<string, string[]> = {
+    'Manufacturing': ['Customers extending payment terms beyond 60 days', 'Suppliers requiring faster payment or cash-on-delivery', 'Raw material inventory building up', 'Long production cycles tying up cash in WIP', ...workingCapitalBase],
+    'SaaS / Technology': ['Annual billing creating uneven cash inflows', 'High upfront customer acquisition costs', 'Infrastructure investment ahead of revenue', 'Long sales cycles delaying cash collection', ...workingCapitalBase],
+    'Retail': ['Inventory purchases tying up cash before sales', 'Supplier payment terms tightening', 'Markdown pressure on slow-moving stock', 'Peak season stock build requiring funding', ...workingCapitalBase],
+    'Construction': ['Long payment cycles on certified work', 'Retention monies held for 12+ months', 'Front-loading of costs before milestone payments', 'Subcontractor payment demands ahead of client receipts', ...workingCapitalBase],
+    'Financial Services': ['Regulatory capital requirements restricting free cash', 'Settlement timing mismatches', 'Collateral/margin requirements tying up funds', 'Premium collection timing vs. claims payment', ...workingCapitalBase],
+    'Healthcare': ['NHS/insurer payment delays', 'Equipment and consumable costs front-loaded', 'Agency staff costs creating cash pressure', 'Capital investment in facilities ahead of revenue', ...workingCapitalBase],
+  };
+  const workingCapitalOpts = workingCapitalIndustry[industry] || ['Customers extending payment terms', 'Suppliers requiring faster payment', 'Inventory/stock building up', ...workingCapitalBase];
+
+  // Cash position options
+  const cashPositionOpts = [
+    'Strong - over 6 months of operating costs in cash/facilities',
+    'Adequate - 3-6 months of operating costs available',
+    'Tight - 1-3 months of operating costs available',
+    'Very tight - less than 1 month of operating costs',
+    'Reliant on overdraft/facility that could be withdrawn',
+    'Not sure of our exact position',
+  ];
+
+  // Largest receivable exposure
+  const receivableExposureOpts = [
+    'Our largest receivable is under 5% of annual revenue - manageable',
+    'Our largest receivable is 5-15% of annual revenue - significant',
+    'Our largest receivable is 15-30% of annual revenue - a default would be serious',
+    'Our largest receivable is over 30% of annual revenue - a default would be a crisis',
+    'Not sure / not applicable',
+  ];
+
+  return {
+    business_model: [
+      { id: 'core_value', question: 'What is the ONE thing your business MUST be able to do to survive?', type: 'radio' as const, options: coreValueOpts },
+      { id: 'customer_dependency', question: 'How dependent are you on your top customers?', type: 'radio' as const, options: ['High - loss of top customers would threaten viability', 'Moderate - painful but we would survive', 'Low - we could replace them relatively easily'] },
+      { id: 'competitive_threats', question: 'What could fundamentally disrupt your competitive position? (Select all that apply)', type: 'checkbox' as const, options: competitiveOpts },
+      { id: 'critical_dependencies', question: 'Does your business model depend critically on any of these? (Select all that apply)', type: 'checkbox' as const, options: ['A specific technology platform or infrastructure provider', 'A key partnership or distribution channel', 'Intellectual property (patents, trade secrets, brand)', 'Regulatory licenses or permissions', 'A specific geography or market', 'None of these'] },
+    ],
+    performance: [
+      { id: 'strategic_risks', question: 'What is most likely to prevent you achieving your strategic priorities? (Select all that apply)', type: 'checkbox' as const, options: [
+        'Inability to reduce costs or improve efficiency fast enough',
+        'New product/service launch delays or failures',
+        'Revenue growth targets missed due to market conditions',
+        'Integration problems from acquisitions or mergers',
+        'Failure to attract/retain talent needed for growth',
+        'Technology or digital transformation falling behind',
+        'Regulatory burden slowing strategic progress',
+      ]},
+      { id: 'operational_concerns', question: 'What operational issues could significantly impact performance? (Select all that apply)', type: 'checkbox' as const, options: operationalOpts },
+      { id: 'market_position', question: 'What could cause significant market share loss? (Select all that apply)', type: 'checkbox' as const, options: marketOpts },
+    ],
+    solvency: [
+      { id: 'major_loss_events', question: 'What single event could cause losses exceeding 10% of your net worth? (Select all that apply)', type: 'checkbox' as const, options: solvencyOpts },
+      { id: 'asset_risk', question: 'Do you carry significant assets at risk of impairment? (Select all that apply)', type: 'checkbox' as const, options: assetRiskOpts },
+      { id: 'liability_exposure', question: 'What is your uninsured liability exposure if a major incident occurred?', type: 'radio' as const, options: ['Under £1M (well covered by insurance)', '£1-5M (partially covered)', '£5-10M (largely uninsured)', 'Over £10M (catastrophic uninsured exposure)', 'Not sure'] },
+      { id: 'covenant_position', question: 'Do you have debt covenants, and how tight is the headroom?', type: 'radio' as const, options: ['No debt or no covenants', 'Yes - comfortable headroom (>20%)', 'Yes - moderate headroom (10-20%)', 'Yes - tight headroom (<10%)', 'Not sure'] },
+    ],
+    liquidity: [
+      { id: 'cash_position', question: 'How would you describe your current cash position and available facilities?', type: 'radio' as const, options: cashPositionOpts },
+      { id: 'revenue_loss_impact', question: 'If you lost your largest customer, what would happen to your cash position?', type: 'radio' as const, options: ['We would survive - 12+ months runway without them', 'Major problem - 6-12 months runway', 'Immediate crisis - less than 6 months runway', 'Not sure'] },
+      { id: 'working_capital', question: 'Are you experiencing working capital pressure? (Select all that apply)', type: 'checkbox' as const, options: workingCapitalOpts },
+      { id: 'largest_receivable', question: 'How concentrated is your receivables exposure?', type: 'radio' as const, options: receivableExposureOpts },
+      { id: 'covenant_breach_impact', question: 'If you breached a loan covenant, what would happen?', type: 'radio' as const, options: ['No debt or no covenants', 'Bank would likely call the loan immediately', 'Bank would negotiate a waiver but restrict operations', 'Bank has historically been flexible', 'Not sure'] },
+    ],
+  };
+}
+
+function getCustomerBaseOptions(industry: string): string[] {
+  const industryOptions: Record<string, string[]> = {
+    'Manufacturing': [
+      'B2B - Few large OEM/industrial customers (top 3 account for >50% revenue)',
+      'B2B - Diversified industrial customer base (no single customer >15%)',
+      'B2B - Mix of large contracts and smaller project-based customers',
+      'B2B and B2C - We sell to both businesses and end consumers',
+      'Primarily government/defence contracts',
+    ],
+    'SaaS / Technology': [
+      'Enterprise - Small number of large enterprise clients (top 3 >50% ARR)',
+      'Mid-market - Moderate number of medium-sized business customers',
+      'SMB - Large number of small business customers (self-serve)',
+      'B2C - High volume of individual consumer subscribers',
+      'Mixed - Enterprise plus self-serve SMB/consumer tiers',
+    ],
+    'Retail': [
+      'Mass market B2C - High volume, low average transaction value',
+      'Premium/luxury B2C - Lower volume, high average transaction value',
+      'B2B wholesale - Selling to other retailers or distributors',
+      'Omnichannel - Mix of in-store and online customers',
+      'Subscription/membership-based customer model',
+    ],
+    'Professional Services': [
+      'Few large corporate/institutional clients (top 3 >50% revenue)',
+      'Diversified corporate client base across multiple sectors',
+      'Mainly public sector/government clients',
+      'Mix of corporate and individual/private clients',
+      'Project-based with high client turnover',
+    ],
+    'Financial Services': [
+      'Retail - High volume individual customers/policyholders',
+      'Institutional - Small number of large institutional clients',
+      'Corporate - Mid-market business banking/insurance clients',
+      'High net worth individuals (wealth management/private banking)',
+      'Mixed retail and corporate customer base',
+    ],
+    'Healthcare': [
+      'NHS/public health commissioners (contracted services)',
+      'Private patients/self-pay individuals',
+      'Insurance-funded patients via multiple insurers',
+      'Mix of NHS and private patient revenue streams',
+      'B2B - Providing services to other healthcare providers',
+    ],
+    'Real Estate': [
+      'Commercial tenants - Few large corporate leases',
+      'Commercial tenants - Diversified mix of business tenants',
+      'Residential tenants - High volume individual renters',
+      'Mixed commercial and residential portfolio',
+      'Development sales - Selling completed units to buyers',
+    ],
+    'Construction': [
+      'Public sector - Government/local authority contracts',
+      'Private sector - Large commercial/industrial projects',
+      'Residential - Housebuilding for consumers/housing associations',
+      'Mixed public and private sector project pipeline',
+      'Specialist subcontractor to main contractors',
+    ],
+    'Energy & Utilities': [
+      'Regulated utility - Captive customer base in defined area',
+      'Competitive retail - Individual consumer energy customers',
+      'B2B - Industrial/commercial energy customers',
+      'Wholesale - Selling to other energy companies/traders',
+      'Mixed residential and commercial customer base',
+    ],
+  };
+
+  return industryOptions[industry] || [
+    'B2B - Few large customers (top 3 account for >50% revenue)',
+    'B2B - Diversified business customer base',
+    'B2C - High volume individual consumers',
+    'Mixed B2B and B2C customer base',
+    'Government/public sector as primary customer',
+  ];
+}
 
 // ==================== TYPES ====================
 
@@ -402,11 +681,21 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
           <div className="grid grid-cols-3 gap-4">
             <div>
               <Label className="text-sm">Annual Revenue</Label>
-              <Input placeholder="e.g., £85M" value={context.annualRevenue} onChange={e => setContext(prev => ({ ...prev, annualRevenue: e.target.value }))} />
+              <Select value={context.annualRevenue} onValueChange={(v) => setContext(prev => ({ ...prev, annualRevenue: v }))}>
+                <SelectTrigger><SelectValue placeholder="Select range" /></SelectTrigger>
+                <SelectContent>
+                  {REVENUE_RANGES.map(r => (<SelectItem key={r} value={r}>{r}</SelectItem>))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="text-sm">Number of Employees</Label>
-              <Input placeholder="e.g., 350" value={context.employeeCount} onChange={e => setContext(prev => ({ ...prev, employeeCount: e.target.value }))} />
+              <Select value={context.employeeCount} onValueChange={(v) => setContext(prev => ({ ...prev, employeeCount: v }))}>
+                <SelectTrigger><SelectValue placeholder="Select range" /></SelectTrigger>
+                <SelectContent>
+                  {EMPLOYEE_RANGES.map(r => (<SelectItem key={r} value={r}>{r}</SelectItem>))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="text-sm">Are you profitable?</Label>
@@ -444,14 +733,27 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <span className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">4</span>
-            Describe your customer base in one sentence
+            Which best describes your customer base?
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Textarea
-            placeholder="E.g., We have 150 B2B customers, mainly in automotive and aerospace sectors. Top 3 represent 60% of revenue."
-            value={context.customerDescription} onChange={e => setContext(prev => ({ ...prev, customerDescription: e.target.value }))} rows={3}
-          />
+          <div className="space-y-2">
+            {getCustomerBaseOptions(context.industry).map(option => (
+              <div key={option}
+                className={`flex items-center space-x-3 border rounded p-3 cursor-pointer transition-colors ${
+                  context.customerDescription === option ? 'bg-blue-50 border-blue-300' : 'hover:bg-accent'
+                }`}
+                onClick={() => setContext(prev => ({ ...prev, customerDescription: option }))}
+              >
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                  context.customerDescription === option ? 'border-blue-600' : 'border-gray-300'
+                }`}>
+                  {context.customerDescription === option && <div className="w-2 h-2 rounded-full bg-blue-600" />}
+                </div>
+                <span className="text-sm">{option}</span>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
@@ -500,7 +802,7 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
   const renderCategoryQuestions = () => {
     const cat = currentCategory;
     const Icon = cat.icon;
-    const questions = CATEGORY_QUESTIONS[cat.key];
+    const questions = getCategoryQuestions(context.industry)[cat.key];
     const answers = categoryAnswers[cat.key];
 
     return (
@@ -534,15 +836,7 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {q.type === 'textarea' && (
-                <Textarea placeholder={q.placeholder} value={(answers[q.id] as string) || ''}
-                  onChange={e => handleAnswerChange(q.id, e.target.value)} rows={3} />
-              )}
-              {q.type === 'text' && (
-                <Input placeholder={q.placeholder} value={(answers[q.id] as string) || ''}
-                  onChange={e => handleAnswerChange(q.id, e.target.value)} />
-              )}
-              {q.type === 'radio' && q.options && (
+              {q.type === 'radio' && (
                 <div className="space-y-2">
                   {q.options.map(option => (
                     <div key={option}
