@@ -59,6 +59,9 @@ section2Router.get('/maturity-selection/:riskId', async (req, res) => {
 // Save a Section 2 control
 section2Router.post('/controls', async (req, res) => {
   try {
+    console.log('=== Section2 Control Save Request ===');
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+
     const {
       riskId, title, description, controlType, objectives,
       owner, reviewer, frequency, evidence, evidenceLocation,
@@ -67,38 +70,77 @@ section2Router.post('/controls', async (req, res) => {
     } = req.body;
 
     if (!riskId || !title || !controlType) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      console.error('Missing required fields:', { riskId, title, controlType });
+      return res.status(400).json({ error: 'Missing required fields: riskId, title, controlType' });
     }
 
+    const controlData: any = {
+      riskId,
+      title,
+      description: description || '',
+      controlType,
+      objectives: JSON.stringify(objectives || []),
+      owner: owner || '',
+      frequency: frequency || 'monthly',
+      evidence: evidence || '',
+      status: status || 'existing',
+      maturityLevel: maturityLevel || 1,
+      source: source || 'existing_documented',
+    };
+
+    // Only add optional fields if they have values (not empty strings)
+    if (reviewer && reviewer.trim() !== '') {
+      controlData.reviewer = reviewer;
+      console.log('Adding reviewer:', reviewer);
+    } else {
+      console.log('Skipping empty reviewer field');
+    }
+    
+    if (evidenceLocation && evidenceLocation.trim() !== '') {
+      controlData.evidenceLocation = evidenceLocation;
+    }
+    
+    if (templateId && templateId.trim() !== '') {
+      controlData.templateId = templateId;
+    }
+    
+    if (implementationPhase !== undefined && implementationPhase !== null) {
+      controlData.implementationPhase = implementationPhase;
+      console.log('Adding implementationPhase:', implementationPhase);
+    }
+    
+    if (implementationEffort && implementationEffort.trim() !== '') {
+      controlData.implementationEffort = implementationEffort;
+    }
+    
+    if (implementationTimeline && implementationTimeline.trim() !== '') {
+      controlData.implementationTimeline = implementationTimeline;
+    }
+
+    console.log('Final control data to save:', JSON.stringify(controlData, null, 2));
+
     const control = await prisma.section2Control.create({
-      data: {
-        riskId,
-        title,
-        description: description || '',
-        controlType,
-        objectives: JSON.stringify(objectives || []),
-        owner: owner || '',
-        reviewer,
-        frequency: frequency || 'monthly',
-        evidence: evidence || '',
-        evidenceLocation,
-        status: status || 'existing',
-        maturityLevel: maturityLevel || 1,
-        source: source || 'existing_documented',
-        templateId,
-        implementationPhase,
-        implementationEffort,
-        implementationTimeline,
-      },
+      data: controlData,
     });
+
+    console.log('Control saved successfully:', control.id);
 
     res.json({
       ...control,
       objectives: JSON.parse(control.objectives),
     });
-  } catch (error) {
-    console.error('Failed to save Section 2 control:', error);
-    res.status(500).json({ error: 'Failed to save control' });
+  } catch (error: any) {
+    console.error('=== ERROR saving Section 2 control ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Error code:', error.code);
+    console.error('Request body:', JSON.stringify(req.body, null, 2));
+    
+    res.status(500).json({ 
+      error: 'Failed to save control',
+      details: error.message,
+      code: error.code 
+    });
   }
 });
 

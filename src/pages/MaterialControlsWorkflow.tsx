@@ -433,23 +433,27 @@ export default function MaterialControlsWorkflow() {
         });
 
         // Also save to Section2Control table for Material Controls tracking
-        await apiService.saveSection2Control({
+        const section2Data: any = {
           riskId: selectedRisk.id,
           title: control.title,
           description: control.description || '',
           controlType: control.type,
           objectives: control.objectives || [],
           owner: control.owner || '',
-          reviewer: control.reviewer || '',
           frequency: control.frequency || 'monthly',
           evidence: control.evidence || '',
           status: control.status || 'existing',
           maturityLevel: selectedCurrentLevel || 1,
           source: control.source || 'workflow_documented',
-          implementationPhase: control.implementationPhase,
-          implementationEffort: control.implementationEffort,
-          implementationTimeline: control.implementationTimeline,
-        });
+        };
+
+        // Only add optional fields if they have actual values
+        if (control.reviewer) section2Data.reviewer = control.reviewer;
+        if (control.implementationPhase !== undefined) section2Data.implementationPhase = control.implementationPhase;
+        if (control.implementationEffort) section2Data.implementationEffort = control.implementationEffort;
+        if (control.implementationTimeline) section2Data.implementationTimeline = control.implementationTimeline;
+
+        await apiService.saveSection2Control(section2Data);
       }
 
       setCompletedRisks([
