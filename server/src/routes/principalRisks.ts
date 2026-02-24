@@ -17,7 +17,17 @@ principalRisksRouter.get('/', async (req, res) => {
       threatLensTags: JSON.parse(risk.threatLensTags)
     }));
     
-    res.json(formatted);
+    const seen = new Set<string>();
+    const deduplicated = formatted.filter(risk => {
+      const key = risk.riskTitle.toLowerCase().trim();
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+    
+    res.json(deduplicated);
   } catch (error) {
     console.error('Failed to fetch principal risks:', error);
     res.status(500).json({ error: 'Failed to fetch principal risks' });

@@ -123,6 +123,29 @@ section2Router.get('/controls/:riskId', async (req, res) => {
   }
 });
 
+// Get all Section 2 controls with risk information
+section2Router.get('/controls', async (req, res) => {
+  try {
+    const controls = await prisma.section2Control.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const risks = await prisma.principalRisk.findMany();
+    const riskMap = new Map(risks.map(r => [r.id, r]));
+
+    const formatted = controls.map(c => ({
+      ...c,
+      objectives: JSON.parse(c.objectives),
+      riskTitle: riskMap.get(c.riskId)?.riskTitle || 'Unknown Risk',
+    }));
+
+    res.json(formatted);
+  } catch (error) {
+    console.error('Failed to fetch Section 2 controls:', error);
+    res.status(500).json({ error: 'Failed to fetch controls' });
+  }
+});
+
 // Save gap analysis results
 section2Router.post('/gap-analysis', async (req, res) => {
   try {

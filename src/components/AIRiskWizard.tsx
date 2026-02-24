@@ -382,6 +382,15 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
     isProfitable: '', fundingType: '', customerDescription: '',
     strategicPriorities: [],
   });
+  const [companyName, setCompanyName] = useState('');
+  const [useAIAnalysis, setUseAIAnalysis] = useState(false);
+  const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
+  const [taskAssignments, setTaskAssignments] = useState<Record<ThreatCategory, string>>({
+    business_model: '',
+    performance: '',
+    solvency: '',
+    liquidity: '',
+  });
 
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
   const [categoryAnswers, setCategoryAnswers] = useState<Record<ThreatCategory, CategoryAnswers>>({
@@ -788,6 +797,62 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
         </CardContent>
       </Card>
 
+      <Card className="border-purple-200 bg-purple-50/50">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-purple-600" />
+            Optional: AI-Enhanced Risk Analysis
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label className="text-sm">Company Name (Optional)</Label>
+            <Input
+              placeholder="e.g., Acme Manufacturing Ltd"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              className="mt-1"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              If provided, AI will analyze publicly available information about your company to craft more relevant questions
+            </p>
+          </div>
+          
+          <div className="flex items-start gap-3 p-3 bg-white border border-purple-200 rounded-lg">
+            <Checkbox
+              checked={useAIAnalysis}
+              onCheckedChange={(checked) => setUseAIAnalysis(checked as boolean)}
+            />
+            <div className="flex-1">
+              <p className="text-sm font-medium">Enable AI Company Analysis</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                AI will review publicly available information including financial statements, news, and reports to generate more contextual questions
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-sm mb-2 block">Task Assignment (Optional)</Label>
+            <p className="text-xs text-muted-foreground mb-3">
+              Assign different threat categories to different people in your organization for collaborative assessment
+            </p>
+            <div className="space-y-2">
+              {THREAT_CATEGORIES.map(cat => (
+                <div key={cat.key} className="flex items-center gap-2">
+                  <span className="text-xs font-medium w-32">{cat.label}:</span>
+                  <Input
+                    placeholder="e.g., CFO, Risk Manager"
+                    value={taskAssignments[cat.key]}
+                    onChange={(e) => setTaskAssignments(prev => ({ ...prev, [cat.key]: e.target.value }))}
+                    className="h-8 text-sm"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="flex justify-between pt-4">
         <Button variant="outline" onClick={onCancel}>Cancel</Button>
         <Button onClick={handleStartCategories} disabled={!isContextValid}>
@@ -1127,6 +1192,77 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
           {allSelectedRisks.length} risks across {completedCategories.length} threat categories. Adjust AI scoring if needed.
         </p>
       </div>
+
+      <Card className="border-blue-200 bg-blue-50/50">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Info className="h-5 w-5 text-blue-600" />
+            Scoring Guide: Likelihood &amp; Impact (1-5 Scale)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold text-sm mb-2 text-blue-900">Likelihood (Probability)</h4>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex items-start gap-2">
+                  <span className="font-bold w-4">1:</span>
+                  <span className="text-muted-foreground">Rare - May occur only in exceptional circumstances (&lt;10% chance in next 12 months)</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold w-4">2:</span>
+                  <span className="text-muted-foreground">Unlikely - Could occur at some time (10-30% chance)</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold w-4">3:</span>
+                  <span className="text-muted-foreground">Possible - Might occur at some time (30-50% chance)</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold w-4">4:</span>
+                  <span className="text-muted-foreground">Likely - Will probably occur in most circumstances (50-80% chance)</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold w-4">5:</span>
+                  <span className="text-muted-foreground">Almost Certain - Expected to occur in most circumstances (&gt;80% chance)</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold text-sm mb-2 text-orange-900">Impact (Severity)</h4>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex items-start gap-2">
+                  <span className="font-bold w-4">1:</span>
+                  <span className="text-muted-foreground">Insignificant - Minimal impact on operations, financials, or reputation</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold w-4">2:</span>
+                  <span className="text-muted-foreground">Minor - Small impact, manageable with existing resources</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold w-4">3:</span>
+                  <span className="text-muted-foreground">Moderate - Noticeable impact requiring management attention and resources</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold w-4">4:</span>
+                  <span className="text-muted-foreground">Major - Significant impact threatening strategic objectives or financial stability</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold w-4">5:</span>
+                  <span className="text-muted-foreground">Catastrophic - Severe impact threatening business viability, solvency, or liquidity</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t">
+            <p className="text-xs text-muted-foreground">
+              <strong>Risk Score = Likelihood × Impact</strong> | 
+              Scores 15-25: CRITICAL/HIGH | 
+              Scores 8-14: MEDIUM | 
+              Scores 1-7: LOWER
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {THREAT_CATEGORIES.map(cat => {
         const risks = selectedForCategory(cat.key);

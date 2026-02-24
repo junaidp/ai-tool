@@ -823,12 +823,19 @@ export default function MaterialControlsWorkflow() {
 
                 <div>
                   <Label>Q3: Who reviews/uses this?</Label>
-                  <Input
-                    className="mt-1"
-                    placeholder="e.g., CFO and department heads"
+                  <Select
                     value={doc.reviewedBy}
-                    onChange={e => updateDoc({ reviewedBy: e.target.value })}
-                  />
+                    onValueChange={v => updateDoc({ reviewedBy: v })}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select role..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['CEO', 'CFO', 'CRO', 'Financial Controller', 'Accountant', 'IT Director', 'CISO', 'Sales Director', 'Operations Director', 'HR Director', 'Compliance Officer', 'Department Manager', 'Board of Directors', 'Audit Committee', 'CFO and department heads', 'Senior Management Team', 'Other'].map(role => (
+                        <SelectItem key={role} value={role}>{role}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -858,13 +865,19 @@ export default function MaterialControlsWorkflow() {
 
                 <div>
                   <Label>Q5: What evidence exists?</Label>
-                  <Textarea
-                    className="mt-1"
-                    placeholder={template.defaultEvidence}
+                  <Select
                     value={doc.evidence}
-                    onChange={e => updateDoc({ evidence: e.target.value })}
-                    rows={2}
-                  />
+                    onValueChange={v => updateDoc({ evidence: v })}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select evidence type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['Informal notes, emails', 'Spreadsheet or document', 'System report or dashboard', 'Meeting minutes', 'Formal report with sign-off', 'Automated system alerts', 'Database records', 'Audit trail in system', 'Physical documentation', 'Email confirmations', 'Signed approvals', 'Other'].map(evidence => (
+                        <SelectItem key={evidence} value={evidence}>{evidence}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -1450,6 +1463,20 @@ export default function MaterialControlsWorkflow() {
   // Screen 6: Implementation Timeline
   // ============================================================
 
+  const [editingPhaseTimeline, setEditingPhaseTimeline] = useState<number | null>(null);
+  const [customTimeline, setCustomTimeline] = useState<string>('');
+
+  const handleUpdatePhaseTimeline = (phaseNum: number, newTimeline: string) => {
+    if (!implementationPlan) return;
+    const updatedPlan = { ...implementationPlan };
+    updatedPlan.phases = updatedPlan.phases.map(p => 
+      p.phase === phaseNum ? { ...p, timeline: newTimeline } : p
+    );
+    setImplementationPlan(updatedPlan);
+    setEditingPhaseTimeline(null);
+    setCustomTimeline('');
+  };
+
   const renderStep6 = () => {
     if (!implementationPlan || !gapAnalysis) return null;
 
@@ -1464,7 +1491,7 @@ export default function MaterialControlsWorkflow() {
             <CardTitle>Implementation Plan</CardTitle>
             <CardDescription>
               You've selected {implementationPlan.newControls} new controls to add.
-              Here's the recommended implementation timeline:
+              Here's the recommended implementation timeline (click to edit):
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -1479,7 +1506,47 @@ export default function MaterialControlsWorkflow() {
                       <h4 className={`font-semibold ${phaseTextColors[idx]}`}>
                         Phase {phase.phase}: {phase.name}
                       </h4>
-                      <p className="text-sm text-muted-foreground">{phase.timeline}</p>
+                      {editingPhaseTimeline === phase.phase ? (
+                        <div className="flex items-center gap-2 mt-1">
+                          <Select
+                            value={customTimeline || phase.timeline}
+                            onValueChange={setCustomTimeline}
+                          >
+                            <SelectTrigger className="w-48 h-8 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Months 1-2">Months 1-2</SelectItem>
+                              <SelectItem value="Months 1-3">Months 1-3</SelectItem>
+                              <SelectItem value="Months 2-4">Months 2-4</SelectItem>
+                              <SelectItem value="Months 3-6">Months 3-6</SelectItem>
+                              <SelectItem value="Months 4-6">Months 4-6</SelectItem>
+                              <SelectItem value="Months 6-9">Months 6-9</SelectItem>
+                              <SelectItem value="Months 7-12">Months 7-12</SelectItem>
+                              <SelectItem value="Months 9-12">Months 9-12</SelectItem>
+                              <SelectItem value="Months 12-18">Months 12-18</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button size="sm" onClick={() => handleUpdatePhaseTimeline(phase.phase, customTimeline || phase.timeline)}>
+                            Save
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => { setEditingPhaseTimeline(null); setCustomTimeline(''); }}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-muted-foreground">{phase.timeline}</p>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="h-6 px-2"
+                            onClick={() => { setEditingPhaseTimeline(phase.phase); setCustomTimeline(phase.timeline); }}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="text-right">
