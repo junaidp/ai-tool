@@ -427,3 +427,17 @@ model Section2ImplementationPlan {
   totalTimelineMonths    Int
   createdAt              DateTime @default(now())
 }
+
+model Section2RiskCompletion {
+  id            String   @id @default(uuid())
+  riskId        String   @unique
+  riskTitle     String
+  status        String   // complete / in_progress
+  currentLevel  Int
+  targetLevel   Int
+  controlCount  Int
+  currentScore  Float
+  targetScore   Float
+  completedAt   DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

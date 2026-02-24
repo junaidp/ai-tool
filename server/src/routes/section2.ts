@@ -323,3 +323,64 @@ section2Router.post('/generate-documentation', async (req, res) => {
     res.status(500).json({ error: 'Failed to generate documentation' });
   }
 });
+
+// Save risk completion status
+section2Router.post('/risk-completion', async (req, res) => {
+  try {
+    const {
+      riskId,
+      riskTitle,
+      status,
+      currentLevel,
+      targetLevel,
+      controlCount,
+      currentScore,
+      targetScore,
+    } = req.body;
+
+    if (!riskId) {
+      return res.status(400).json({ error: 'Missing riskId' });
+    }
+
+    const completion = await prisma.section2RiskCompletion.upsert({
+      where: { riskId },
+      update: {
+        riskTitle,
+        status,
+        currentLevel,
+        targetLevel,
+        controlCount,
+        currentScore,
+        targetScore,
+      },
+      create: {
+        riskId,
+        riskTitle,
+        status,
+        currentLevel,
+        targetLevel,
+        controlCount,
+        currentScore,
+        targetScore,
+      },
+    });
+
+    res.json(completion);
+  } catch (error: any) {
+    console.error('Failed to save risk completion:', error);
+    res.status(500).json({ error: 'Failed to save risk completion', details: error.message });
+  }
+});
+
+// Get all completed risks
+section2Router.get('/risk-completion', async (req, res) => {
+  try {
+    const completions = await prisma.section2RiskCompletion.findMany({
+      orderBy: { completedAt: 'desc' },
+    });
+    res.json(completions);
+  } catch (error) {
+    console.error('Failed to fetch risk completions:', error);
+    res.status(500).json({ error: 'Failed to fetch risk completions' });
+  }
+});

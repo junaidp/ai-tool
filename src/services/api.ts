@@ -479,6 +479,21 @@ class ApiService {
     return this.request<any[]>(`/section2/controls/${riskId}`);
   }
 
+  getAllSection2Controls() {
+    return this.request<any[]>('/section2/controls');
+  }
+
+  saveRiskCompletion(data: any) {
+    return this.request('/section2/risk-completion', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  getCompletedRisks() {
+    return this.request<any[]>('/section2/risk-completion');
+  }
+
   generateGapAnalysis(data: {
     riskId: string;
     riskType: string;

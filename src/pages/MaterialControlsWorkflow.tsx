@@ -113,6 +113,7 @@ export default function MaterialControlsWorkflow() {
   // Multi-risk progress
   const [completedRisks, setCompletedRisks] = useState<RiskWorkflowProgress[]>([]);
   const [allDocumentedControls, setAllDocumentedControls] = useState<Section2Control[]>([]);
+  const [isCompletingRisk, setIsCompletingRisk] = useState(false);
 
   // ============================================================
   // Data Loading
@@ -120,6 +121,7 @@ export default function MaterialControlsWorkflow() {
 
   useEffect(() => {
     loadPrincipalRisks();
+    loadCompletedRisks();
   }, []);
 
   const loadPrincipalRisks = async () => {
@@ -128,6 +130,15 @@ export default function MaterialControlsWorkflow() {
       setPrincipalRisks(data);
     } catch (error) {
       console.error('Failed to load principal risks:', error);
+    }
+  };
+
+  const loadCompletedRisks = async () => {
+    try {
+      const data = await apiService.getCompletedRisks();
+      setCompletedRisks(data);
+    } catch (error) {
+      console.error('Failed to load completed risks:', error);
     }
   };
 
@@ -414,6 +425,7 @@ export default function MaterialControlsWorkflow() {
   const handleCompleteRisk = async () => {
     if (!selectedRisk || !gapAnalysis || !implementationPlan) return;
 
+    setIsCompletingRisk(true);
     try {
       // Save all controls to the Risk-Control Library
       const allControls = [...gapAnalysis.existingControls, ...implementationPlan.phases.flatMap(p => p.controls)];
@@ -456,18 +468,23 @@ export default function MaterialControlsWorkflow() {
         await apiService.saveSection2Control(section2Data);
       }
 
+      // Save completion status to database
+      const completionData = {
+        riskId: selectedRisk.id,
+        riskTitle: selectedRisk.riskTitle,
+        status: 'complete' as const,
+        currentLevel: selectedCurrentLevel!,
+        targetLevel: targetLevel!,
+        controlCount: implementationPlan.totalControls,
+        currentScore: gapAnalysis.currentScore,
+        targetScore: gapAnalysis.targetScore,
+      };
+
+      await apiService.saveRiskCompletion(completionData);
+
       setCompletedRisks([
         ...completedRisks,
-        {
-          riskId: selectedRisk.id,
-          riskTitle: selectedRisk.riskTitle,
-          status: 'complete',
-          currentLevel: selectedCurrentLevel!,
-          targetLevel: targetLevel!,
-          controlCount: implementationPlan.totalControls,
-          currentScore: gapAnalysis.currentScore,
-          targetScore: gapAnalysis.targetScore,
-        },
+        completionData,
       ]);
 
       setAllDocumentedControls([...allDocumentedControls, ...allControls]);
@@ -479,6 +496,8 @@ export default function MaterialControlsWorkflow() {
     } catch (error) {
       console.error('Failed to save controls:', error);
       alert('Failed to save controls to Risk-Control Library. Please try again.');
+    } finally {
+      setIsCompletingRisk(false);
     }
   };
 
@@ -1781,9 +1800,18 @@ export default function MaterialControlsWorkflow() {
               <Pencil className="h-4 w-4 mr-2" />
               Adjust Priorities
             </Button>
-            <Button onClick={handleCompleteRisk}>
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Accept & Complete Risk
+            <Button onClick={handleCompleteRisk} disabled={isCompletingRisk}>
+              {isCompletingRisk ? (
+                <>
+                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Saving Controls...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Accept & Complete Risk
+                </>
+              )}
             </Button>
           </div>
         </div>
