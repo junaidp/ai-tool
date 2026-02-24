@@ -290,6 +290,35 @@ class ApiService {
     });
   }
 
+  generateMaturityControlsForRisk(data: {
+    riskTitle: string;
+    riskStatement: string;
+    riskCategory: string;
+    maturityLevel: number;
+  }) {
+    return this.request<{
+      level: number;
+      levelName: string;
+      maturityScore: string;
+      typicalControls: string[];
+      characteristics: string[];
+      specificControls: Array<{
+        title: string;
+        description: string;
+        type: string;
+        objectives: string[];
+        defaultOwner: string;
+        defaultFrequency: string;
+        defaultEvidence: string;
+        maturityScore: number;
+        implementationEffort: string;
+      }>;
+    }>('/ai/generate-maturity-controls', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   editCriteriaWithAI(data: {
     criteriaId: string;
     currentCriteria: {

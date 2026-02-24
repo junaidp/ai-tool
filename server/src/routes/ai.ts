@@ -189,3 +189,30 @@ aiRouter.post('/edit-criteria', async (req, res) => {
     });
   }
 });
+
+// Generate risk-specific maturity controls
+aiRouter.post('/generate-maturity-controls', async (req, res) => {
+  try {
+    const { riskTitle, riskStatement, riskCategory, maturityLevel } = req.body;
+
+    if (!riskTitle || !riskStatement || !maturityLevel) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const result = await aiService.generateMaturityControlsForRisk(
+      riskTitle,
+      riskStatement,
+      riskCategory || 'General',
+      maturityLevel
+    );
+
+    res.json(result);
+  } catch (error: any) {
+    console.error('AI maturity controls generation error:', error);
+    console.error('Error details:', error.message, error.response?.data);
+    res.status(500).json({ 
+      error: 'Failed to generate maturity controls',
+      details: error.message 
+    });
+  }
+});

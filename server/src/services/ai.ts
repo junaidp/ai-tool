@@ -649,3 +649,125 @@ Ensure the updated criterion is specific, measurable, and aligned with the user'
     explanation: parsed.explanation || 'Criteria updated based on your request.',
   };
 }
+
+export async function generateMaturityControlsForRisk(
+  riskTitle: string,
+  riskStatement: string,
+  riskCategory: string,
+  maturityLevel: number
+): Promise<any> {
+  const levelNames: Record<number, string> = {
+    1: 'BASIC (Ad Hoc)',
+    2: 'DEVELOPING (Basic Formal)',
+    3: 'DEFINED (Systematic)',
+    4: 'ADVANCED (Optimized)'
+  };
+
+  const prompt = `You are an expert in enterprise risk management and control frameworks. Generate risk-specific controls for a maturity level.
+
+RISK INFORMATION:
+Risk Title: ${riskTitle}
+Risk Statement: ${riskStatement}
+Risk Category: ${riskCategory}
+
+MATURITY LEVEL: ${maturityLevel} - ${levelNames[maturityLevel]}
+
+Your task is to generate controls specifically tailored to this risk at this maturity level. The controls should be contextual and relevant to the specific risk, not generic.
+
+MATURITY LEVEL GUIDANCE:
+
+LEVEL 1: BASIC (Ad Hoc) - Maturity Score 1.0-1.5/5
+- No formal framework or playbook
+- Reactive approach to issues
+- Ad hoc meetings and informal documentation
+- Minimal systematic processes
+- Basic awareness but limited action
+- 3-4 controls typical
+
+LEVEL 2: DEVELOPING (Basic Formal) - Maturity Score 2.0-2.5/5
+- Formal committee/team established
+- Basic plan created with limited detail
+- Monthly reporting on progress
+- Some proactive planning
+- Documentation improved but not systematic
+- Success metrics defined but not systematically tracked
+- 5-6 controls typical
+
+LEVEL 3: DEFINED (Systematic) - Maturity Score 3.0-3.5/5
+- Comprehensive framework/playbook deployed
+- Dedicated resources (full-time team)
+- Proactive programs with metrics
+- Detailed roadmaps and tracking systems
+- Weekly (not monthly) monitoring
+- Early warning systems for issues
+- Cross-functional coordination
+- Defined metrics and KPIs tracked
+- 8-10 controls typical
+
+LEVEL 4: ADVANCED (Optimized) - Maturity Score 4.0-5.0/5
+- All Level 3 controls PLUS:
+- Pre-emptive planning (before issues arise)
+- Predictive analytics (AI/ML)
+- Real-time automated dashboards
+- Continuously optimized processes (machine learning)
+- Dedicated permanent capability center
+- Benchmarking against industry best practice
+- Scenario planning and stress testing
+- Technology-enabled automation
+- 10-12 controls typical
+
+INSTRUCTIONS:
+1. Generate ${maturityLevel === 1 ? '3-4' : maturityLevel === 2 ? '5-6' : maturityLevel === 3 ? '8-10' : '10-12'} specific controls for this risk at this maturity level
+2. Each control should be directly relevant to mitigating this specific risk
+3. Controls should reflect the sophistication level of the maturity stage
+4. Include realistic details (owners, frequency, evidence types)
+
+Return JSON with:
+{
+  "level": ${maturityLevel},
+  "levelName": "${levelNames[maturityLevel]}",
+  "maturityScore": "X.X-Y.Y / 5",
+  "typicalControls": [array of 4-6 bullet points describing typical controls at this level],
+  "characteristics": [array of 6-8 bullet points describing characteristics of this maturity level],
+  "specificControls": [
+    {
+      "title": "Control name",
+      "description": "Detailed description of what this control does and how it mitigates the risk. Should be 2-4 sentences.",
+      "type": "preventive|detective|corrective",
+      "objectives": ["operations", "financial", "compliance", "reporting"],
+      "defaultOwner": "Role (e.g., CFO, CRO, IT Director)",
+      "defaultFrequency": "continuous|daily|weekly|monthly|quarterly|annually|ad_hoc",
+      "defaultEvidence": "What evidence exists for this control",
+      "maturityScore": X.X,
+      "implementationEffort": "low|medium|high"
+    }
+  ]
+}
+
+Make the controls realistic, specific to this risk, and appropriate for the maturity level.`;
+
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4-turbo-preview',
+    messages: [
+      {
+        role: 'system',
+        content: 'You are an expert in enterprise risk management, internal controls, and maturity models. You generate detailed, risk-specific controls that are contextually appropriate for each maturity level.',
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
+    response_format: { type: 'json_object' },
+    temperature: 0.8,
+  });
+
+  const response = completion.choices[0].message.content;
+  if (!response) {
+    throw new Error('No response from OpenAI');
+  }
+
+  console.log('AI Maturity Controls Response:', response);
+
+  return JSON.parse(response);
+}

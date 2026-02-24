@@ -87,6 +87,8 @@ export default function MaterialControlsWorkflow() {
   const [maturityPackages, setMaturityPackages] = useState<MaturityPackage[]>([]);
   const [expandedLevel, setExpandedLevel] = useState<MaturityLevel | null>(null);
   const [selectedCurrentLevel, setSelectedCurrentLevel] = useState<MaturityLevel | null>(null);
+  const [aiGeneratedControls, setAiGeneratedControls] = useState<Record<number, any>>({});
+  const [loadingAIControls, setLoadingAIControls] = useState<Record<number, boolean>>({});
 
   // Step 2: Document Current Controls
   const [currentLevelPackage, setCurrentLevelPackage] = useState<MaturityPackage | null>(null);
@@ -172,7 +174,37 @@ export default function MaterialControlsWorkflow() {
     setSuggestedControls([]);
     setCurrentSuggestionIdx(0);
     setImplementationPlan(null);
+    setAiGeneratedControls({});
+    setLoadingAIControls({});
     setCurrentStep(1);
+  };
+
+  const loadAIControlsForLevel = async (level: MaturityLevel) => {
+    if (!selectedRisk || aiGeneratedControls[level] || loadingAIControls[level]) return;
+
+    setLoadingAIControls(prev => ({ ...prev, [level]: true }));
+    try {
+      const result = await apiService.generateMaturityControlsForRisk({
+        riskTitle: selectedRisk.riskTitle,
+        riskStatement: selectedRisk.riskStatement,
+        riskCategory: selectedRisk.domainTags?.[0] || 'General',
+        maturityLevel: level,
+      });
+      setAiGeneratedControls(prev => ({ ...prev, [level]: result }));
+    } catch (error) {
+      console.error('Failed to generate AI controls:', error);
+    } finally {
+      setLoadingAIControls(prev => ({ ...prev, [level]: false }));
+    }
+  };
+
+  const handleToggleLevel = (level: MaturityLevel) => {
+    if (expandedLevel === level) {
+      setExpandedLevel(null);
+    } else {
+      setExpandedLevel(level);
+      loadAIControlsForLevel(level);
+    }
   };
 
   const handleSelectCurrentLevel = (level: MaturityLevel) => {
@@ -621,7 +653,7 @@ export default function MaterialControlsWorkflow() {
                     className="flex items-start gap-4 p-4 cursor-pointer"
                     onClick={() => {
                       handleSelectCurrentLevel(pkg.level);
-                      setExpandedLevel(isExpanded ? null : pkg.level);
+                      handleToggleLevel(pkg.level);
                     }}
                   >
                     <div className="mt-1">
@@ -652,35 +684,100 @@ export default function MaterialControlsWorkflow() {
 
                   {isExpanded && (
                     <div className="px-4 pb-4 pl-13 border-t">
-                      <div className="pt-4 pl-9 space-y-3">
-                        <div>
-                          <h5 className="text-sm font-medium mb-1">Typical Controls:</h5>
-                          <ul className="space-y-1">
-                            {pkg.controlTemplates.map(t => (
-                              <li key={t.id} className="flex items-center gap-2 text-sm">
-                                <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
-                                {t.title}
-                              </li>
-                            ))}
-                          </ul>
+                      {loadingAIControls[pkg.level] ? (
+                        <div className="pt-4 pl-9 flex items-center gap-3 text-sm text-muted-foreground">
+                          <Sparkles className="h-4 w-4 animate-pulse text-blue-600" />
+                          <span>AI is generating risk-specific controls for this maturity level...</span>
                         </div>
-                        <div>
-                          <h5 className="text-sm font-medium mb-1">Characteristics:</h5>
-                          <ul className="space-y-1">
-                            {pkg.characteristics.map((c, i) => (
-                              <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full flex-shrink-0" />
-                                {c}
-                              </li>
-                            ))}
-                          </ul>
+                      ) : aiGeneratedControls[pkg.level] ? (
+                        <div className="pt-4 pl-9 space-y-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Sparkles className="h-4 w-4 text-purple-600" />
+                            <span className="text-xs font-medium text-purple-600">AI-Generated Risk-Specific Controls</span>
+                          </div>
+                          
+                          <div>
+                            <h5 className="text-sm font-medium mb-2">Typical Controls:</h5>
+                            <ul className="space-y-1">
+                              {aiGeneratedControls[pkg.level].typicalControls?.map((control: string, i: number) => (
+                                <li key={i} className="flex items-center gap-2 text-sm">
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                                  {control}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          
+                          <div>
+                            <h5 className="text-sm font-medium mb-2">Characteristics:</h5>
+                            <ul className="space-y-1">
+                              {aiGeneratedControls[pkg.level].characteristics?.map((c: string, i: number) => (
+                                <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full flex-shrink-0" />
+                                  {c}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          
+                          <div>
+                            <h5 className="text-sm font-medium mb-2">Specific Controls ({aiGeneratedControls[pkg.level].specificControls?.length || 0}):</h5>
+                            <div className="space-y-2">
+                              {aiGeneratedControls[pkg.level].specificControls?.slice(0, 3).map((control: any, i: number) => (
+                                <div key={i} className="bg-gray-50 rounded-lg p-3 border">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1">
+                                      <p className="text-sm font-medium">{control.title}</p>
+                                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{control.description}</p>
+                                    </div>
+                                    <Badge variant="outline" className="text-xs">{control.type}</Badge>
+                                  </div>
+                                  <div className="flex gap-2 mt-2">
+                                    <span className="text-xs text-muted-foreground">Owner: {control.defaultOwner}</span>
+                                    <span className="text-xs text-muted-foreground">•</span>
+                                    <span className="text-xs text-muted-foreground">{control.defaultFrequency}</span>
+                                  </div>
+                                </div>
+                              ))}
+                              {aiGeneratedControls[pkg.level].specificControls?.length > 3 && (
+                                <p className="text-xs text-muted-foreground italic">
+                                  ... and {aiGeneratedControls[pkg.level].specificControls.length - 3} more controls
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        {pkg.exampleCompanies && pkg.exampleCompanies.length > 0 && (
-                          <p className="text-xs text-muted-foreground italic">
-                            {pkg.exampleCompanies[0]}
-                          </p>
-                        )}
-                      </div>
+                      ) : (
+                        <div className="pt-4 pl-9 space-y-3">
+                          <div>
+                            <h5 className="text-sm font-medium mb-1">Typical Controls:</h5>
+                            <ul className="space-y-1">
+                              {pkg.controlTemplates.map(t => (
+                                <li key={t.id} className="flex items-center gap-2 text-sm">
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                                  {t.title}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <h5 className="text-sm font-medium mb-1">Characteristics:</h5>
+                            <ul className="space-y-1">
+                              {pkg.characteristics.map((c, i) => (
+                                <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full flex-shrink-0" />
+                                  {c}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          {pkg.exampleCompanies && pkg.exampleCompanies.length > 0 && (
+                            <p className="text-xs text-muted-foreground italic">
+                              {pkg.exampleCompanies[0]}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
