@@ -411,28 +411,71 @@ export default function MaterialControlsWorkflow() {
     setCurrentStep(6);
   };
 
-  const handleCompleteRisk = () => {
+  const handleCompleteRisk = async () => {
     if (!selectedRisk || !gapAnalysis || !implementationPlan) return;
 
-    setCompletedRisks([
-      ...completedRisks,
-      {
-        riskId: selectedRisk.id,
-        riskTitle: selectedRisk.riskTitle,
-        status: 'complete',
-        currentLevel: selectedCurrentLevel!,
-        targetLevel: targetLevel!,
-        controlCount: implementationPlan.totalControls,
-        currentScore: gapAnalysis.currentScore,
-        targetScore: gapAnalysis.targetScore,
-      },
-    ]);
+    try {
+      // Save all controls to the Risk-Control Library
+      const allControls = [...gapAnalysis.existingControls, ...implementationPlan.phases.flatMap(p => p.controls)];
+      
+      for (const control of allControls) {
+        // Create control in the Control table (Risk-Control Library)
+        await apiService.createControl({
+          name: control.title,
+          description: control.description || '',
+          type: control.type === 'preventive' ? 'preventive' : control.type === 'detective' ? 'detective' : 'corrective',
+          automation: 'manual',
+          frequency: control.frequency || 'monthly',
+          owner: control.owner || 'To be assigned',
+          linkedRisks: [selectedRisk.riskTitle],
+          effectiveness: 'effective',
+          evidenceSource: control.evidence || 'To be documented',
+        });
 
-    const newControls = implementationPlan.phases.flatMap(p => p.controls);
-    setAllDocumentedControls([...allDocumentedControls, ...gapAnalysis.existingControls, ...newControls]);
+        // Also save to Section2Control table for Material Controls tracking
+        await apiService.saveSection2Control({
+          riskId: selectedRisk.id,
+          title: control.title,
+          description: control.description || '',
+          controlType: control.type,
+          objectives: control.objectives || [],
+          owner: control.owner || '',
+          reviewer: control.reviewer || '',
+          frequency: control.frequency || 'monthly',
+          evidence: control.evidence || '',
+          status: control.status || 'existing',
+          maturityLevel: selectedCurrentLevel || 1,
+          source: control.source || 'workflow_documented',
+          implementationPhase: control.implementationPhase,
+          implementationEffort: control.implementationEffort,
+          implementationTimeline: control.implementationTimeline,
+        });
+      }
 
-    setSelectedRisk(null);
-    setCurrentStep(0);
+      setCompletedRisks([
+        ...completedRisks,
+        {
+          riskId: selectedRisk.id,
+          riskTitle: selectedRisk.riskTitle,
+          status: 'complete',
+          currentLevel: selectedCurrentLevel!,
+          targetLevel: targetLevel!,
+          controlCount: implementationPlan.totalControls,
+          currentScore: gapAnalysis.currentScore,
+          targetScore: gapAnalysis.targetScore,
+        },
+      ]);
+
+      setAllDocumentedControls([...allDocumentedControls, ...allControls]);
+
+      alert(`✅ Risk completed! ${allControls.length} controls have been saved to the Risk-Control Library.`);
+      
+      setSelectedRisk(null);
+      setCurrentStep(0);
+    } catch (error) {
+      console.error('Failed to save controls:', error);
+      alert('Failed to save controls to Risk-Control Library. Please try again.');
+    }
   };
 
   // ============================================================
@@ -859,7 +902,7 @@ export default function MaterialControlsWorkflow() {
             </div>
 
             <div>
-              <Label className="text-sm font-medium">Do you have this control?</Label>
+              <Label className="text-sm font-medium">Do you have this control? <span className="text-red-500">*</span></Label>
               <div className="mt-2 space-y-2">
                 {[
                   { value: 'yes', label: 'Yes, we have this' },
@@ -871,6 +914,7 @@ export default function MaterialControlsWorkflow() {
                     className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
                       doc.hasControl === opt.value ? 'border-primary bg-primary/5' : 'hover:bg-accent'
                     }`}
+                    onClick={() => updateDoc({ hasControl: opt.value as 'yes' | 'no' | 'similar' })}
                   >
                     <div
                       className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
@@ -1026,7 +1070,12 @@ export default function MaterialControlsWorkflow() {
                 {currentControlIdx > 0 ? 'Previous Control' : 'Back'}
               </Button>
               <Button
+                disabled={!doc.hasControl}
                 onClick={() => {
+                  if (!doc.hasControl) {
+                    alert('Please select whether you have this control before proceeding.');
+                    return;
+                  }
                   if (currentControlIdx < templates.length - 1) {
                     setCurrentControlIdx(currentControlIdx + 1);
                   } else {
