@@ -7,9 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
 import { apiService } from '@/services/api';
 import type { PrincipalRisk, Process, AsIsControl, Gap, ToBeControl } from '@/types';
-import { AlertTriangle, Building2, ChevronRight, ChevronLeft, CheckCircle2, Sparkles, Target, FileText, Download } from 'lucide-react';
+import { AlertTriangle, Building2, ChevronRight, ChevronLeft, CheckCircle2, Sparkles, Target, FileText, Download, Plus, Search, CheckCircle, XCircle, Shield } from 'lucide-react';
 
 type WorkflowStep = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -26,6 +28,14 @@ interface MaturityAnswers {
   monitoring: string;
   priorIssues: string;
 }
+
+// Helper function to transform API response
+const transformApiMaterialControl = (control: any) => ({
+  ...control,
+  dependencies: typeof control.dependencies === 'string' 
+    ? JSON.parse(control.dependencies || '[]') 
+    : control.dependencies || []
+});
 
 export default function MaterialControls() {
   // Step navigation
@@ -69,9 +79,9 @@ export default function MaterialControls() {
   
   // Step 6: To-Be Controls & RCM
   const [toBeControls, setToBeControls] = useState<ToBeControl[]>([]);
-
-export default function MaterialControls() {
-  const [controls, setControls] = useState<MaterialControl[]>([]);
+  
+  // Legacy material controls state (to be migrated)
+  const [controls, setControls] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAiScoringOpen, setIsAiScoringOpen] = useState(false);
   const [isScoring, setIsScoring] = useState(false);

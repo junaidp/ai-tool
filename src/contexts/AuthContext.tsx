@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { User, AuthContextType } from '@/types/auth';
+import { hasPermission as checkPermission, hasAnyPermission as checkAnyPermission, hasAllPermissions as checkAllPermissions } from '@/types/roles';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://ai-tool-9o3q.onrender.com/api';
 
@@ -54,13 +55,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('token');
   };
 
+  const hasPermission = (permission: string): boolean => {
+    if (!user) return false;
+    return checkPermission(user.role, permission as any);
+  };
+
+  const hasAnyPermission = (permissions: string[]): boolean => {
+    if (!user) return false;
+    return checkAnyPermission(user.role, permissions as any[]);
+  };
+
+  const hasAllPermissions = (permissions: string[]): boolean => {
+    if (!user) return false;
+    return checkAllPermissions(user.role, permissions as any[]);
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
       isAuthenticated: !!user, 
       isLoading,
       login, 
-      logout 
+      logout,
+      hasPermission,
+      hasAnyPermission,
+      hasAllPermissions
     }}>
       {children}
     </AuthContext.Provider>

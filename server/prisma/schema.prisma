@@ -11,18 +11,66 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String
-  role      String
+  role      UserRole @default(CONTROL_OWNER)
+  department String?
   password  String
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  approvals      ApprovalWorkflow[] @relation("Approver")
+  approvals          ApprovalWorkflow[] @relation("Approver")
   requestedApprovals ApprovalWorkflow[] @relation("Requester")
-  ownedControls  MaterialControl[]
-  ownedRisks     Risk[]
-  ownedIssues    Issue[]
+  ownedControls      MaterialControl[]
+  ownedRisks         Risk[]
+  ownedIssues        Issue[]
+  comments           Comment[]
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+  assignedControls   ControlAssignment[]
+  createdVersions    Version[]
 }
 
+enum UserRole {
+  SYSTEM_ADMIN
+  FRAMEWORK_OWNER
+  CONTROLS_MANAGER
+  CONTROL_OWNER
+  REVIEWER
+  BOARD_MEMBER
+}
+
+// New Effectiveness Criteria Framework Models
+model EffectivenessCriteriaConfig {
+  id                String   @id @default(uuid())
+  companyId         String   @default("default")
+  version           String   @default("1.0")
+  pathway           String   // "guided" or "custom"
+  
+  // Company Profile (JSON)
+  companyProfile    String   // JSON: stage, ownership, regulatory, priorities, maturity, riskAppetite, size
+  
+  // The 7 Criteria Configurations (JSON)
+  criteriaConfig    String   // JSON: riskIdentification, frameworkDesign, controlOperating, issueResponsiveness, riskOutcome, governance, continuousImprovement
+  
+  // Overall Target
+  overallTarget     Int      @default(85)
+  
+  // Approval
+  boardApproved     Boolean  @default(false)
+  approvedBy        String?
+  approvedDate      DateTime?
+  
+  // Version tracking
+  active            Boolean  @default(true)
+  supersedesId      String?  // Previous version
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([companyId, active])
+}
+
+// Legacy model - keeping for backward compatibility during migration
 model EffectivenessCriteria {
   id            String   @id @default(uuid())
   dimension     String
@@ -187,11 +235,23 @@ model ApprovalWorkflow {
 model AuditLog {
   id        String   @id @default(uuid())
   userId    String
-  action    String
-  entity    String
+  userEmail String
+  userName  String
+  action    String   // CREATED, EDITED, DELETED, APPROVED, REJECTED, SUBMITTED, LOCKED, etc.
+  entity    String   // Risk, Control, Assessment, etc.
   entityId  String
-  changes   String
+  field     String?  // Specific field changed
+  oldValue  String?  // Previous value
+  newValue  String?  // New value
+  changes   String?  // JSON of all changes
+  ipAddress String?
   timestamp DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([timestamp])
 }
 
 // Principal Risks and Material Controls Workflow Models
@@ -440,4 +500,345 @@ model Section2RiskCompletion {
   targetScore   Float
   completedAt   DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// Workflow State Management Models
+
+model WorkflowState {
+  id            String   @id @default(uuid())
+  entityType    String   // Section0, Section1, Section2, Section3, Risk, Control
+  entityId      String
+  status        WorkflowStatus @default(DRAFT)
+  submittedBy   String?
+  submittedAt   DateTime?
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  approvedBy    String?
+  approvedAt    DateTime?
+  lockedBy      String?
+  lockedAt      DateTime?
+  version       Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@unique([entityType, entityId])
+  @@index([status])
+}
+
+enum WorkflowStatus {
+  DRAFT
+  IN_REVIEW
+  CHANGES_REQUESTED
+  APPROVED
+  BOARD_APPROVED
+  LOCKED
+  ARCHIVED
+}
+
+// Comments and Collaboration
+
+model Comment {
+  id            String   @id @default(uuid())
+  entityType    String   // Risk, Control, Assessment, etc.
+  entityId      String
+  userId        String
+  content       String
+  parentId      String?  // For threaded replies
+  status        CommentStatus @default(OPEN)
+  resolvedBy    String?
+  resolvedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  user          User     @relation(fields: [userId], references: [id])
+  parent        Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies       Comment[] @relation("CommentReplies")
+  
+  @@index([entityType, entityId])
+  @@index([userId])
+}
+
+enum CommentStatus {
+  OPEN
+  RESOLVED
+  REOPENED
+}
+
+// Notifications System
+
+model Notification {
+  id            String   @id @default(uuid())
+  userId        String
+  type          NotificationType
+  title         String
+  message       String
+  entityType    String?
+  entityId      String?
+  actionUrl     String?
+  read          Boolean  @default(false)
+  emailSent     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  
+  user          User     @relation(fields: [userId], references: [id])
+  
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  CONTROL_ASSIGNED
+  TESTING_ASSIGNED
+  REVIEW_REQUESTED
+  CHANGES_REQUESTED
+  APPROVAL_GRANTED
+  DEADLINE_APPROACHING
+  DEADLINE_MISSED
+  COMMENT_ADDED
+  COMMENT_RESOLVED
+  EVIDENCE_UPLOADED
+  DEFICIENCY_ASSIGNED
+  REMEDIATION_DUE
+  BOARD_APPROVAL_REQUIRED
+}
+
+// Version Control System
+
+model Version {
+  id            String   @id @default(uuid())
+  entityType    String   // Risk, Control, EffectivenessCriteria, etc.
+  entityId      String
+  versionNumber Int
+  data          String   // JSON snapshot of the entity
+  changes       String?  // Description of changes
+  createdBy     String
+  createdAt     DateTime @default(now())
+  
+  user          User     @relation(fields: [createdBy], references: [id])
+  
+  @@unique([entityType, entityId, versionNumber])
+  @@index([entityType, entityId])
+}
+
+// Control Assignment and Testing
+
+model ControlAssignment {
+  id            String   @id @default(uuid())
+  controlId     String
+  userId        String
+  assignedBy    String
+  role          AssignmentRole
+  status        AssignmentStatus @default(ASSIGNED)
+  dueDate       DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  user          User     @relation(fields: [userId], references: [id])
+  
+  @@index([userId, status])
+  @@index([controlId])
+}
+
+enum AssignmentRole {
+  DOCUMENTER
+  TESTER
+  REVIEWER
+  APPROVER
+}
+
+enum AssignmentStatus {
+  ASSIGNED
+  IN_PROGRESS
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+// Section 3: Control Testing (5 Effectiveness Tests)
+
+model ControlTestingResult {
+  id                    String   @id @default(uuid())
+  controlId             String
+  assessmentPeriod      String   // e.g., "2025"
+  testerId              String
+  testerName            String
+  
+  // Test 1: Design Effectiveness
+  designEffective       Boolean?
+  designNotes           String?
+  designScore           Int?     // 0-5
+  
+  // Test 2: Operating Effectiveness
+  operatingEffective    Boolean?
+  operatingRate         Float?   // Percentage
+  instancesTested       Int?
+  instancesPassed       Int?
+  operatingNotes        String?
+  operatingScore        Int?     // 0-5
+  
+  // Test 3: Evidence Effectiveness
+  evidenceEffective     Boolean?
+  evidenceNotes         String?
+  evidenceScore         Int?     // 0-5
+  
+  // Test 4: Responsiveness Effectiveness
+  responsivenessEffective Boolean?
+  issuesIdentified      Int?
+  issuesActioned        Int?
+  responsivenessNotes   String?
+  responsivenessScore   Int?     // 0-5
+  
+  // Test 5: Competence Effectiveness
+  competenceEffective   Boolean?
+  competenceNotes       String?
+  competenceScore       Int?     // 0-5
+  
+  // Overall Rating
+  overallRating         ControlEffectiveness?
+  totalScore            Int?     // Sum of all scores
+  rationale             String?
+  
+  // Evidence
+  evidenceFiles         String?  // JSON array of file references
+  
+  // Workflow
+  status                TestingStatus @default(NOT_STARTED)
+  submittedAt           DateTime?
+  reviewedBy            String?
+  reviewedAt            DateTime?
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@index([controlId, assessmentPeriod])
+  @@index([testerId])
+}
+
+enum ControlEffectiveness {
+  EFFECTIVE
+  PARTIALLY_EFFECTIVE
+  INEFFECTIVE
+}
+
+enum TestingStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  APPROVED
+  FLAGGED_AS_DEFICIENCY
+}
+
+// Section 3: Framework Assessment (4-Layer Assessment)
+
+model FrameworkAssessment {
+  id                String   @id @default(uuid())
+  riskId            String
+  assessmentPeriod  String   // e.g., "2025"
+  
+  // Layer 1: Risk Trending
+  priorYearScore    Int?
+  currentYearScore  Int?
+  trendEvidence     String?  // JSON
+  
+  // Layer 2: Incidents
+  incidentsOccurred Boolean  @default(false)
+  incidentCount     Int      @default(0)
+  incidentDetails   String?  // JSON
+  nearMisses        String?  // JSON
+  
+  // Layer 3: Leading Indicators
+  indicatorData     String?  // JSON: 12-month trend
+  percentToTarget   Float?
+  
+  // Layer 4: Objectives
+  objectives        String?  // JSON: actual vs target
+  achievementPercent Float?
+  
+  overallScore      Int?
+  status            String   @default("draft")
+  completedBy       String?
+  completedAt       DateTime?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@unique([riskId, assessmentPeriod])
+}
+
+// Section 3: Deficiency Management
+
+model Deficiency {
+  id                String   @id @default(uuid())
+  controlId         String?
+  riskId            String?
+  type              DeficiencyType
+  severity          DeficiencySeverity
+  title             String
+  description       String
+  rootCause         String?
+  identifiedDate    DateTime @default(now())
+  identifiedBy      String
+  
+  // Remediation
+  remediationPlan   String?
+  responsibleOwner  String?
+  targetDate        DateTime?
+  verificationMethod String?
+  
+  status            DeficiencyStatus @default(IDENTIFIED)
+  closedDate        DateTime?
+  closedBy          String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([status])
+  @@index([severity])
+}
+
+enum DeficiencyType {
+  CONTROL_DESIGN
+  CONTROL_OPERATING
+  CONTROL_EVIDENCE
+  CONTROL_RESPONSIVENESS
+  CONTROL_COMPETENCE
+  FRAMEWORK_INCIDENT
+  OBJECTIVE_MISSED
+}
+
+enum DeficiencySeverity {
+  SIGNIFICANT
+  MINOR
+}
+
+enum DeficiencyStatus {
+  IDENTIFIED
+  REMEDIATION_PLANNED
+  IN_REMEDIATION
+  PENDING_VERIFICATION
+  CLOSED
+}
+
+// Board Reporting
+
+model BoardDeclaration {
+  id                String   @id @default(uuid())
+  assessmentPeriod  String
+  declarationType   DeclarationType
+  effectivenessScore Float?
+  deficiencyCount   Int      @default(0)
+  significantDeficiencies String? // JSON
+  boardMinutes      String?  // File reference
+  declaredBy        String
+  declaredDate      DateTime
+  
+  createdAt         DateTime @default(now())
+  
+  @@unique([assessmentPeriod])
+}
+
+enum DeclarationType {
+  CLEAN
+  WITH_DISCLOSED_DEFICIENCIES
+  QUALIFIED_MATERIAL_WEAKNESS
 }

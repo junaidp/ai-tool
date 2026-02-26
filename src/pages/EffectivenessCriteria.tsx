@@ -168,6 +168,24 @@ export default function EffectivenessCriteriaPage() {
         return;
       }
 
+      // Check if criteria already exist
+      if (criteria.length > 0) {
+        const confirmRegenerate = confirm(
+          `⚠️ Warning: You already have ${criteria.length} effectiveness criteria.\n\n` +
+          'Generating new criteria will DELETE all existing criteria and replace them with AI-generated ones.\n\n' +
+          'Do you want to proceed?'
+        );
+        
+        if (!confirmRegenerate) {
+          return;
+        }
+
+        // Delete all existing criteria
+        for (const item of criteria) {
+          await apiService.deleteEffectivenessCriteria(item.id);
+        }
+      }
+
       // Call AI to generate criteria with categorization
       const response = await apiService.generateCriteriaWithAI({
         regulatoryPosture: aiFormData.regulatoryPosture,

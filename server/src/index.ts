@@ -23,6 +23,14 @@ import { asIsControlsRouter } from './routes/asIsControls';
 import { gapsRouter } from './routes/gaps';
 import { toBeControlsRouter } from './routes/toBeControls';
 import { section2Router } from './routes/section2';
+import effectivenessCriteriaV2Router from './routes/effectiveness-criteria-v2';
+import { usersRouter } from './routes/users';
+import { workflowRouter } from './routes/workflow';
+import { commentsRouter } from './routes/comments';
+import { notificationsRouter } from './routes/notifications';
+import { versionsRouter } from './routes/versions';
+import { auditRouter } from './routes/audit';
+import { controlTestingRouter } from './routes/control-testing';
 
 dotenv.config();
 
@@ -36,6 +44,13 @@ app.use(cors({
 app.use(express.json());
 
 app.use('/api/auth', authRouter);
+app.use('/api/users', usersRouter);
+app.use('/api/workflow', workflowRouter);
+app.use('/api/comments', commentsRouter);
+app.use('/api/notifications', notificationsRouter);
+app.use('/api/versions', versionsRouter);
+app.use('/api/audit', auditRouter);
+app.use('/api/control-testing', controlTestingRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/effectiveness-criteria', effectivenessCriteriaRouter);
 app.use('/api/framework-components', frameworkComponentsRouter);
@@ -57,6 +72,7 @@ app.use('/api/as-is-controls', asIsControlsRouter);
 app.use('/api/gaps', gapsRouter);
 app.use('/api/to-be-controls', toBeControlsRouter);
 app.use('/api/section2', section2Router);
+app.use('/api/effectiveness-criteria-v2', effectivenessCriteriaV2Router);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

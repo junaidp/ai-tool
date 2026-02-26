@@ -514,3 +514,6 @@ export interface CoverageAnalysis {
   byRisk: { riskId: string; riskTitle: string; count: number; status: 'good' | 'acceptable' | 'low' }[];
   warnings: string[];
 }
+
+// Re-export effectiveness types
+export * from './effectiveness';

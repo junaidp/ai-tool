@@ -21,6 +21,7 @@ export const mockEffectivenessCriteria: EffectivenessCriteria[] = [
     evidenceType: ['Design documentation', 'Risk-control matrices'],
     frequency: 'annual',
     status: 'approved',
+    categorization: 'H',
     approvedBy: 'John Smith',
     approvedDate: '2024-01-15',
   },
@@ -32,6 +33,7 @@ export const mockEffectivenessCriteria: EffectivenessCriteria[] = [
     evidenceType: ['Test results', 'Evidence logs'],
     frequency: 'quarterly',
     status: 'approved',
+    categorization: 'C',
     approvedBy: 'John Smith',
     approvedDate: '2024-01-15',
   },
@@ -43,6 +45,7 @@ export const mockEffectivenessCriteria: EffectivenessCriteria[] = [
     evidenceType: ['Continuous monitoring alerts', 'Exception reports'],
     frequency: 'continuous',
     status: 'approved',
+    categorization: 'C',
     approvedBy: 'John Smith',
     approvedDate: '2024-01-15',
   },
@@ -54,6 +57,7 @@ export const mockEffectivenessCriteria: EffectivenessCriteria[] = [
     evidenceType: ['Meeting minutes', 'Decision logs'],
     frequency: 'quarterly',
     status: 'in_review',
+    categorization: 'B',
   },
 ];
 

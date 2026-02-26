@@ -1,9 +1,4 @@
-export type UserRole = 
-  | 'board' 
-  | 'control_owner' 
-  | 'risk_compliance' 
-  | 'internal_audit' 
-  | 'framework_admin';
+import { UserRole } from './roles';
 
 export interface User {
   id: string;
@@ -11,7 +6,9 @@ export interface User {
   name: string;
   role: UserRole;
   department?: string;
+  isActive: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface AuthContextType {
@@ -20,6 +17,9 @@ export interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  hasPermission: (permission: string) => boolean;
+  hasAnyPermission: (permissions: string[]) => boolean;
+  hasAllPermissions: (permissions: string[]) => boolean;
 }
 
 export interface LoginCredentials {
@@ -27,7 +27,25 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface RegisterData {
+  email: string;
+  password: string;
+  name: string;
+  role: UserRole;
+  department?: string;
+}
+
 export interface AuthResponse {
   user: User;
   token: string;
 }
+
+export interface UpdateUserData {
+  name?: string;
+  email?: string;
+  role?: UserRole;
+  department?: string;
+  isActive?: boolean;
+}
+
+export { UserRole };

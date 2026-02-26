@@ -1,5 +1,6 @@
 import prisma from './db';
 import bcrypt from 'bcryptjs';
+import { UserRole } from '@prisma/client';
 
 async function main() {
   console.log('🌱 Seeding database...');
@@ -26,27 +27,27 @@ async function main() {
     {
       email: 'board@company.com',
       name: 'Sarah Thompson',
-      role: 'board',
+      role: UserRole.BOARD_MEMBER,
     },
     {
       email: 'owner@company.com',
       name: 'Michael Chen',
-      role: 'control_owner',
+      role: UserRole.CONTROL_OWNER,
     },
     {
       email: 'risk@company.com',
       name: 'David Martinez',
-      role: 'risk_compliance',
+      role: UserRole.CONTROLS_MANAGER,
     },
     {
       email: 'audit@company.com',
       name: 'Emily Johnson',
-      role: 'internal_audit',
+      role: UserRole.REVIEWER,
     },
     {
       email: 'admin@company.com',
       name: 'Rachel Adams',
-      role: 'framework_admin',
+      role: UserRole.FRAMEWORK_OWNER,
     },
   ];
 

@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Target,
@@ -13,11 +13,17 @@ import {
   Menu,
   X,
   LogOut,
+  Users,
+  Settings,
+  CheckCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import NotificationCenter from './NotificationCenter';
+import { Permission } from '@/types/roles';
+import { ROLE_DISPLAY_NAMES } from '@/types/roles';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -34,14 +40,7 @@ const navigation = [
 ];
 
 const getRoleDisplay = (role: string) => {
-  const roleMap: Record<string, string> = {
-    board: 'Board Member',
-    control_owner: 'Control Owner',
-    risk_compliance: 'Risk & Compliance',
-    internal_audit: 'Internal Audit',
-    framework_admin: 'Framework Admin'
-  };
-  return roleMap[role] || role;
+  return ROLE_DISPLAY_NAMES[role as keyof typeof ROLE_DISPLAY_NAMES] || role;
 };
 
 export default function Layout() {
@@ -56,12 +55,15 @@ export default function Layout() {
           <Shield className="h-6 w-6 text-primary" />
           <span className="font-semibold text-lg">RiskControl</span>
         </div>
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 rounded-md hover:bg-gray-100"
-        >
-          {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationCenter />
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 rounded-md hover:bg-gray-100"
+          >
+            {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </div>
 
       <div

@@ -4,7 +4,7 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
-import EffectivenessCriteria from './pages/EffectivenessCriteria';
+import EffectivenessCriteria from './pages/EffectivenessCriteriaV2';
 import FrameworkBuilder from './pages/FrameworkBuilder';
 import PrincipalRisks from './pages/PrincipalRisks';
 import MaterialControls from './pages/MaterialControlsWorkflow';
