@@ -662,9 +662,11 @@ model ControlTestingResult {
   assessmentPeriod      String   // e.g., "2025"
   testerId              String
   testerName            String
+  dueDate               DateTime?
   
   // Test 1: Design Effectiveness
   designEffective       Boolean?
+  designQuestions       String?  // JSON array of question responses
   designNotes           String?
   designScore           Int?     // 0-5
   
@@ -673,11 +675,13 @@ model ControlTestingResult {
   operatingRate         Float?   // Percentage
   instancesTested       Int?
   instancesPassed       Int?
+  instanceDetails       String?  // JSON array of instance test results
   operatingNotes        String?
   operatingScore        Int?     // 0-5
   
   // Test 3: Evidence Effectiveness
   evidenceEffective     Boolean?
+  evidenceQuestions     String?  // JSON array of question responses
   evidenceNotes         String?
   evidenceScore         Int?     // 0-5
   
@@ -685,11 +689,13 @@ model ControlTestingResult {
   responsivenessEffective Boolean?
   issuesIdentified      Int?
   issuesActioned        Int?
+  responsivenessDetails String?  // JSON array of issue reviews
   responsivenessNotes   String?
   responsivenessScore   Int?     // 0-5
   
   // Test 5: Competence Effectiveness
   competenceEffective   Boolean?
+  competenceQuestions   String?  // JSON array of question responses
   competenceNotes       String?
   competenceScore       Int?     // 0-5
   
@@ -706,12 +712,14 @@ model ControlTestingResult {
   submittedAt           DateTime?
   reviewedBy            String?
   reviewedAt            DateTime?
+  reviewComments        String?
   
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
   
-  @@index([controlId, assessmentPeriod])
+  @@unique([controlId, assessmentPeriod])
   @@index([testerId])
+  @@index([status])
 }
 
 enum ControlEffectiveness {

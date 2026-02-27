@@ -12,6 +12,8 @@ import RiskControlLibrary from './pages/RiskControlLibrary';
 import Integrations from './pages/Integrations';
 import ControlGapRadar from './pages/ControlGapRadar';
 import TestingCoordination from './pages/TestingCoordination';
+import ControlTesting from './pages/ControlTesting';
+import ControlTestingAssignment from './pages/ControlTestingAssignment';
 import Approvals from './pages/Approvals';
 import BoardReporting from './pages/BoardReporting';
 
@@ -53,6 +55,8 @@ function App() {
           <Route path="integrations" element={<Integrations />} />
           <Route path="control-gaps" element={<ControlGapRadar />} />
           <Route path="testing" element={<TestingCoordination />} />
+          <Route path="control-testing" element={<ControlTesting />} />
+          <Route path="control-testing-assignment" element={<ControlTestingAssignment />} />
           <Route path="approvals" element={<Approvals />} />
           <Route path="board-reporting" element={<BoardReporting />} />
         </Route>

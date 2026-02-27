@@ -16,6 +16,8 @@ import {
   Users,
   Settings,
   CheckCircle,
+  ClipboardCheck,
+  UserCheck,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -35,6 +37,8 @@ const navigation = [
   { name: 'System Integrations', href: '/integrations', icon: Plug },
   { name: 'Control Gap Radar', href: '/control-gaps', icon: AlertTriangle },
   { name: 'Testing Coordination', href: '/testing', icon: FlaskConical },
+  { name: 'Control Testing', href: '/control-testing', icon: ClipboardCheck },
+  { name: 'Testing Assignment', href: '/control-testing-assignment', icon: UserCheck },
   { name: 'Approvals', href: '/approvals', icon: CheckSquare },
   { name: 'Board Reporting', href: '/board-reporting', icon: FileText },
 ];
