@@ -153,7 +153,13 @@ export default function EffectivenessCriteriaV2Page() {
         }
       );
 
-      setSavedConfig(data);
+      const parsedConfig: EffectivenessCriteriaConfig = {
+        ...data,
+        companyProfile: typeof data.companyProfile === 'string' ? JSON.parse(data.companyProfile) : data.companyProfile,
+        criteriaConfig: typeof data.criteriaConfig === 'string' ? JSON.parse(data.criteriaConfig) : data.criteriaConfig,
+      };
+
+      setSavedConfig(parsedConfig);
       setCurrentView('display');
       alert('✅ Effectiveness criteria saved successfully!');
     } catch (error) {
@@ -231,7 +237,7 @@ export default function EffectivenessCriteriaV2Page() {
                   <li>🎯 Expert guidance</li>
                   <li>✨ AI-powered recommendations</li>
                 </ul>
-                <Button className="w-full mt-4">
+                <Button className="w-full mt-4" onClick={handleStartGuided}>
                   Start Guided Setup <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </CardContent>
@@ -248,7 +254,7 @@ export default function EffectivenessCriteriaV2Page() {
                   <li>🎛️ Full control</li>
                   <li>👨‍💼 For sophisticated users</li>
                 </ul>
-                <Button variant="outline" className="w-full mt-4">
+                <Button variant="outline" className="w-full mt-4" onClick={(e) => { e.stopPropagation(); handleStartCustom(); }}>
                   Start Custom Setup <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </CardContent>
@@ -738,6 +744,32 @@ export default function EffectivenessCriteriaV2Page() {
     );
   };
 
+  const renderCustomConfig = () => (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Custom Effectiveness Configuration</CardTitle>
+          <CardDescription>Manual builder coming soon. For now, use the guided workflow.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground">
+            The custom pathway will allow you to manually set weights, targets, and rationale for each of the
+            seven effectiveness criteria. This feature is under construction.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button variant="outline" onClick={() => setCurrentView('landing')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to landing
+            </Button>
+            <Button onClick={handleStartGuided} className="flex-1">
+              Use Guided Workflow
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   const renderDisplay = () => {
     if (!savedConfig) return null;
 
@@ -930,6 +962,7 @@ export default function EffectivenessCriteriaV2Page() {
       {currentView === 'landing' && renderLanding()}
       {currentView === 'guided-questions' && renderGuidedQuestions()}
       {currentView === 'recommendation' && renderRecommendation()}
+      {currentView === 'custom-config' && renderCustomConfig()}
       {currentView === 'display' && renderDisplay()}
     </div>
   );
