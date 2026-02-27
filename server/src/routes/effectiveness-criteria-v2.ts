@@ -1,11 +1,11 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
 const router = express.Router();
 const prisma = new PrismaClient();
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 // AI Weighting Recommendation Engine
@@ -434,8 +434,8 @@ router.post('/generate-board-document', async (req, res) => {
     const criteria = JSON.parse(config.criteriaConfig);
 
     // Use AI to generate board approval document
-    const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
       max_tokens: 4000,
       messages: [{
         role: 'user',
@@ -471,7 +471,7 @@ Format as markdown.`
       }]
     });
 
-    const document = message.content[0].type === 'text' ? message.content[0].text : '';
+    const document = completion.choices[0]?.message?.content || '';
 
     res.json({ document });
   } catch (error) {

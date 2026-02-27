@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Target,
@@ -13,9 +13,6 @@ import {
   Menu,
   X,
   LogOut,
-  Users,
-  Settings,
-  CheckCircle,
   ClipboardCheck,
   UserCheck,
 } from 'lucide-react';
@@ -24,7 +21,6 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import NotificationCenter from './NotificationCenter';
-import { Permission } from '@/types/roles';
 import { ROLE_DISPLAY_NAMES } from '@/types/roles';
 
 const navigation = [
