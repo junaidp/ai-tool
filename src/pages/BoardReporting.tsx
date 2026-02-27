@@ -1200,7 +1200,7 @@ Material Weaknesses: No material weaknesses were identified during the period un
                           <td className="p-2 border"><Badge variant="success">Effective</Badge></td>
                         </tr>
                         <tr>
-                          <td className="p-2 border" colSpan={5} className="text-center text-muted-foreground">
+                          <td className="p-2 border text-center text-muted-foreground" colSpan={5}>
                             ... and {(data?.controlHealth.tested || 158) - 4} more test results
                           </td>
                         </tr>

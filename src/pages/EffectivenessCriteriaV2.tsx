@@ -11,9 +11,18 @@ import { Slider } from '@/components/ui/slider';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ArrowRight, ArrowLeft, CheckCircle, Sparkles, FileText, Download, Star } from 'lucide-react';
 import { SEVEN_CRITERIA, STRATEGIC_PRIORITIES, type CompanyProfile, type ContextAnswers, type EffectivenessCriteriaConfig, type WeightingRecommendation } from '@/types/effectiveness';
-import axios from 'axios';
+const API_BASE_RAW = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3001';
+const API_BASE = API_BASE_RAW.replace(/\/$/, '');
+const API_ROOT = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+async function fetchJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
+  const response = await fetch(input, init);
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => '');
+    throw new Error(`Request failed (${response.status}): ${errorText || response.statusText}`);
+  }
+  return response.json() as Promise<T>;
+}
 
 export default function EffectivenessCriteriaV2Page() {
   const [currentView, setCurrentView] = useState<'landing' | 'pathway-select' | 'guided-questions' | 'custom-config' | 'recommendation' | 'display'>('landing');
@@ -33,9 +42,11 @@ export default function EffectivenessCriteriaV2Page() {
 
   const loadExistingConfig = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/api/effectiveness-criteria-v2/config`);
-      if (response.data) {
-        setSavedConfig(response.data);
+      const data = await fetchJson<EffectivenessCriteriaConfig | null>(
+        `${API_ROOT}/effectiveness-criteria-v2/config`
+      );
+      if (data) {
+        setSavedConfig(data);
         setCurrentView('display');
       }
     } catch (error) {
@@ -88,11 +99,16 @@ export default function EffectivenessCriteriaV2Page() {
         }
       };
 
-      const response = await axios.post(`${API_BASE}/api/effectiveness-criteria-v2/generate-recommendation`, {
-        profile
-      });
+      const data = await fetchJson<WeightingRecommendation>(
+        `${API_ROOT}/effectiveness-criteria-v2/generate-recommendation`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profile })
+        }
+      );
 
-      setRecommendation(response.data);
+      setRecommendation(data);
       setCurrentView('recommendation');
     } catch (error) {
       console.error('Error generating recommendation:', error);
@@ -123,14 +139,21 @@ export default function EffectivenessCriteriaV2Page() {
         }
       };
 
-      const response = await axios.post(`${API_BASE}/api/effectiveness-criteria-v2/save-config`, {
-        companyProfile: profile,
-        criteria: recommendation.criteriaConfigs,
-        overallTarget: recommendation.overallTarget,
-        pathway: 'guided'
-      });
+      const data = await fetchJson<EffectivenessCriteriaConfig>(
+        `${API_ROOT}/effectiveness-criteria-v2/save-config`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            companyProfile: profile,
+            criteria: recommendation.criteriaConfigs,
+            overallTarget: recommendation.overallTarget,
+            pathway: 'guided'
+          })
+        }
+      );
 
-      setSavedConfig(response.data);
+      setSavedConfig(data);
       setCurrentView('display');
       alert('✅ Effectiveness criteria saved successfully!');
     } catch (error) {
@@ -146,11 +169,16 @@ export default function EffectivenessCriteriaV2Page() {
 
     setIsLoading(true);
     try {
-      const response = await axios.post(`${API_BASE}/api/effectiveness-criteria-v2/generate-board-document`, {
-        configId: savedConfig.id
-      });
+      const data = await fetchJson<{ document: string }>(
+        `${API_ROOT}/effectiveness-criteria-v2/generate-board-document`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ configId: savedConfig.id })
+        }
+      );
 
-      setBoardDocument(response.data.document);
+      setBoardDocument(data.document);
       setShowBoardDoc(true);
     } catch (error) {
       console.error('Error generating board document:', error);
