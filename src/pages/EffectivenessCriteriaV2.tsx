@@ -17,9 +17,13 @@ const API_ROOT = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
 
 async function fetchJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
   const response = await fetch(input, init);
-  if (!response.ok) {
+  if (!response.ok && response.status !== 304) {
     const errorText = await response.text().catch(() => '');
     throw new Error(`Request failed (${response.status}): ${errorText || response.statusText}`);
+  }
+  // Handle 304 Not Modified - return null as the cached data should be used
+  if (response.status === 304) {
+    return null as T;
   }
   return response.json() as Promise<T>;
 }
