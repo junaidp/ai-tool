@@ -18,6 +18,7 @@ export default function PrincipalRisksPage() {
   const [editingRisk, setEditingRisk] = useState<PrincipalRisk | null>(null);
   const [showAIWizard, setShowAIWizard] = useState(false);
   const [isSavingAIRisks, setIsSavingAIRisks] = useState(false);
+  const [showReconfigureDialog, setShowReconfigureDialog] = useState(false);
   
   const [formData, setFormData] = useState({
     riskTitle: '',
@@ -159,9 +160,15 @@ export default function PrincipalRisksPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowAIWizard(true)} className="border-blue-300 text-blue-700 hover:bg-blue-50">
+          <Button variant="outline" onClick={() => {
+            if (risks.length > 0) {
+              setShowReconfigureDialog(true);
+            } else {
+              setShowAIWizard(true);
+            }
+          }} className="border-blue-300 text-blue-700 hover:bg-blue-50">
             <Sparkles className="h-4 w-4 mr-2" />
-            AI Risk Identification
+            {risks.length > 0 ? 'Reconfigure Risks' : 'AI Risk Identification'}
           </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -353,6 +360,84 @@ export default function PrincipalRisksPage() {
           </ul>
         </CardContent>
       </Card>
+
+      {/* Reconfigure Dialog */}
+      <Dialog open={showReconfigureDialog} onOpenChange={setShowReconfigureDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Reconfigure Principal Risks</DialogTitle>
+            <DialogDescription>
+              You have {risks.length} existing principal risk{risks.length !== 1 ? 's' : ''}. Choose how to proceed:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Card className="border-orange-200 bg-orange-50">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-orange-900 mb-2">Clear and Restart</h4>
+                    <p className="text-sm text-orange-800 mb-4">
+                      Delete all existing principal risks and start fresh with the AI wizard. 
+                      This will remove all {risks.length} current risk{risks.length !== 1 ? 's' : ''} and allow you to generate new ones based on updated answers.
+                    </p>
+                    <Button 
+                      variant="destructive"
+                      onClick={async () => {
+                        if (confirm(`Are you sure you want to delete all ${risks.length} existing principal risks? This action cannot be undone.`)) {
+                          try {
+                            for (const risk of risks) {
+                              await apiService.deletePrincipalRisk(risk.id);
+                            }
+                            await loadRisks();
+                            setShowReconfigureDialog(false);
+                            setShowAIWizard(true);
+                          } catch (error) {
+                            console.error('Failed to delete risks:', error);
+                            alert('Failed to delete some risks. Please try again.');
+                          }
+                        }
+                      }}
+                    >
+                      Clear All & Restart Wizard
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-blue-200 bg-blue-50">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <Plus className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-blue-900 mb-2">Add More Risks</h4>
+                    <p className="text-sm text-blue-800 mb-4">
+                      Keep existing risks and add new ones from the AI wizard. 
+                      New risks will be added to your current list of {risks.length} risk{risks.length !== 1 ? 's' : ''}.
+                    </p>
+                    <Button 
+                      variant="outline"
+                      className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                      onClick={() => {
+                        setShowReconfigureDialog(false);
+                        setShowAIWizard(true);
+                      }}
+                    >
+                      Add More Risks
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowReconfigureDialog(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

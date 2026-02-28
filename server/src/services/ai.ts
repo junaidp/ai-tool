@@ -329,7 +329,7 @@ function buildCategoryPrompt(
 
   return `You are an expert in enterprise risk management, FRC guidance, and principal risk identification for UK companies.
 
-Generate 2-5 ${label} THREAT risks with complete, board-quality definitions based on the business context AND the user's targeted answers for this threat category.
+Generate ${label} THREAT risks with complete, board-quality definitions based on the business context AND the user's targeted answers for this threat category.
 
 THREAT CATEGORY: ${label}
 ${description}
@@ -348,7 +348,7 @@ ${answersText}
 
 REQUIREMENTS:
 1. Generate ONLY risks that fall under the ${label} threat category
-2. Generate 2-5 risks (not more) based on the user's answers
+2. Generate as many risks as are relevant based on the user's answers (typically 2-6 risks, but can be more if the user has indicated multiple significant concerns)
 3. Each risk MUST have a FULL, board-quality definition (5-10 sentences minimum)
 4. Reference SPECIFIC details from the business context (revenue figures, customer details, employee counts, industry specifics)
 5. Reference SPECIFIC details from the user's answers

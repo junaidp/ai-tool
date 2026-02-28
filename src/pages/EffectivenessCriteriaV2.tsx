@@ -35,6 +35,8 @@ export default function EffectivenessCriteriaV2Page() {
   const [isLoading, setIsLoading] = useState(false);
   const [showBoardDoc, setShowBoardDoc] = useState(false);
   const [boardDocument, setBoardDocument] = useState('');
+  const [isEditingBoardDoc, setIsEditingBoardDoc] = useState(false);
+  const [editedBoardDoc, setEditedBoardDoc] = useState('');
 
   useEffect(() => {
     loadExistingConfig();
@@ -185,6 +187,8 @@ export default function EffectivenessCriteriaV2Page() {
       );
 
       setBoardDocument(data.document);
+      setEditedBoardDoc(data.document);
+      setIsEditingBoardDoc(false);
       setShowBoardDoc(true);
     } catch (error) {
       console.error('Error generating board document:', error);
@@ -934,21 +938,139 @@ export default function EffectivenessCriteriaV2Page() {
         </Card>
 
         <Dialog open={showBoardDoc} onOpenChange={setShowBoardDoc}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Board Approval Document</DialogTitle>
+              <DialogTitle className="text-2xl">Board Approval Document</DialogTitle>
               <DialogDescription>
                 Generated board paper for effectiveness criteria approval
               </DialogDescription>
             </DialogHeader>
-            <div className="prose prose-sm max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: boardDocument.replace(/\n/g, '<br/>') }} />
-            </div>
-            <DialogFooter>
+            {isEditingBoardDoc ? (
+              <div className="space-y-4">
+                <Textarea
+                  value={editedBoardDoc}
+                  onChange={(e) => setEditedBoardDoc(e.target.value)}
+                  rows={25}
+                  className="font-mono text-sm"
+                />
+                <div className="flex gap-2">
+                  <Button onClick={() => {
+                    setBoardDocument(editedBoardDoc);
+                    setIsEditingBoardDoc(false);
+                  }}>
+                    Save Changes
+                  </Button>
+                  <Button variant="outline" onClick={() => {
+                    setEditedBoardDoc(boardDocument);
+                    setIsEditingBoardDoc(false);
+                  }}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg border shadow-sm">
+                <div className="p-8 space-y-6">
+                  {boardDocument.split('\n\n').map((paragraph, idx) => {
+                    const trimmed = paragraph.trim();
+                    if (!trimmed) return null;
+                    
+                    // Check if it's a heading
+                    if (trimmed.startsWith('# ')) {
+                      return (
+                        <h1 key={idx} className="text-3xl font-bold text-gray-900 border-b-2 border-blue-600 pb-3">
+                          {trimmed.substring(2)}
+                        </h1>
+                      );
+                    }
+                    if (trimmed.startsWith('## ')) {
+                      return (
+                        <h2 key={idx} className="text-2xl font-semibold text-gray-800 mt-6 mb-3">
+                          {trimmed.substring(3)}
+                        </h2>
+                      );
+                    }
+                    if (trimmed.startsWith('### ')) {
+                      return (
+                        <h3 key={idx} className="text-xl font-semibold text-gray-700 mt-4 mb-2">
+                          {trimmed.substring(4)}
+                        </h3>
+                      );
+                    }
+                    
+                    // Check if it's a list item
+                    if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+                      const items = paragraph.split('\n').filter(line => line.trim().startsWith('-') || line.trim().startsWith('*'));
+                      return (
+                        <ul key={idx} className="list-disc list-inside space-y-2 text-gray-700 ml-4">
+                          {items.map((item, i) => (
+                            <li key={i} className="leading-relaxed">
+                              {item.substring(2).trim()}
+                            </li>
+                          ))}
+                        </ul>
+                      );
+                    }
+                    
+                    // Check if it's a numbered list
+                    if (/^\d+\./.test(trimmed)) {
+                      const items = paragraph.split('\n').filter(line => /^\d+\./.test(line.trim()));
+                      return (
+                        <ol key={idx} className="list-decimal list-inside space-y-2 text-gray-700 ml-4">
+                          {items.map((item, i) => (
+                            <li key={i} className="leading-relaxed">
+                              {item.replace(/^\d+\.\s*/, '').trim()}
+                            </li>
+                          ))}
+                        </ol>
+                      );
+                    }
+                    
+                    // Check if it contains bold text
+                    const boldRegex = /\*\*(.*?)\*\*/g;
+                    if (boldRegex.test(trimmed)) {
+                      const parts = trimmed.split(boldRegex);
+                      return (
+                        <p key={idx} className="text-gray-700 leading-relaxed text-justify">
+                          {parts.map((part, i) => 
+                            i % 2 === 1 ? <strong key={i} className="font-semibold text-gray-900">{part}</strong> : part
+                          )}
+                        </p>
+                      );
+                    }
+                    
+                    // Regular paragraph
+                    return (
+                      <p key={idx} className="text-gray-700 leading-relaxed text-justify">
+                        {trimmed}
+                      </p>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            <DialogFooter className="flex gap-2">
               <Button variant="outline" onClick={() => setShowBoardDoc(false)}>Close</Button>
-              <Button>
+              {!isEditingBoardDoc && (
+                <Button variant="outline" onClick={() => {
+                  setEditedBoardDoc(boardDocument);
+                  setIsEditingBoardDoc(true);
+                }}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              )}
+              <Button onClick={() => {
+                const blob = new Blob([boardDocument], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `board-approval-document-${new Date().toISOString().split('T')[0]}.md`;
+                link.click();
+                URL.revokeObjectURL(url);
+              }}>
                 <Download className="h-4 w-4 mr-2" />
-                Download PDF
+                Download
               </Button>
             </DialogFooter>
           </DialogContent>
