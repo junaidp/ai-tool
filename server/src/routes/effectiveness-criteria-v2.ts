@@ -417,6 +417,170 @@ router.post('/approve', async (req, res) => {
   }
 });
 
+// POST /api/effectiveness-criteria-v2/generate-custom-framework
+router.post('/generate-custom-framework', async (req, res) => {
+  try {
+    const { companyProfile, effectivenessCriteria, companyName } = req.body;
+
+    // Use AI to generate the complete custom framework
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      max_tokens: 16000,
+      temperature: 0.7,
+      messages: [{
+        role: 'user',
+        content: `You are an expert in UK Corporate Governance Code Provision 29 compliance and risk management frameworks.
+
+Generate a complete Material Controls Framework document for the following company:
+
+COMPANY PROFILE:
+- Company Name: ${companyName}
+- Stage: ${companyProfile.stage}
+- Ownership: ${companyProfile.ownership}
+- Regulatory Environment: ${companyProfile.regulatory}
+- Current Maturity Level: ${companyProfile.maturity}
+- Risk Appetite: ${companyProfile.riskAppetite}
+- Strategic Priorities: ${companyProfile.priorities?.join(', ')}
+- Size: ${companyProfile.size.revenue} revenue, ${companyProfile.size.employees} employees
+- Geographic Scope: ${companyProfile.size.geographic}
+- Complexity: ${companyProfile.size.complexity}
+
+EFFECTIVENESS CRITERIA (User's Custom Weightings):
+- Risk Identification: ${effectivenessCriteria.weights.riskIdentification}%
+- Framework Design: ${effectivenessCriteria.weights.frameworkDesign}%
+- Control Operating: ${effectivenessCriteria.weights.controlOperating}%
+- Issue Responsiveness: ${effectivenessCriteria.weights.issueResponsiveness}% ${effectivenessCriteria.weights.issueResponsiveness >= 20 ? '(HIGH PRIORITY)' : ''}
+- Risk Outcome: ${effectivenessCriteria.weights.riskOutcome}%
+- Governance: ${effectivenessCriteria.weights.governance}%
+- Continuous Improvement: ${effectivenessCriteria.weights.continuousImprovement}%
+Overall Target: ${effectivenessCriteria.overallTarget}%
+
+Generate a complete custom framework with these 5 CORE ELEMENTS. Each element should be 2-4 paragraphs of detailed, actionable content tailored to this specific company:
+
+1. RISK IDENTIFICATION APPROACH
+   - Methodology for identifying principal risks (FRC's 4 categories: business model, performance, solvency, liquidity)
+   - Prioritization criteria (likelihood × impact scoring)
+   - Review cycle (quarterly/annual)
+   - Tailor to their industry, stage, and priorities
+
+2. CONTROL DESIGN METHODOLOGY
+   - Maturity-based approach (current Level ${companyProfile.maturity}, target Level ${Math.min(companyProfile.maturity + 1, 4)})
+   - Control design principles (preventive/detective/corrective balance)
+   - Implementation timeline (3 phases over 12 months)
+   - Emphasize their #1 effectiveness priority
+
+3. EFFECTIVENESS ASSESSMENT CRITERIA
+   - How "effective" is defined using THEIR weighted criteria
+   - Overall threshold (${effectivenessCriteria.overallTarget}% = effective)
+   - Testing methodology (varies by risk priority)
+   - Specific metrics for each criterion
+
+4. GOVERNANCE & ACCOUNTABILITY
+   - Three lines of defense structure
+   - Board oversight responsibilities and meeting cadence
+   - Management accountability (CFO as framework owner)
+   - Escalation process with timeframes
+   - Tailor to their ownership structure (${companyProfile.ownership})
+
+5. CONTINUOUS IMPROVEMENT PROCESS
+   - Improvement triggers (new risks, control failures, maturity progression)
+   - Review cycles (quarterly, annual, post-incident)
+   - Maturity journey roadmap (Level ${companyProfile.maturity} → Level ${Math.min(companyProfile.maturity + 1, 4)} over 2-3 years)
+   - Learning capture process
+
+Also generate:
+- EXECUTIVE SUMMARY (3-4 paragraphs summarizing the framework)
+- CURRENT RISK PROFILE (example: "13 principal risks identified, 8 HIGH priority")
+- CURRENT CONTROL PROFILE (example: "58 material controls, average maturity 2.2")
+- MATURITY JOURNEY (3-year roadmap from current to target maturity)
+
+IMPORTANT REQUIREMENTS:
+- Use plain, professional language (NO COSO jargon)
+- Make it specific to THIS company's context
+- Reference their priorities, ownership structure, and maturity level throughout
+- The framework should feel like THEIR framework, not a generic template
+- Focus on practical, actionable guidance
+- Emphasize their highest-weighted effectiveness criterion
+
+Return as JSON with this structure:
+{
+  "frameworkName": "string (e.g., '${companyName} Material Controls Framework')",
+  "executiveSummary": "string (3-4 paragraphs)",
+  "elements": {
+    "riskIdentification": {
+      "title": "Risk Identification Approach",
+      "content": "string (detailed content)"
+    },
+    "controlDesign": {
+      "title": "Control Design Methodology", 
+      "content": "string (detailed content)"
+    },
+    "effectivenessAssessment": {
+      "title": "Effectiveness Assessment Criteria",
+      "content": "string (detailed content)"
+    },
+    "governance": {
+      "title": "Governance & Accountability",
+      "content": "string (detailed content)"
+    },
+    "continuousImprovement": {
+      "title": "Continuous Improvement Process",
+      "content": "string (detailed content)"
+    }
+  },
+  "currentRiskProfile": "string (1-2 paragraphs)",
+  "currentControlProfile": "string (1-2 paragraphs)",
+  "maturityJourney": "string (3-year roadmap, 2-3 paragraphs)"
+}`
+      }]
+    });
+
+    const responseText = completion.choices[0]?.message?.content || '';
+    
+    // Parse the JSON response
+    let frameworkData;
+    try {
+      // Extract JSON from markdown code blocks if present
+      const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/) || responseText.match(/```\n([\s\S]*?)\n```/);
+      const jsonText = jsonMatch ? jsonMatch[1] : responseText;
+      frameworkData = JSON.parse(jsonText);
+    } catch (parseError) {
+      console.error('Failed to parse AI response:', parseError);
+      return res.status(500).json({ error: 'Failed to parse framework generation response' });
+    }
+
+    // Add metadata
+    const framework = {
+      id: `framework_${Date.now()}`,
+      name: frameworkData.frameworkName,
+      version: '1.0',
+      effectiveDate: new Date().toISOString().split('T')[0],
+      companyName,
+      companyProfile,
+      effectivenessCriteria,
+      elements: {
+        riskIdentification: { ...frameworkData.elements.riskIdentification, id: 'risk_id', order: 1 },
+        controlDesign: { ...frameworkData.elements.controlDesign, id: 'control_design', order: 2 },
+        effectivenessAssessment: { ...frameworkData.elements.effectivenessAssessment, id: 'effectiveness', order: 3 },
+        governance: { ...frameworkData.elements.governance, id: 'governance', order: 4 },
+        continuousImprovement: { ...frameworkData.elements.continuousImprovement, id: 'improvement', order: 5 }
+      },
+      executiveSummary: frameworkData.executiveSummary,
+      currentRiskProfile: frameworkData.currentRiskProfile,
+      currentControlProfile: frameworkData.currentControlProfile,
+      maturityJourney: frameworkData.maturityJourney,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      approved: false
+    };
+
+    res.json(framework);
+  } catch (error) {
+    console.error('Error generating custom framework:', error);
+    res.status(500).json({ error: 'Failed to generate custom framework' });
+  }
+});
+
 // POST /api/effectiveness-criteria-v2/generate-board-document
 router.post('/generate-board-document', async (req, res) => {
   try {

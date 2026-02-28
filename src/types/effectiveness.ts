@@ -5,7 +5,7 @@ export type OwnershipType = 'public' | 'pe' | 'vc' | 'private' | 'other';
 export type RegulatoryEnvironment = 'heavy' | 'moderate' | 'light';
 export type MaturityLevel = 1 | 2 | 3 | 4;
 export type RiskAppetite = 'low' | 'moderate' | 'high';
-export type PathwayType = 'guided' | 'custom';
+export type PathwayType = 'guided' | 'custom' | 'ai-framework';
 
 export interface CompanySize {
   revenue: string; // "<£10M" | "£10-50M" | "£50-100M" | "£100-500M" | ">£500M"
@@ -234,3 +234,41 @@ export const STRATEGIC_PRIORITIES = [
   'Digital Transformation',
   'Cost Reduction'
 ];
+
+// Custom Framework Types
+export interface CustomFrameworkElement {
+  id: string;
+  title: string;
+  content: string;
+  order: number;
+}
+
+export interface CustomFramework {
+  id: string;
+  name: string;
+  version: string;
+  effectiveDate: string;
+  companyName: string;
+  companyProfile: CompanyProfile;
+  effectivenessCriteria: WeightingRecommendation;
+  
+  // 5 Core Elements
+  elements: {
+    riskIdentification: CustomFrameworkElement;
+    controlDesign: CustomFrameworkElement;
+    effectivenessAssessment: CustomFrameworkElement;
+    governance: CustomFrameworkElement;
+    continuousImprovement: CustomFrameworkElement;
+  };
+  
+  executiveSummary: string;
+  currentRiskProfile: string;
+  currentControlProfile: string;
+  maturityJourney: string;
+  
+  createdAt: string;
+  updatedAt: string;
+  approved: boolean;
+  approvedBy?: string;
+  approvedDate?: string;
+}

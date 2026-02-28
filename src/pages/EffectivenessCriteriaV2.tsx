@@ -11,7 +11,7 @@ import { Slider } from '@/components/ui/slider';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowRight, ArrowLeft, CheckCircle, Sparkles, FileText, Download, Star, Edit } from 'lucide-react';
-import { SEVEN_CRITERIA, STRATEGIC_PRIORITIES, type CompanyProfile, type ContextAnswers, type EffectivenessCriteriaConfig, type WeightingRecommendation } from '@/types/effectiveness';
+import { SEVEN_CRITERIA, STRATEGIC_PRIORITIES, type CompanyProfile, type ContextAnswers, type EffectivenessCriteriaConfig, type WeightingRecommendation, type CustomFramework } from '@/types/effectiveness';
 const API_BASE_RAW = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3001';
 const API_BASE = API_BASE_RAW.replace(/\/$/, '');
 const API_ROOT = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
@@ -30,8 +30,8 @@ async function fetchJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> 
 }
 
 export default function EffectivenessCriteriaV2Page() {
-  const [currentView, setCurrentView] = useState<'landing' | 'pathway-select' | 'guided-questions' | 'custom-config' | 'recommendation' | 'display'>('landing');
-  const [selectedPathway, setSelectedPathway] = useState<'guided' | 'custom' | null>(null);
+  const [currentView, setCurrentView] = useState<'landing' | 'pathway-select' | 'guided-questions' | 'custom-config' | 'recommendation' | 'display' | 'ai-framework-setup' | 'ai-framework-preview'>('landing');
+  const [selectedPathway, setSelectedPathway] = useState<'guided' | 'custom' | 'ai-framework' | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [answers, setAnswers] = useState<ContextAnswers>({});
   const [recommendation, setRecommendation] = useState<WeightingRecommendation | null>(null);
@@ -43,6 +43,8 @@ export default function EffectivenessCriteriaV2Page() {
   const [boardDocument, setBoardDocument] = useState('');
   const [isEditingBoardDoc, setIsEditingBoardDoc] = useState(false);
   const [editedBoardDoc, setEditedBoardDoc] = useState('');
+  const [customFramework, setCustomFramework] = useState<CustomFramework | null>(null);
+  const [companyName, setCompanyName] = useState('');
 
   useEffect(() => {
     loadExistingConfig();
@@ -75,6 +77,112 @@ export default function EffectivenessCriteriaV2Page() {
   const handleStartCustom = () => {
     setSelectedPathway('custom');
     setCurrentView('custom-config');
+  };
+
+  const handleStartAIFramework = () => {
+    setSelectedPathway('ai-framework');
+    setCurrentView('guided-questions');
+    setCurrentQuestion(1);
+    setAnswers({});
+  };
+
+  const handleGenerateFramework = async () => {
+    if (!recommendation || !companyName.trim()) {
+      alert('Please provide a company name');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const profile: CompanyProfile = {
+        stage: answers.stage!,
+        ownership: answers.ownership!,
+        ownershipOther: answers.ownershipOther,
+        regulatory: answers.regulatory!,
+        priorities: answers.priorities || [],
+        maturity: answers.maturity!,
+        riskAppetite: answers.riskAppetite!,
+        size: {
+          revenue: answers.revenue!,
+          employees: answers.employees!,
+          geographic: answers.geographic!,
+          complexity: answers.complexity!
+        }
+      };
+
+      const data = await fetchJson<CustomFramework>(
+        `${API_ROOT}/effectiveness-criteria-v2/generate-custom-framework`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            companyProfile: profile,
+            effectivenessCriteria: recommendation,
+            companyName: companyName.trim()
+          })
+        }
+      );
+
+      setCustomFramework(data);
+      setCurrentView('ai-framework-preview');
+    } catch (error) {
+      console.error('Error generating framework:', error);
+      alert('Failed to generate custom framework. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleApproveFramework = async () => {
+    if (!customFramework || !recommendation) return;
+
+    setIsLoading(true);
+    try {
+      const profile: CompanyProfile = {
+        stage: answers.stage!,
+        ownership: answers.ownership!,
+        ownershipOther: answers.ownershipOther,
+        regulatory: answers.regulatory!,
+        priorities: answers.priorities || [],
+        maturity: answers.maturity!,
+        riskAppetite: answers.riskAppetite!,
+        size: {
+          revenue: answers.revenue!,
+          employees: answers.employees!,
+          geographic: answers.geographic!,
+          complexity: answers.complexity!
+        }
+      };
+
+      const data = await fetchJson<EffectivenessCriteriaConfig>(
+        `${API_ROOT}/effectiveness-criteria-v2/save-config`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            companyProfile: profile,
+            criteria: recommendation.criteriaConfigs,
+            overallTarget: recommendation.overallTarget,
+            pathway: 'ai-framework'
+          })
+        }
+      );
+
+      const parsedConfig: EffectivenessCriteriaConfig = {
+        ...data,
+        companyProfile: typeof data.companyProfile === 'string' ? JSON.parse(data.companyProfile) : data.companyProfile,
+        criteriaConfig: typeof data.criteriaConfig === 'string' ? JSON.parse(data.criteriaConfig) : data.criteriaConfig,
+      };
+
+      setSavedConfig(parsedConfig);
+      setCurrentView('display');
+      alert('✅ Custom framework and effectiveness criteria saved successfully!');
+    } catch (error) {
+      console.error('Error saving framework:', error);
+      alert('Failed to save framework. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleNextQuestion = () => {
@@ -235,40 +343,62 @@ export default function EffectivenessCriteriaV2Page() {
             </ul>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mt-6">
+          <div className="grid grid-cols-3 gap-4 mt-6">
             <Card className="cursor-pointer hover:border-primary transition-colors" onClick={handleStartGuided}>
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-purple-600" />
-                  <CardTitle className="text-lg">Guided (Recommended)</CardTitle>
+                  <CardTitle className="text-lg">Guided</CardTitle>
                 </div>
-                <CardDescription>Answer 7 questions, AI recommends criteria</CardDescription>
+                <CardDescription>AI recommends criteria weightings</CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="text-sm space-y-1 text-muted-foreground">
                   <li>⏱️ Time: 10 minutes</li>
                   <li>🎯 Expert guidance</li>
-                  <li>✨ AI-powered recommendations</li>
+                  <li>✨ AI recommendations</li>
                 </ul>
                 <Button className="w-full mt-4" onClick={handleStartGuided}>
-                  Start Guided Setup <ArrowRight className="h-4 w-4 ml-2" />
+                  Start <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="cursor-pointer hover:border-blue-500 transition-colors border-2 border-blue-300 bg-blue-50" onClick={handleStartAIFramework}>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                  <CardTitle className="text-lg">AI Framework</CardTitle>
+                  <Badge className="ml-auto bg-blue-600">NEW</Badge>
+                </div>
+                <CardDescription className="text-blue-900">Generate complete custom framework (15-20 pages)</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="text-sm space-y-1 text-blue-700">
+                  <li>⏱️ Time: 15 minutes</li>
+                  <li>📄 Full framework document</li>
+                  <li>🤖 AI-generated & tailored</li>
+                  <li>✅ Board-ready output</li>
+                </ul>
+                <Button className="w-full mt-4 bg-blue-600 hover:bg-blue-700" onClick={handleStartAIFramework}>
+                  Generate Framework <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </CardContent>
             </Card>
 
             <Card className="cursor-pointer hover:border-primary transition-colors" onClick={handleStartCustom}>
               <CardHeader>
-                <CardTitle className="text-lg">Custom (Advanced)</CardTitle>
-                <CardDescription>Manually configure all criteria and weights</CardDescription>
+                <CardTitle className="text-lg">Custom Manual</CardTitle>
+                <CardDescription>Manually configure all criteria</CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="text-sm space-y-1 text-muted-foreground">
                   <li>⏱️ Time: 30-45 minutes</li>
                   <li>🎛️ Full control</li>
-                  <li>👨‍💼 For sophisticated users</li>
+                  <li>👨‍💼 Advanced users</li>
                 </ul>
                 <Button variant="outline" className="w-full mt-4" onClick={(e) => { e.stopPropagation(); handleStartCustom(); }}>
-                  Start Custom Setup <ArrowRight className="h-4 w-4 ml-2" />
+                  Start <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </CardContent>
             </Card>
@@ -732,24 +862,86 @@ export default function EffectivenessCriteriaV2Page() {
               </CardContent>
             </Card>
 
+            {selectedPathway === 'ai-framework' && (
+              <Card className="bg-blue-50 border-blue-300">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    Generate Your Custom Framework
+                  </CardTitle>
+                  <CardDescription>
+                    AI will generate a complete 15-20 page Material Controls Framework tailored to your company
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="companyName">Company Name</Label>
+                    <input
+                      id="companyName"
+                      type="text"
+                      className="w-full px-3 py-2 border rounded-md"
+                      placeholder="e.g., ABC Manufacturing Ltd"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      This will be used throughout your framework document
+                    </p>
+                  </div>
+                  <div className="bg-white p-3 rounded-lg border">
+                    <p className="text-sm font-medium mb-2">Your framework will include:</p>
+                    <ul className="text-sm space-y-1 text-muted-foreground">
+                      <li>✓ Executive Summary</li>
+                      <li>✓ Risk Identification Approach</li>
+                      <li>✓ Control Design Methodology</li>
+                      <li>✓ Effectiveness Assessment Criteria</li>
+                      <li>✓ Governance & Accountability</li>
+                      <li>✓ Continuous Improvement Process</li>
+                      <li>✓ Maturity Journey Roadmap</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <div className="flex gap-3 pt-4">
               <Button variant="outline" onClick={() => setCurrentView('guided-questions')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Questions
               </Button>
-              <Button className="flex-1" onClick={handleAcceptRecommendation} disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Accept AI Recommendation
-                  </>
-                )}
-              </Button>
+              {selectedPathway === 'ai-framework' ? (
+                <Button 
+                  className="flex-1 bg-blue-600 hover:bg-blue-700" 
+                  onClick={handleGenerateFramework} 
+                  disabled={isLoading || !companyName.trim()}
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
+                      Generating Framework (30 seconds)...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Generate Custom Framework
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button className="flex-1" onClick={handleAcceptRecommendation} disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Accept & Save Criteria
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -1088,6 +1280,136 @@ export default function EffectivenessCriteriaV2Page() {
     );
   };
 
+  const renderAIFrameworkPreview = () => {
+    if (!customFramework) return null;
+
+    const elements = [
+      { key: 'riskIdentification', ...customFramework.elements.riskIdentification },
+      { key: 'controlDesign', ...customFramework.elements.controlDesign },
+      { key: 'effectivenessAssessment', ...customFramework.elements.effectivenessAssessment },
+      { key: 'governance', ...customFramework.elements.governance },
+      { key: 'continuousImprovement', ...customFramework.elements.continuousImprovement }
+    ];
+
+    return (
+      <div className="max-w-6xl mx-auto space-y-6">
+        <Card className="border-2 border-blue-500 bg-blue-50">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                  {customFramework.name}
+                </CardTitle>
+                <CardDescription className="text-blue-900 mt-2">
+                  Version {customFramework.version} | Effective Date: {customFramework.effectiveDate}
+                </CardDescription>
+              </div>
+              <Badge className="bg-blue-600 text-lg px-4 py-2">AI-Generated</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-white p-4 rounded-lg border border-blue-200">
+              <h3 className="font-semibold text-lg mb-3">Executive Summary</h3>
+              <div className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                {customFramework.executiveSummary}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 gap-4">
+          {elements.map((element, idx) => (
+            <Card key={element.key} className="border-l-4 border-l-blue-500">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-base">
+                    Element {idx + 1}
+                  </Badge>
+                  {element.title}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                  {element.content}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Current Risk Profile</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-700 whitespace-pre-line">
+                {customFramework.currentRiskProfile}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Current Control Profile</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-700 whitespace-pre-line">
+                {customFramework.currentControlProfile}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Maturity Journey</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-700 whitespace-pre-line">
+                {customFramework.maturityJourney}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="bg-green-50 border-green-300">
+          <CardHeader>
+            <CardTitle className="text-lg">Framework Ready for Approval</CardTitle>
+            <CardDescription>
+              Review the framework above. Once approved, it will be saved along with your effectiveness criteria.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setCurrentView('recommendation')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Edit
+              </Button>
+              <Button 
+                className="flex-1 bg-green-600 hover:bg-green-700" 
+                onClick={handleApproveFramework}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
+                    Saving Framework...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Approve & Save Framework
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   if (isInitialLoading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
@@ -1106,6 +1428,7 @@ export default function EffectivenessCriteriaV2Page() {
       {currentView === 'recommendation' && renderRecommendation()}
       {currentView === 'custom-config' && renderCustomConfig()}
       {currentView === 'display' && renderDisplay()}
+      {currentView === 'ai-framework-preview' && renderAIFrameworkPreview()}
     </div>
   );
 }
