@@ -33,6 +33,7 @@ export default function EffectivenessCriteriaV2Page() {
   const [customWeights, setCustomWeights] = useState<any>(null);
   const [savedConfig, setSavedConfig] = useState<EffectivenessCriteriaConfig | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [showBoardDoc, setShowBoardDoc] = useState(false);
   const [boardDocument, setBoardDocument] = useState('');
   const [isEditingBoardDoc, setIsEditingBoardDoc] = useState(false);
@@ -43,6 +44,7 @@ export default function EffectivenessCriteriaV2Page() {
   }, []);
 
   const loadExistingConfig = async () => {
+    setIsInitialLoading(true);
     try {
       const data = await fetchJson<EffectivenessCriteriaConfig | null>(
         `${API_ROOT}/effectiveness-criteria-v2/config`
@@ -53,6 +55,8 @@ export default function EffectivenessCriteriaV2Page() {
       }
     } catch (error) {
       console.error('Error loading config:', error);
+    } finally {
+      setIsInitialLoading(false);
     }
   };
 
@@ -1078,6 +1082,17 @@ export default function EffectivenessCriteriaV2Page() {
       </div>
     );
   };
+
+  if (isInitialLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+          <p className="text-muted-foreground">Loading effectiveness criteria...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
