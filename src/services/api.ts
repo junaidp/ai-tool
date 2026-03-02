@@ -206,6 +206,38 @@ class ApiService {
     });
   }
 
+  testIntegrationConnection(id: string) {
+    return this.request<{ success: boolean; message: string }>(`/integrations/${id}/test-connection`, {
+      method: 'POST',
+    });
+  }
+
+  syncIntegration(id: string) {
+    return this.request(`/integrations/${id}/sync`, {
+      method: 'POST',
+    });
+  }
+
+  connectIntegration(id: string) {
+    return this.request(`/integrations/${id}/connect`, {
+      method: 'POST',
+    });
+  }
+
+  disconnectIntegration(id: string) {
+    return this.request(`/integrations/${id}/disconnect`, {
+      method: 'POST',
+    });
+  }
+
+  getIntegrationSignals(id: string, limit: number = 100) {
+    return this.request(`/integrations/${id}/signals?limit=${limit}`);
+  }
+
+  getIntegrationExceptions(id: string, limit: number = 100) {
+    return this.request(`/integrations/${id}/exceptions?limit=${limit}`);
+  }
+
   getControlGaps() {
     return this.request<ControlGap[]>('/control-gaps');
   }

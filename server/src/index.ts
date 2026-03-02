@@ -31,6 +31,7 @@ import { notificationsRouter } from './routes/notifications';
 import { versionsRouter } from './routes/versions';
 import { auditRouter } from './routes/audit';
 import { controlTestingRouter } from './routes/control-testing';
+import { integrationManager } from './services/integrations/integration-manager';
 
 dotenv.config();
 
@@ -76,6 +77,26 @@ app.use('/api/effectiveness-criteria-v2', effectivenessCriteriaV2Router);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Initialize integration manager
+integrationManager.initialize().then(() => {
+  console.log('✅ Integration Manager initialized');
+}).catch(error => {
+  console.error('❌ Failed to initialize Integration Manager:', error);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  integrationManager.shutdown();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully...');
+  integrationManager.shutdown();
+  process.exit(0);
 });
 
 app.listen(PORT, '0.0.0.0', () => {

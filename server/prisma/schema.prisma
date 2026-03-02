@@ -192,12 +192,21 @@ model Issue {
 model IntegrationStatus {
   id               String   @id @default(uuid())
   system           String   @unique
-  status           String
+  type             String   // erp, identity, ticketing, database, cloud, custom
+  status           String   // connected, disconnected, error
+  endpoint         String
+  apiKey           String?
+  authMethod       String?  // api_key, oauth, basic, token
+  syncFrequency    String?  // realtime, 5min, 15min, 1hour, daily
+  config           String?  // JSON: additional configuration
   lastSync         DateTime
   signalsReceived  Int      @default(0)
   exceptionsRaised Int      @default(0)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  
+  signals          IntegrationSignal[]
+  exceptions       IntegrationException[]
 }
 
 model ControlGap {
@@ -849,4 +858,46 @@ enum DeclarationType {
   CLEAN
   WITH_DISCLOSED_DEFICIENCIES
   QUALIFIED_MATERIAL_WEAKNESS
+}
+
+// System Integrations - Signals and Exceptions
+
+model IntegrationSignal {
+  id              String   @id @default(uuid())
+  integrationId   String
+  controlId       String
+  eventType       String
+  timestamp       DateTime
+  data            String   // JSON: raw event data
+  metadata        String?  // JSON: processed metadata
+  processed       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  
+  integration     IntegrationStatus @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  
+  @@index([integrationId, timestamp])
+  @@index([controlId])
+}
+
+model IntegrationException {
+  id              String   @id @default(uuid())
+  integrationId   String
+  controlId       String
+  severity        String   // low, medium, high, critical
+  message         String
+  details         String
+  timestamp       DateTime
+  data            String?  // JSON: additional data
+  status          String   @default("open") // open, investigating, resolved, closed
+  assignedTo      String?
+  resolvedAt      DateTime?
+  resolvedBy      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  integration     IntegrationStatus @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  
+  @@index([integrationId, status])
+  @@index([controlId])
+  @@index([severity])
 }

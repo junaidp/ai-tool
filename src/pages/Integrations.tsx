@@ -68,8 +68,24 @@ export default function Integrations() {
     }
   };
 
+  const [configFormData, setConfigFormData] = useState({
+    endpoint: '',
+    authMethod: 'api_key',
+    syncFrequency: '15min',
+    apiKey: ''
+  });
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
   const handleConfigure = (integration: IntegrationStatus) => {
     setSelectedIntegration(integration);
+    setConfigFormData({
+      endpoint: integration.endpoint || '',
+      authMethod: integration.authMethod || 'api_key',
+      syncFrequency: integration.syncFrequency || '15min',
+      apiKey: integration.apiKey || ''
+    });
+    setTestResult(null);
     setIsConfigureOpen(true);
   };
 
@@ -425,13 +441,25 @@ export default function Integrations() {
                 <div>
                   <Label>API Endpoint</Label>
                   <Input 
-                    defaultValue="https://api.system.com/v1"
+                    value={configFormData.endpoint}
+                    onChange={(e) => setConfigFormData({...configFormData, endpoint: e.target.value})}
+                    placeholder="https://api.system.com/v1"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>API Key / Token</Label>
+                  <Input 
+                    type="password"
+                    value={configFormData.apiKey}
+                    onChange={(e) => setConfigFormData({...configFormData, apiKey: e.target.value})}
+                    placeholder="Enter API key or token"
                     className="mt-1"
                   />
                 </div>
                 <div>
                   <Label>Authentication Method</Label>
-                  <Select defaultValue="api_key">
+                  <Select value={configFormData.authMethod} onValueChange={(value) => setConfigFormData({...configFormData, authMethod: value})}>
                     <SelectTrigger className="mt-1">
                       <SelectValue />
                     </SelectTrigger>
@@ -445,7 +473,7 @@ export default function Integrations() {
                 </div>
                 <div>
                   <Label>Sync Frequency</Label>
-                  <Select defaultValue="15min">
+                  <Select value={configFormData.syncFrequency} onValueChange={(value) => setConfigFormData({...configFormData, syncFrequency: value})}>
                     <SelectTrigger className="mt-1">
                       <SelectValue />
                     </SelectTrigger>
@@ -488,14 +516,67 @@ export default function Integrations() {
               <p className="text-sm text-muted-foreground mb-3">
                 Verify connectivity and authentication before saving
               </p>
-              <Button variant="outline">Test Connection</Button>
+              {testResult && (
+                <div className={`mb-3 p-3 rounded ${testResult.success ? 'bg-green-50 text-green-900' : 'bg-red-50 text-red-900'}`}>
+                  <p className="text-sm font-medium">{testResult.success ? '✅ Success' : '❌ Failed'}</p>
+                  <p className="text-sm mt-1">{testResult.message}</p>
+                </div>
+              )}
+              <Button 
+                variant="outline" 
+                disabled={isTestingConnection || !selectedIntegration}
+                onClick={async () => {
+                  if (!selectedIntegration) return;
+                  
+                  setIsTestingConnection(true);
+                  setTestResult(null);
+                  
+                  try {
+                    // First save the configuration
+                    await apiService.updateIntegration(selectedIntegration.id, {
+                      endpoint: configFormData.endpoint,
+                      authMethod: configFormData.authMethod,
+                      apiKey: configFormData.apiKey,
+                    });
+                    
+                    // Then test the connection
+                    const result = await apiService.testIntegrationConnection(selectedIntegration.id);
+                    setTestResult(result);
+                  } catch (error: any) {
+                    setTestResult({
+                      success: false,
+                      message: error.message || 'Connection test failed'
+                    });
+                  } finally {
+                    setIsTestingConnection(false);
+                  }
+                }}
+              >
+                {isTestingConnection ? 'Testing...' : 'Test Connection'}
+              </Button>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsConfigureOpen(false)}>Cancel</Button>
-            <Button onClick={() => {
-              setIsConfigureOpen(false);
-              alert('✅ Configuration saved successfully!');
+            <Button onClick={async () => {
+              if (!selectedIntegration) return;
+              
+              try {
+                // Update configuration
+                await apiService.updateIntegration(selectedIntegration.id, {
+                  endpoint: configFormData.endpoint,
+                  authMethod: configFormData.authMethod,
+                  syncFrequency: configFormData.syncFrequency,
+                  apiKey: configFormData.apiKey,
+                });
+                
+                setIsConfigureOpen(false);
+                await loadIntegrations();
+                alert('✅ Configuration saved successfully!');
+              } catch (error) {
+                console.error('Failed to save configuration:', error);
+                alert('Failed to save configuration. Please try again.');
+              }
             }}>
               Save Configuration
             </Button>
