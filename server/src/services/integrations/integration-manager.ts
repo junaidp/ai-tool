@@ -37,10 +37,10 @@ export class IntegrationManager {
       id: integrationData.id,
       system: integrationData.system,
       type: integrationData.type,
-      endpoint: integrationData.endpoint || '',
-      apiKey: integrationData.apiKey ?? undefined,
-      authMethod: integrationData.authMethod ?? undefined,
-      syncFrequency: integrationData.syncFrequency || '15min',
+      endpoint: integrationData.endpoint,
+      apiKey: integrationData.apiKey,
+      authMethod: integrationData.authMethod,
+      syncFrequency: integrationData.syncFrequency,
       config: integrationData.config,
     };
 

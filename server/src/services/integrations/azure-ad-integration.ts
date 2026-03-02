@@ -3,6 +3,7 @@
  * Monitors user access, authentication events, and permission changes
  */
 
+import axios from 'axios';
 import { BaseIntegration, IntegrationSignal, IntegrationException, SyncResult } from './base-integration';
 
 export class AzureADIntegration extends BaseIntegration {
@@ -11,17 +12,15 @@ export class AzureADIntegration extends BaseIntegration {
    */
   async testConnection(): Promise<{ success: boolean; message: string }> {
     try {
-      const url = new URL('/v1.0/users', this.config.endpoint);
-      url.searchParams.set('$top', '1');
-
-      const response = await fetch(url, {
+      const response = await axios.get(`${this.config.endpoint}/v1.0/users?$top=1`, {
         headers: {
           'Authorization': `Bearer ${this.config.apiKey}`,
           'Content-Type': 'application/json',
         },
+        timeout: 10000,
       });
 
-      if (response.ok) {
+      if (response.status === 200) {
         return {
           success: true,
           message: 'Successfully connected to Azure AD',
@@ -30,12 +29,12 @@ export class AzureADIntegration extends BaseIntegration {
 
       return {
         success: false,
-        message: `Unexpected response: ${response.status} ${response.statusText}`,
+        message: `Unexpected response: ${response.status}`,
       };
     } catch (error: any) {
       return {
         success: false,
-        message: error?.message || 'Connection failed',
+        message: error.response?.data?.error?.message || error.message || 'Connection failed',
       };
     }
   }
@@ -87,23 +86,22 @@ export class AzureADIntegration extends BaseIntegration {
   private async fetchAuditLogs(): Promise<any[]> {
     try {
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const url = new URL('/v1.0/auditLogs/directoryAudits', this.config.endpoint);
-      url.searchParams.set('$filter', `activityDateTime ge ${yesterday}`);
-      url.searchParams.set('$top', '1000');
+      const response = await axios.get(
+        `${this.config.endpoint}/v1.0/auditLogs/directoryAudits`,
+        {
+          headers: {
+            'Authorization': `Bearer ${this.config.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          params: {
+            $filter: `activityDateTime ge ${yesterday}`,
+            $top: 1000,
+          },
+          timeout: 30000,
+        }
+      );
 
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${this.config.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch audit logs: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.value || [];
+      return response.data.value || [];
     } catch (error) {
       console.error('Failed to fetch audit logs:', error);
       return [];
@@ -116,23 +114,22 @@ export class AzureADIntegration extends BaseIntegration {
   private async fetchSignInLogs(): Promise<any[]> {
     try {
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const url = new URL('/v1.0/auditLogs/signIns', this.config.endpoint);
-      url.searchParams.set('$filter', `createdDateTime ge ${yesterday}`);
-      url.searchParams.set('$top', '1000');
+      const response = await axios.get(
+        `${this.config.endpoint}/v1.0/auditLogs/signIns`,
+        {
+          headers: {
+            'Authorization': `Bearer ${this.config.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          params: {
+            $filter: `createdDateTime ge ${yesterday}`,
+            $top: 1000,
+          },
+          timeout: 30000,
+        }
+      );
 
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${this.config.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch sign-in logs: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.value || [];
+      return response.data.value || [];
     } catch (error) {
       console.error('Failed to fetch sign-in logs:', error);
       return [];
@@ -144,20 +141,18 @@ export class AzureADIntegration extends BaseIntegration {
    */
   private async fetchDirectoryChanges(): Promise<any[]> {
     try {
-      const url = new URL('/v1.0/users/delta', this.config.endpoint);
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${this.config.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await axios.get(
+        `${this.config.endpoint}/v1.0/users/delta`,
+        {
+          headers: {
+            'Authorization': `Bearer ${this.config.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 30000,
+        }
+      );
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch directory changes: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.value || [];
+      return response.data.value || [];
     } catch (error) {
       console.error('Failed to fetch directory changes:', error);
       return [];

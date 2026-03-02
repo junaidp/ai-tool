@@ -3,6 +3,7 @@
  * Monitors financial transactions, reconciliations, and approval workflows
  */
 
+import axios from 'axios';
 import { BaseIntegration, IntegrationSignal, IntegrationException, SyncResult } from './base-integration';
 
 export class SAPERPIntegration extends BaseIntegration {
@@ -11,17 +12,15 @@ export class SAPERPIntegration extends BaseIntegration {
    */
   async testConnection(): Promise<{ success: boolean; message: string }> {
     try {
-      const url = new URL('/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner', this.config.endpoint);
-      url.searchParams.set('$top', '1');
-
-      const response = await fetch(url, {
+      const response = await axios.get(`${this.config.endpoint}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner?$top=1`, {
         headers: {
           'Authorization': `Basic ${Buffer.from(this.config.apiKey || '').toString('base64')}`,
           'Content-Type': 'application/json',
         },
+        timeout: 10000,
       });
 
-      if (response.ok) {
+      if (response.status === 200) {
         return {
           success: true,
           message: 'Successfully connected to SAP ERP',
@@ -30,12 +29,12 @@ export class SAPERPIntegration extends BaseIntegration {
 
       return {
         success: false,
-        message: `Unexpected response: ${response.status} ${response.statusText}`,
+        message: `Unexpected response: ${response.status}`,
       };
     } catch (error: any) {
       return {
         success: false,
-        message: error?.message || 'Connection failed',
+        message: error.response?.data?.error?.message?.value || error.message || 'Connection failed',
       };
     }
   }
@@ -88,23 +87,22 @@ export class SAPERPIntegration extends BaseIntegration {
   private async fetchFinancialTransactions(): Promise<any[]> {
     try {
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const url = new URL('/sap/opu/odata/sap/API_JOURNALENTRY_SRV/A_JournalEntry', this.config.endpoint);
-      url.searchParams.set('$filter', `PostingDate ge datetime'${yesterday}'`);
-      url.searchParams.set('$top', '1000');
+      const response = await axios.get(
+        `${this.config.endpoint}/sap/opu/odata/sap/API_JOURNALENTRY_SRV/A_JournalEntry`,
+        {
+          headers: {
+            'Authorization': `Basic ${Buffer.from(this.config.apiKey || '').toString('base64')}`,
+            'Content-Type': 'application/json',
+          },
+          params: {
+            $filter: `PostingDate ge datetime'${yesterday}'`,
+            $top: 1000,
+          },
+          timeout: 30000,
+        }
+      );
 
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Basic ${Buffer.from(this.config.apiKey || '').toString('base64')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch financial transactions: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.d?.results || [];
+      return response.data.d?.results || [];
     } catch (error) {
       console.error('Failed to fetch financial transactions:', error);
       return [];
@@ -116,23 +114,22 @@ export class SAPERPIntegration extends BaseIntegration {
    */
   private async fetchApprovalWorkflows(): Promise<any[]> {
     try {
-      const url = new URL('/sap/opu/odata/sap/API_WORKFLOW_SRV/WorkflowTaskCollection', this.config.endpoint);
-      url.searchParams.set('$filter', `Status eq 'COMPLETED' or Status eq 'READY'`);
-      url.searchParams.set('$top', '500');
+      const response = await axios.get(
+        `${this.config.endpoint}/sap/opu/odata/sap/API_WORKFLOW_SRV/WorkflowTaskCollection`,
+        {
+          headers: {
+            'Authorization': `Basic ${Buffer.from(this.config.apiKey || '').toString('base64')}`,
+            'Content-Type': 'application/json',
+          },
+          params: {
+            $filter: `Status eq 'COMPLETED' or Status eq 'READY'`,
+            $top: 500,
+          },
+          timeout: 30000,
+        }
+      );
 
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Basic ${Buffer.from(this.config.apiKey || '').toString('base64')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch approval workflows: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.d?.results || [];
+      return response.data.d?.results || [];
     } catch (error) {
       console.error('Failed to fetch approval workflows:', error);
       return [];
@@ -144,22 +141,21 @@ export class SAPERPIntegration extends BaseIntegration {
    */
   private async fetchReconciliations(): Promise<any[]> {
     try {
-      const url = new URL('/sap/opu/odata/sap/API_BANK_RECONCILIATION_SRV/BankReconciliation', this.config.endpoint);
-      url.searchParams.set('$top', '500');
+      const response = await axios.get(
+        `${this.config.endpoint}/sap/opu/odata/sap/API_BANK_RECONCILIATION_SRV/BankReconciliation`,
+        {
+          headers: {
+            'Authorization': `Basic ${Buffer.from(this.config.apiKey || '').toString('base64')}`,
+            'Content-Type': 'application/json',
+          },
+          params: {
+            $top: 500,
+          },
+          timeout: 30000,
+        }
+      );
 
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Basic ${Buffer.from(this.config.apiKey || '').toString('base64')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch reconciliations: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.d?.results || [];
+      return response.data.d?.results || [];
     } catch (error) {
       console.error('Failed to fetch reconciliations:', error);
       return [];
@@ -171,22 +167,21 @@ export class SAPERPIntegration extends BaseIntegration {
    */
   private async fetchChangeRequests(): Promise<any[]> {
     try {
-      const url = new URL('/sap/opu/odata/sap/API_CHANGE_REQUEST_SRV/ChangeRequest', this.config.endpoint);
-      url.searchParams.set('$top', '500');
+      const response = await axios.get(
+        `${this.config.endpoint}/sap/opu/odata/sap/API_CHANGE_REQUEST_SRV/ChangeRequest`,
+        {
+          headers: {
+            'Authorization': `Basic ${Buffer.from(this.config.apiKey || '').toString('base64')}`,
+            'Content-Type': 'application/json',
+          },
+          params: {
+            $top: 500,
+          },
+          timeout: 30000,
+        }
+      );
 
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Basic ${Buffer.from(this.config.apiKey || '').toString('base64')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch change requests: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.d?.results || [];
+      return response.data.d?.results || [];
     } catch (error) {
       console.error('Failed to fetch change requests:', error);
       return [];
