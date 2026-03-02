@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -74,6 +75,8 @@ interface DocumentedControl {
 // ============================================================
 
 export default function MaterialControlsWorkflow() {
+  const navigate = useNavigate();
+  
   // Navigation
   const [currentStep, setCurrentStep] = useState<WorkflowStep>(0);
 
@@ -574,7 +577,7 @@ export default function MaterialControlsWorkflow() {
                     key={cr.riskId} 
                     className="flex items-center justify-between text-sm border rounded px-3 py-2 hover:bg-accent cursor-pointer transition-colors"
                     onClick={() => {
-                      window.location.href = `/material-controls?riskId=${cr.riskId}`;
+                      navigate(`/material-controls?riskId=${cr.riskId}`);
                     }}
                   >
                     <div className="flex items-center gap-2">
