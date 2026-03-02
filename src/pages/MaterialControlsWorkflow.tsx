@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -76,6 +76,7 @@ interface DocumentedControl {
 
 export default function MaterialControlsWorkflow() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   // Navigation
   const [currentStep, setCurrentStep] = useState<WorkflowStep>(0);
@@ -126,6 +127,17 @@ export default function MaterialControlsWorkflow() {
     loadPrincipalRisks();
     loadCompletedRisks();
   }, []);
+
+  // Auto-select risk from URL parameter
+  useEffect(() => {
+    const riskId = searchParams.get('riskId');
+    if (riskId && principalRisks.length > 0 && !selectedRisk) {
+      const risk = principalRisks.find(r => r.id === riskId);
+      if (risk) {
+        handleSelectRisk(risk);
+      }
+    }
+  }, [searchParams, principalRisks, selectedRisk]);
 
   const loadPrincipalRisks = async () => {
     try {
