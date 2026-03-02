@@ -51,15 +51,11 @@ export default function TestingCoordination() {
     loadData();
   }, []);
 
-  const handleStartTest = async (testId: number) => {
-    try {
-      await apiService.updateTestPlan(testId, { status: 'in_progress' });
-      await loadData();
-      alert('✅ Test started successfully!');
-    } catch (error) {
-      console.error('Failed to start test:', error);
-      alert('Failed to start test. Please try again.');
-    }
+  const handleStartTest = (test: TestPlan) => {
+    setSelectedTest(test);
+    setTestResults('');
+    setHasExceptions(false);
+    setIsCompleteTestOpen(true);
   };
 
   const handleViewTestScript = (test: TestPlan) => {
@@ -510,7 +506,7 @@ export default function TestingCoordination() {
                     <div className="flex gap-2 pt-2 border-t">
                       {test.status === 'not_started' && (
                         <>
-                          <Button size="sm" onClick={() => handleStartTest(test.id)}>Start Test</Button>
+                          <Button size="sm" onClick={() => handleStartTest(test)}>Start Test</Button>
                           <Button size="sm" variant="outline" onClick={() => handleViewTestScript(test)}>View Test Script</Button>
                         </>
                       )}
@@ -781,71 +777,157 @@ export default function TestingCoordination() {
         </DialogContent>
       </Dialog>
 
-      {/* Complete Test Dialog */}
+      {/* Complete Test Dialog - Enhanced Test Documentation */}
       <Dialog open={isCompleteTestOpen} onOpenChange={setIsCompleteTestOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Complete Test: {selectedTest?.controlName}</DialogTitle>
+            <DialogTitle>Test Documentation & Results</DialogTitle>
             <DialogDescription>
-              Document test results and conclusion
+              Document comprehensive test execution details, procedures, and findings
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="font-medium text-blue-900 mb-2">Control Being Tested</p>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-blue-700">Control Name:</span>
+                  <p className="font-medium text-blue-900">{selectedTest?.controlName}</p>
+                </div>
+                <div>
+                  <span className="text-blue-700">Control ID:</span>
+                  <p className="font-medium text-blue-900">{selectedTest?.controlId}</p>
+                </div>
+                <div>
+                  <span className="text-blue-700">Test Type:</span>
+                  <p className="font-medium text-blue-900 capitalize">{selectedTest?.testType} Effectiveness</p>
+                </div>
+                <div>
+                  <span className="text-blue-700">Tester:</span>
+                  <p className="font-medium text-blue-900">{selectedTest?.tester}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Test Date *</Label>
+                <Input 
+                  type="date"
+                  defaultValue={new Date().toISOString().split('T')[0]}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>Sample Size *</Label>
+                <Input 
+                  type="number"
+                  placeholder="e.g., 25"
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Number of items/instances tested
+                </p>
+              </div>
+            </div>
+
             <div>
-              <Label>Test Results *</Label>
+              <Label>Test Procedures Performed *</Label>
               <Textarea 
-                placeholder="Summarize your testing observations, sample size tested, evidence reviewed, and overall conclusion on control effectiveness..."
-                value={testResults}
-                onChange={(e) => setTestResults(e.target.value)}
-                className="mt-1 min-h-[120px]"
+                placeholder="Describe the specific test steps executed, including:&#10;• How the sample was selected&#10;• What evidence was examined&#10;• What procedures were performed&#10;• Any deviations from the test script"
+                className="mt-1"
+                rows={4}
               />
             </div>
 
-            <div className="flex items-center space-x-2 border rounded-lg p-4">
+            <div>
+              <Label>Evidence Reviewed *</Label>
+              <Textarea 
+                placeholder="List the specific evidence reviewed (e.g., system reports, approvals, reconciliations, logs, screenshots)"
+                className="mt-1"
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <Label>Test Results & Conclusion *</Label>
+              <Textarea 
+                placeholder="Summarize the test results and provide your conclusion on control effectiveness..."
+                value={testResults}
+                onChange={(e) => setTestResults(e.target.value)}
+                className="mt-1"
+                rows={4}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                State whether the control is operating effectively based on your testing
+              </p>
+            </div>
+
+            <div className="flex items-center space-x-2 border-2 rounded-lg p-4 bg-gray-50">
               <Checkbox 
                 id="exceptions" 
                 checked={hasExceptions}
                 onCheckedChange={(checked) => setHasExceptions(checked as boolean)}
               />
               <div className="flex-1">
-                <Label htmlFor="exceptions" className="font-medium cursor-pointer">
-                  Exceptions or issues identified during testing
+                <Label htmlFor="exceptions" className="font-medium cursor-pointer text-base">
+                  Exceptions or Deficiencies Identified
                 </Label>
-                <p className="text-sm text-muted-foreground">
-                  Check this if remediation is required
+                <p className="text-sm text-muted-foreground mt-1">
+                  Check if any exceptions, errors, or control deficiencies were found during testing
                 </p>
               </div>
             </div>
 
             {hasExceptions && (
-              <div className="border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded">
+              <div className="border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded space-y-3">
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
                   <div>
                     <p className="font-medium text-yellow-900">Remediation Required</p>
                     <p className="text-sm text-yellow-700 mt-1">
-                      This test will be marked as requiring remediation. An issue will need to be created for tracking.
+                      Document the exceptions found. This test will be marked as requiring remediation.
                     </p>
                   </div>
+                </div>
+                <div>
+                  <Label className="text-yellow-900">Exception Details *</Label>
+                  <Textarea 
+                    placeholder="Describe the exceptions or deficiencies identified:&#10;• Nature of the exception&#10;• Number of exceptions found&#10;• Impact on control effectiveness&#10;• Root cause (if known)"
+                    className="mt-1 bg-white"
+                    rows={4}
+                  />
                 </div>
               </div>
             )}
 
-            <div className="bg-muted/50 rounded-lg p-3 text-sm">
-              <p className="font-medium mb-1">Test Summary</p>
-              <ul className="space-y-1 text-muted-foreground">
-                <li>• Control: {selectedTest?.controlName}</li>
-                <li>• Test Type: {selectedTest?.testType}</li>
-                <li>• Tester: {selectedTest?.tester}</li>
-                <li>• Scheduled: {selectedTest ? formatDate(selectedTest.scheduledDate) : ''}</li>
-              </ul>
+            <div className="bg-muted/50 rounded-lg p-3 border">
+              <p className="text-sm font-medium mb-2">Test Documentation Checklist</p>
+              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-3 w-3" />
+                  <span>Test procedures documented</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-3 w-3" />
+                  <span>Sample size recorded</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-3 w-3" />
+                  <span>Evidence reviewed listed</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-3 w-3" />
+                  <span>Conclusion stated</span>
+                </div>
+              </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCompleteTestOpen(false)}>Cancel</Button>
             <Button onClick={handleCompleteTestSubmit}>
               <CheckCircle className="h-4 w-4 mr-2" />
-              Complete Test
+              Complete & Save Test
             </Button>
           </DialogFooter>
         </DialogContent>

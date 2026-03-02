@@ -91,23 +91,23 @@ export default function Login() {
             <p className="text-sm text-center text-muted-foreground mb-3">Demo Accounts:</p>
             <div className="space-y-2 text-xs">
               <div className="flex justify-between bg-gray-50 p-2 rounded">
-                <span className="font-medium">Board Member:</span>
+                <span className="font-medium">Board Member (Sarah):</span>
                 <span className="text-muted-foreground">board@company.com / demo123</span>
               </div>
               <div className="flex justify-between bg-gray-50 p-2 rounded">
-                <span className="font-medium">Control Owner:</span>
+                <span className="font-medium">Control Owner (Michael):</span>
                 <span className="text-muted-foreground">owner@company.com / demo123</span>
               </div>
               <div className="flex justify-between bg-gray-50 p-2 rounded">
-                <span className="font-medium">Risk/Compliance:</span>
+                <span className="font-medium">Controls Manager (David):</span>
                 <span className="text-muted-foreground">risk@company.com / demo123</span>
               </div>
               <div className="flex justify-between bg-gray-50 p-2 rounded">
-                <span className="font-medium">Internal Audit:</span>
+                <span className="font-medium">Reviewer (Emily):</span>
                 <span className="text-muted-foreground">audit@company.com / demo123</span>
               </div>
               <div className="flex justify-between bg-gray-50 p-2 rounded">
-                <span className="font-medium">Framework Admin:</span>
+                <span className="font-medium">Framework Owner (Rachel):</span>
                 <span className="text-muted-foreground">admin@company.com / demo123</span>
               </div>
             </div>

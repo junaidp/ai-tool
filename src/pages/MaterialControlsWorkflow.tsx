@@ -570,7 +570,13 @@ export default function MaterialControlsWorkflow() {
               </div>
               <div className="space-y-2">
                 {completedRisks.map(cr => (
-                  <div key={cr.riskId} className="flex items-center justify-between text-sm border rounded px-3 py-2">
+                  <div 
+                    key={cr.riskId} 
+                    className="flex items-center justify-between text-sm border rounded px-3 py-2 hover:bg-accent cursor-pointer transition-colors"
+                    onClick={() => {
+                      window.location.href = `/material-controls?riskId=${cr.riskId}`;
+                    }}
+                  >
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-green-600" />
                       <span>{cr.riskTitle}</span>
@@ -578,6 +584,7 @@ export default function MaterialControlsWorkflow() {
                     <div className="flex items-center gap-4 text-muted-foreground">
                       <span>Maturity: {cr.currentScore?.toFixed(1)} → {cr.targetScore?.toFixed(1)}</span>
                       <span>Controls: {cr.controlCount}</span>
+                      <ArrowRight className="h-4 w-4" />
                     </div>
                   </div>
                 ))}
