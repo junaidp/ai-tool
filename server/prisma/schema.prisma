@@ -428,6 +428,29 @@ model FrameworkDocument {
   updatedAt       DateTime @updatedAt
 }
 
+model CustomFramework {
+  id                      String   @id @default(uuid())
+  name                    String
+  version                 String   @default("1.0")
+  effectiveDate           String
+  companyName             String
+  companyProfile          String   // JSON
+  effectivenessCriteria   String   // JSON
+  elements                String   // JSON: 5 core elements
+  executiveSummary        String
+  currentRiskProfile      String
+  currentControlProfile   String
+  maturityJourney         String
+  approved                Boolean  @default(false)
+  approvedBy              String?
+  approvedDate            DateTime?
+  active                  Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  
+  @@index([active])
+}
+
 // Section 2: Material Controls Mapping - Maturity Spectrum Models
 
 model MaturitySelection {

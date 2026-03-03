@@ -365,9 +365,12 @@ export default function FrameworkBuilder() {
   const [editContent, setEditContent] = useState('');
   const [criteria, setCriteria] = useState<EffectivenessCriteria[]>([]);
   const [activeTab, setActiveTab] = useState('document');
+  const [customFramework, setCustomFramework] = useState<any>(null);
+  const [isLoadingFramework, setIsLoadingFramework] = useState(true);
 
   useEffect(() => {
     loadCriteria();
+    loadCustomFramework();
   }, []);
 
   const loadCriteria = async () => {
@@ -376,6 +379,69 @@ export default function FrameworkBuilder() {
       setCriteria(data);
     } catch (error) {
       console.error('Failed to load criteria:', error);
+    }
+  };
+
+  const loadCustomFramework = async () => {
+    try {
+      setIsLoadingFramework(true);
+      const response = await fetch('/api/effectiveness-criteria-v2/custom-framework');
+      if (response.ok) {
+        const data = await response.json();
+        if (data) {
+          setCustomFramework(data);
+          // Convert custom framework elements to sections format
+          const customSections: FrameworkSection[] = [
+            {
+              id: 'executive-summary',
+              title: 'Executive Summary',
+              icon: FileText,
+              content: data.executiveSummary,
+              editable: false
+            },
+            {
+              id: 'risk-identification',
+              title: data.elements.riskIdentification.title,
+              icon: AlertTriangle,
+              content: data.elements.riskIdentification.content,
+              editable: true
+            },
+            {
+              id: 'control-design',
+              title: data.elements.controlDesign.title,
+              icon: Shield,
+              content: data.elements.controlDesign.content,
+              editable: true
+            },
+            {
+              id: 'effectiveness-assessment',
+              title: data.elements.effectivenessAssessment.title,
+              icon: CheckCircle,
+              content: data.elements.effectivenessAssessment.content,
+              editable: true
+            },
+            {
+              id: 'governance',
+              title: data.elements.governance.title,
+              icon: Users,
+              content: data.elements.governance.content,
+              editable: true
+            },
+            {
+              id: 'continuous-improvement',
+              title: data.elements.continuousImprovement.title,
+              icon: TrendingUp,
+              content: data.elements.continuousImprovement.content,
+              editable: true
+            }
+          ];
+          setSections(customSections);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load custom framework:', error);
+    } finally {
+      setIsLoadingFramework(false);
     }
   };
 
@@ -457,13 +523,43 @@ ${criteria.map(c => `
     alert('✅ Framework document exported successfully!');
   };
 
+  if (isLoadingFramework) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading framework...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {customFramework && (
+        <Card className="border-2 border-blue-500 bg-blue-50">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                  {customFramework.name}
+                </CardTitle>
+                <CardDescription className="text-blue-900 mt-1">
+                  Version {customFramework.version} | Effective Date: {customFramework.effectiveDate} | AI-Generated Custom Framework
+                </CardDescription>
+              </div>
+              <Badge className="bg-blue-600">AI-Generated</Badge>
+            </div>
+          </CardHeader>
+        </Card>
+      )}
+      
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Framework Builder</h1>
           <p className="text-muted-foreground mt-1">
-            Comprehensive internal control framework - business-friendly and editable
+            {customFramework ? 'Your custom AI-generated framework - editable and exportable' : 'Comprehensive internal control framework - business-friendly and editable'}
           </p>
         </div>
         <Button onClick={handleExport}>

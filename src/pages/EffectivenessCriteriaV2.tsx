@@ -154,6 +154,7 @@ export default function EffectivenessCriteriaV2Page() {
         }
       };
 
+      // Save effectiveness criteria config
       const data = await fetchJson<EffectivenessCriteriaConfig>(
         `${API_ROOT}/effectiveness-criteria-v2/save-config`,
         {
@@ -168,6 +169,16 @@ export default function EffectivenessCriteriaV2Page() {
         }
       );
 
+      // Save custom framework to database
+      await fetchJson(
+        `${API_ROOT}/effectiveness-criteria-v2/save-custom-framework`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(customFramework)
+        }
+      );
+
       const parsedConfig: EffectivenessCriteriaConfig = {
         ...data,
         companyProfile: typeof data.companyProfile === 'string' ? JSON.parse(data.companyProfile) : data.companyProfile,
@@ -176,7 +187,7 @@ export default function EffectivenessCriteriaV2Page() {
 
       setSavedConfig(parsedConfig);
       setCurrentView('display');
-      alert('✅ Custom framework and effectiveness criteria saved successfully!');
+      alert('✅ Custom framework and effectiveness criteria saved successfully! Framework is now available in Framework Builder.');
     } catch (error) {
       console.error('Error saving framework:', error);
       alert('Failed to save framework. Please try again.');

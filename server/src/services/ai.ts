@@ -348,7 +348,11 @@ ${answersText}
 
 REQUIREMENTS:
 1. Generate ONLY risks that fall under the ${label} threat category
-2. Generate as many risks as are relevant based on the user's answers (typically 2-6 risks, but can be more if the user has indicated multiple significant concerns)
+2. Generate ALL risks that are relevant based on the user's answers - DO NOT artificially limit the number
+   - If the user selected multiple concerns/threats in their answers, generate a separate risk for EACH concern
+   - For each selected option or identified issue in the user's answers, create a dedicated risk
+   - Typical output: 3-8 risks per category, but generate MORE if the user indicated more concerns
+   - IMPORTANT: Do NOT consolidate multiple distinct threats into a single risk - separate them out
 3. Each risk MUST have a FULL, board-quality definition (5-10 sentences minimum)
 4. Reference SPECIFIC details from the business context (revenue figures, customer details, employee counts, industry specifics)
 5. Reference SPECIFIC details from the user's answers
@@ -390,7 +394,7 @@ export async function generateRisksByCategory(
     messages: [
       {
         role: 'system',
-        content: `You are an expert in enterprise risk management, FRC UK Corporate Governance Code compliance, and principal risk identification. You are generating ${CATEGORY_LABELS[threatCategory]} THREAT risks specifically. Generate comprehensive, board-quality risk definitions that are specific to the business context and user answers provided. Always return valid JSON.`,
+        content: `You are an expert in enterprise risk management, FRC UK Corporate Governance Code compliance, and principal risk identification. You are generating ${CATEGORY_LABELS[threatCategory]} THREAT risks specifically. Generate comprehensive, board-quality risk definitions that are specific to the business context and user answers provided. Generate a SEPARATE risk for EACH distinct threat/concern indicated in the user's answers - do not consolidate multiple threats into one risk. Always return valid JSON.`,
       },
       {
         role: 'user',
@@ -399,7 +403,7 @@ export async function generateRisksByCategory(
     ],
     response_format: { type: 'json_object' },
     temperature: 0.7,
-    max_tokens: 4096,
+    max_tokens: 8192,
   });
 
   const response = completion.choices[0].message.content;

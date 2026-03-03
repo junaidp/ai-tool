@@ -455,38 +455,98 @@ EFFECTIVENESS CRITERIA (User's Custom Weightings):
 - Continuous Improvement: ${effectivenessCriteria.weights.continuousImprovement}%
 Overall Target: ${effectivenessCriteria.overallTarget}%
 
-Generate a complete custom framework with these 5 CORE ELEMENTS. Each element should be 2-4 paragraphs of detailed, actionable content tailored to this specific company:
+Generate a complete custom framework with these 5 CORE ELEMENTS. Each element should be 3-5 paragraphs of DETAILED, COMPREHENSIVE content with:
+- Specific responsibilities for each role (Board, Management, Process Owners)
+- Detailed methodologies and processes (step-by-step where applicable)
+- Clear workflow descriptions and decision points
+- Concrete examples specific to ${companyName}'s context
+- Timelines, frequencies, and cadences
+- Escalation paths and thresholds
 
-1. RISK IDENTIFICATION APPROACH
-   - Methodology for identifying principal risks (FRC's 4 categories: business model, performance, solvency, liquidity)
-   - Prioritization criteria (likelihood × impact scoring)
-   - Review cycle (quarterly/annual)
-   - Tailor to their industry, stage, and priorities
+Make the content MUCH MORE DETAILED than a typical template:
 
-2. CONTROL DESIGN METHODOLOGY
-   - Maturity-based approach (current Level ${companyProfile.maturity}, target Level ${Math.min(companyProfile.maturity + 1, 4)})
-   - Control design principles (preventive/detective/corrective balance)
-   - Implementation timeline (3 phases over 12 months)
-   - Emphasize their #1 effectiveness priority
+1. RISK IDENTIFICATION APPROACH (3-5 detailed paragraphs)
+   - DETAILED methodology for identifying principal risks (FRC's 4 categories: business model, performance, solvency, liquidity)
+   - Specific responsibilities: Who identifies risks (process owners, risk managers, executive team), how they collect inputs (workshops, data analysis, stakeholder interviews)
+   - Detailed prioritization process: likelihood × impact scoring methodology with specific criteria for each score (1-5), who scores, approval process
+   - Review cycle with specific cadence: monthly risk reviews, quarterly deep dives, annual comprehensive assessment
+   - Risk taxonomy structure and how it's maintained
+   - Integration with strategic planning and business change processes
+   - Tools and systems used for risk tracking
+   - Tailor ALL details to ${companyName}'s industry, stage, size, and priorities
 
-3. EFFECTIVENESS ASSESSMENT CRITERIA
-   - How "effective" is defined using THEIR weighted criteria
-   - Overall threshold (${effectivenessCriteria.overallTarget}% = effective)
-   - Testing methodology (varies by risk priority)
-   - Specific metrics for each criterion
+2. CONTROL DESIGN METHODOLOGY (3-5 detailed paragraphs)
+   - DETAILED maturity-based approach (current Level ${companyProfile.maturity}, target Level ${Math.min(companyProfile.maturity + 1, 4)})
+   - Specific responsibilities: Control design owners (risk teams, process owners), reviewers (internal audit, compliance), approvers (risk committee)
+   - Comprehensive control design process: How controls are identified for each principal risk, design workshops, testing before rollout
+   - Control design principles with specific examples: preventive controls (what types, when to use), detective controls (monitoring frequency, thresholds), corrective controls (remediation timeframes)
+   - Control documentation standards: what must be documented (owner, frequency, evidence, test approach)
+   - Implementation methodology: 3 phases over 12 months with specific activities in each phase, resource requirements, dependencies
+   - How control effectiveness is built into the design (automation, segregation of duties, system controls)
+   - Emphasize their #1 effectiveness priority: ${effectivenessCriteria.weights.issueResponsiveness >= 20 ? 'rapid issue detection and response' : 'systematic risk mitigation'}
 
-4. GOVERNANCE & ACCOUNTABILITY
-   - Three lines of defense structure
-   - Board oversight responsibilities and meeting cadence
-   - Management accountability (CFO as framework owner)
-   - Escalation process with timeframes
-   - Tailor to their ownership structure (${companyProfile.ownership})
+3. EFFECTIVENESS ASSESSMENT CRITERIA (3-5 detailed paragraphs)
+   - COMPREHENSIVE definition of "effective" using THEIR weighted criteria
+   - Detailed scoring methodology: How each of the 7 criteria is measured, who measures it, evidence required, calculation methods
+   - Overall threshold explanation (${effectivenessCriteria.overallTarget}% = effective) with examples of what "effective" looks like for ${companyName}
+   - Testing methodology that varies by risk priority: HIGH priority risks (quarterly testing, larger samples), MEDIUM priority (semi-annual), LOWER priority (annual)
+   - Specific responsibilities: First line testing (process owners), second line review (risk/compliance), third line assurance (internal audit)
+   - Detailed metrics for each criterion with measurement approach:
+     * Risk Identification (${effectivenessCriteria.weights.riskIdentification}%): completeness metrics, forward-looking indicators
+     * Framework Design (${effectivenessCriteria.weights.frameworkDesign}%): control coverage %, design quality scores
+     * Control Operating (${effectivenessCriteria.weights.controlOperating}%): operating rate %, exception frequency
+     * Issue Responsiveness (${effectivenessCriteria.weights.issueResponsiveness}%): detection time, remediation speed
+     * Risk Outcome (${effectivenessCriteria.weights.riskOutcome}%): objectives achieved %, incidents prevented
+     * Governance (${effectivenessCriteria.weights.governance}%): board engagement metrics, challenge quality
+     * Continuous Improvement (${effectivenessCriteria.weights.continuousImprovement}%): improvements implemented, maturity progression
+   - Assessment frequency and reporting cycles
+   - Aggregation methodology to calculate overall effectiveness score
 
-5. CONTINUOUS IMPROVEMENT PROCESS
-   - Improvement triggers (new risks, control failures, maturity progression)
-   - Review cycles (quarterly, annual, post-incident)
-   - Maturity journey roadmap (Level ${companyProfile.maturity} → Level ${Math.min(companyProfile.maturity + 1, 4)} over 2-3 years)
-   - Learning capture process
+4. GOVERNANCE & ACCOUNTABILITY (3-5 detailed paragraphs)
+   - DETAILED three lines of defense structure with specific responsibilities:
+     * First Line (Business/Process Owners): Daily risk/control execution, exception handling, self-assessment, evidence retention. Specific roles and reporting lines.
+     * Second Line (Risk/Compliance): Framework design, policy setting, independent review, challenge, aggregated reporting. Team structure and authorities.
+     * Third Line (Internal Audit): Independent assurance, deep-dive testing, maturity assessment. Audit plan and approach.
+   - Board oversight structure tailored to ${companyProfile.ownership}:
+     * Board/Audit Committee: Specific responsibilities (framework approval, quarterly reviews, material weakness oversight), meeting cadence (quarterly deep dives, annual comprehensive review)
+     * Risk Committee: Monthly risk profile reviews, control effectiveness trends, emerging risks, investment decisions
+     * Executive Management: Weekly/bi-weekly risk discussions, monthly detailed reviews, accountability for remediation
+   - Detailed accountability framework:
+     * Framework Owner (CFO/CRO): overall accountability, resource allocation, board reporting
+     * Risk Owners: specific accountability for their principal risks, control effectiveness, remediation
+     * Control Owners: day-to-day execution, evidence management, issue escalation
+   - COMPREHENSIVE escalation process with specific thresholds and timeframes:
+     * Critical issues: immediate escalation to CRO + notification to Audit Committee within 24 hours
+     * High priority issues: escalation within 48 hours, management review within 1 week
+     * Medium issues: weekly escalation, monthly management review
+   - Clear decision rights and approval authorities at each level
+   - Regular governance forum structure (meeting cadence, attendees, agendas, outputs)
+
+5. CONTINUOUS IMPROVEMENT PROCESS (3-5 detailed paragraphs)
+   - DETAILED improvement triggers with specific criteria and processes:
+     * New/emerging risks: How identified, assessment process, control design, implementation timeline
+     * Control failures: Root cause analysis methodology (5-whys, fishbone), remediation approach, retesting requirements
+     * Maturity progression: Criteria for moving to next level, investment cases, board approval process
+     * Regulatory changes: Monitoring process, impact assessment, control updates
+     * Business changes: M&A integration, new products/markets, system changes - how framework adapts
+   - Comprehensive review cycles with specific activities:
+     * Quarterly reviews: Control operating effectiveness, issue trends, metrics review, minor updates
+     * Annual comprehensive reviews: Full risk reassessment, control rationalization, maturity assessment, strategic alignment
+     * Post-incident reviews: Detailed RCA, framework gaps, systemic improvements, lessons learned distribution
+   - DETAILED maturity journey roadmap (Level ${companyProfile.maturity} → Level ${Math.min(companyProfile.maturity + 1, 4)} over 2-3 years):
+     * Year 1: Specific capabilities to build, controls to implement, processes to establish
+     * Year 2: Enhancement areas, automation opportunities, efficiency gains
+     * Year 3: Target state achievement, advanced capabilities, industry benchmarking
+     * Investment requirements (FTEs, systems, consulting) for each year
+   - Learning capture and knowledge management:
+     * Lessons learned database with search capability
+     * Monthly knowledge sharing sessions
+     * Best practice documentation and templates
+     * Training program for new risks/controls
+   - Innovation and efficiency initiatives:
+     * Control automation roadmap
+     * Process improvement targets (% reduction in manual effort)
+     * Technology enablement (GRC systems, data analytics)
 
 Also generate:
 - EXECUTIVE SUMMARY (3-4 paragraphs summarizing the framework)
@@ -641,6 +701,70 @@ Format as markdown.`
   } catch (error) {
     console.error('Error generating board document:', error);
     res.status(500).json({ error: 'Failed to generate board document' });
+  }
+});
+
+// POST /api/effectiveness-criteria-v2/save-custom-framework
+router.post('/save-custom-framework', async (req, res) => {
+  try {
+    const frameworkData = req.body;
+
+    // Deactivate any existing active custom frameworks
+    await prisma.customFramework.updateMany({
+      where: { active: true },
+      data: { active: false }
+    });
+
+    // Create new custom framework
+    const customFramework = await prisma.customFramework.create({
+      data: {
+        name: frameworkData.name,
+        version: frameworkData.version,
+        effectiveDate: frameworkData.effectiveDate,
+        companyName: frameworkData.companyName,
+        companyProfile: JSON.stringify(frameworkData.companyProfile),
+        effectivenessCriteria: JSON.stringify(frameworkData.effectivenessCriteria),
+        elements: JSON.stringify(frameworkData.elements),
+        executiveSummary: frameworkData.executiveSummary,
+        currentRiskProfile: frameworkData.currentRiskProfile,
+        currentControlProfile: frameworkData.currentControlProfile,
+        maturityJourney: frameworkData.maturityJourney,
+        approved: false,
+        active: true
+      }
+    });
+
+    res.json(customFramework);
+  } catch (error) {
+    console.error('Error saving custom framework:', error);
+    res.status(500).json({ error: 'Failed to save custom framework' });
+  }
+});
+
+// GET /api/effectiveness-criteria-v2/custom-framework
+router.get('/custom-framework', async (req, res) => {
+  try {
+    const customFramework = await prisma.customFramework.findFirst({
+      where: { active: true },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (!customFramework) {
+      return res.json(null);
+    }
+
+    // Parse JSON fields
+    const parsed = {
+      ...customFramework,
+      companyProfile: JSON.parse(customFramework.companyProfile),
+      effectivenessCriteria: JSON.parse(customFramework.effectivenessCriteria),
+      elements: JSON.parse(customFramework.elements)
+    };
+
+    res.json(parsed);
+  } catch (error) {
+    console.error('Error fetching custom framework:', error);
+    res.status(500).json({ error: 'Failed to fetch custom framework' });
   }
 });
 
