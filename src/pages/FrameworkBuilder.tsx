@@ -367,11 +367,16 @@ export default function FrameworkBuilder() {
   const [activeTab, setActiveTab] = useState('document');
   const [customFramework, setCustomFramework] = useState<any>(null);
   const [isLoadingFramework, setIsLoadingFramework] = useState(true);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
 
   useEffect(() => {
     loadCriteria();
     loadCustomFramework();
   }, []);
+
+  const handleRefresh = () => {
+    loadCustomFramework();
+  };
 
   const loadCriteria = async () => {
     try {
@@ -390,6 +395,7 @@ export default function FrameworkBuilder() {
         const data = await response.json();
         if (data) {
           setCustomFramework(data);
+          setLastRefreshed(new Date());
           // Convert custom framework elements to sections format
           const customSections: FrameworkSection[] = [
             {
@@ -561,11 +567,22 @@ ${criteria.map(c => `
           <p className="text-muted-foreground mt-1">
             {customFramework ? 'Your custom AI-generated framework - editable and exportable' : 'Comprehensive internal control framework - business-friendly and editable'}
           </p>
+          {lastRefreshed && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Last refreshed: {lastRefreshed.toLocaleTimeString()}
+            </p>
+          )}
         </div>
-        <Button onClick={handleExport}>
-          <Download className="h-4 w-4 mr-2" />
-          Export Framework
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleRefresh} disabled={isLoadingFramework}>
+            <Workflow className="h-4 w-4 mr-2" />
+            {isLoadingFramework ? 'Refreshing...' : 'Refresh Framework'}
+          </Button>
+          <Button onClick={handleExport}>
+            <Download className="h-4 w-4 mr-2" />
+            Export Framework
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
