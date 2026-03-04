@@ -219,12 +219,22 @@ export default function MaterialControlsWorkflow() {
       // Load the saved controls and show them in a summary view
       const savedControls = await loadCompletedRiskControls(risk.id);
       if (savedControls.length > 0) {
-        // Set the state to show completed controls
+        // Set the state to show completed controls in read-only mode
         setSelectedCurrentLevel(completedRisk.currentLevel || 2);
         setTargetLevel(completedRisk.targetLevel || 3);
+        setDocumentedControls(savedControls.map(c => ({
+          title: c.title,
+          description: c.description,
+          type: c.controlType as any,
+          objectives: Array.isArray(c.objectives) ? c.objectives : [],
+          owner: c.owner || '',
+          frequency: c.frequency as any,
+          evidence: c.evidence || '',
+          reviewer: c.reviewer || '',
+        })));
         setAllDocumentedControls(savedControls);
-        // Skip to a summary/review step instead of step 1
-        setCurrentStep(6); // Go to implementation/summary view
+        // Show controls at step 2 (Document Controls) in view mode
+        setCurrentStep(2);
         return;
       }
     }
@@ -921,6 +931,92 @@ export default function MaterialControlsWorkflow() {
   // ============================================================
 
   const renderStep2 = () => {
+    // Check if this is a completed risk being viewed
+    const isCompletedRiskView = completedRisks.some(cr => cr.riskId === selectedRisk?.id) && 
+                                 documentedControls.length > 0 && 
+                                 !currentLevelPackage;
+    
+    if (isCompletedRiskView) {
+      // Show completed controls summary
+      return (
+        <div className="space-y-6">
+          <Card className="border-green-200 bg-green-50/50">
+            <CardContent className="pt-4 pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  <div className="text-sm">
+                    <span className="font-medium">Completed Risk - View Only</span>
+                    <span className="text-muted-foreground ml-2">
+                      This risk has been completed with {documentedControls.length} controls documented
+                    </span>
+                  </div>
+                </div>
+                <Badge className="bg-green-100 text-green-800 border-green-300">
+                  Completed
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Documented Controls for {selectedRisk?.riskTitle}</CardTitle>
+              <CardDescription>
+                Current Maturity Level: {selectedCurrentLevel} | Target Level: {targetLevel}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {documentedControls.map((control, idx) => (
+                  <div key={idx} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-lg">{control.title}</h4>
+                        <p className="text-sm text-muted-foreground mt-1">{control.description}</p>
+                      </div>
+                      <Badge variant="outline">{control.type}</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium">Owner:</span>
+                        <p className="text-muted-foreground">{control.owner}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Frequency:</span>
+                        <p className="text-muted-foreground">{control.frequency}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Evidence:</span>
+                        <p className="text-muted-foreground">{control.evidence || 'Not specified'}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Objectives:</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {control.objectives.map((obj, i) => (
+                            <Badge key={i} variant="secondary" className="text-xs">
+                              {obj}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={() => { setCurrentStep(0); setSelectedRisk(null); }}>
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Back to Risk Selection
+            </Button>
+          </div>
+        </div>
+      );
+    }
+    
     if (!currentLevelPackage || !selectedCurrentLevel) return null;
     const templates = currentLevelPackage.controlTemplates;
     const template = templates[currentControlIdx];

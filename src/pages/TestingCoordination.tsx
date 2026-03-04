@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { apiService } from '@/services/api';
 import type { TestPlan, Issue } from '@/types';
-import {  Calendar, CheckCircle, Clock, XCircle, AlertTriangle, Plus, Download, Sparkles } from 'lucide-react';
+import {  Calendar, CheckCircle, Clock, XCircle, AlertTriangle, Plus, Download, Sparkles, Shield } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 export default function TestingCoordination() {
