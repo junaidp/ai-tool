@@ -14,7 +14,7 @@ import type { BusinessContext, AIRiskCandidate, ThreatCategory, CategoryAnswers 
 import {
   ArrowLeft, ArrowRight, Check, X, Pencil, Sparkles, Loader2,
   Building2, Target, DollarSign, TrendingDown, AlertTriangle,
-  ChevronDown, ChevronUp, FileText
+  ChevronDown, ChevronUp, FileText, Info
 } from 'lucide-react';
 
 // ==================== CONSTANTS ====================
