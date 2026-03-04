@@ -37,14 +37,19 @@ export default function TestingCoordination() {
     tester: '',
     scheduledDate: ''
   });
+  const [controls, setControls] = useState<any[]>([]);
+  const [isMarkImplementedOpen, setIsMarkImplementedOpen] = useState(false);
+  const [selectedControl, setSelectedControl] = useState<any>(null);
 
   const loadData = async () => {
-    const [tests, issuesData] = await Promise.all([
+    const [tests, issuesData, controlsData] = await Promise.all([
       apiService.getTestPlans(), 
-      apiService.getIssues()
+      apiService.getIssues(),
+      apiService.getControls()
     ]);
     setTestPlans(tests);
     setIssues(issuesData);
+    setControls(controlsData);
   };
 
   useEffect(() => {
@@ -439,6 +444,8 @@ export default function TestingCoordination() {
       <Tabs defaultValue="schedule">
         <TabsList>
           <TabsTrigger value="schedule">Test Schedule</TabsTrigger>
+          <TabsTrigger value="operational">Operational Controls</TabsTrigger>
+          <TabsTrigger value="implementation">Under Implementation</TabsTrigger>
           <TabsTrigger value="results">Test Results</TabsTrigger>
           <TabsTrigger value="remediation">Remediation Tracking</TabsTrigger>
         </TabsList>
@@ -561,6 +568,125 @@ export default function TestingCoordination() {
                     <li>• Auto-close findings</li>
                   </ul>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="operational" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Operational Controls</CardTitle>
+              <CardDescription>
+                Controls that are implemented and operational - ready for testing
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {controls
+                  .filter((c) => c.effectiveness === 'effective' || c.effectiveness === 'not_tested')
+                  .map((control) => (
+                    <div key={control.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3 flex-1">
+                          <Shield className="h-5 w-5 text-green-600 mt-0.5" />
+                          <div className="space-y-1 flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold">{control.name}</h3>
+                              <Badge className="bg-green-100 text-green-800 border-green-300">
+                                Operational
+                              </Badge>
+                              <Badge variant="outline">{control.type}</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{control.description}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium">Owner:</span>
+                          <p className="text-muted-foreground">{control.owner}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Frequency:</span>
+                          <p className="text-muted-foreground">{control.frequency}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Status:</span>
+                          <p className="text-muted-foreground">{control.effectiveness || 'Not tested'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="implementation" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Controls Under Implementation</CardTitle>
+              <CardDescription>
+                Advanced maturity controls being implemented - not yet operational
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {controls
+                  .filter((c) => !c.effectiveness || c.effectiveness === 'planned')
+                  .map((control) => (
+                    <div key={control.id} className="border rounded-lg p-4 space-y-3 bg-blue-50/50">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3 flex-1">
+                          <Clock className="h-5 w-5 text-blue-600 mt-0.5" />
+                          <div className="space-y-1 flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold">{control.name}</h3>
+                              <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+                                Under Implementation
+                              </Badge>
+                              <Badge variant="outline">{control.type}</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{control.description}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium">Owner:</span>
+                          <p className="text-muted-foreground">{control.owner}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Target Frequency:</span>
+                          <p className="text-muted-foreground">{control.frequency}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Implementation Status:</span>
+                          <p className="text-muted-foreground">In Progress</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 pt-2 border-t">
+                        <Button 
+                          size="sm" 
+                          onClick={() => {
+                            setSelectedControl(control);
+                            setIsMarkImplementedOpen(true);
+                          }}
+                        >
+                          Mark as Implemented
+                        </Button>
+                        <Button size="sm" variant="outline">View Implementation Plan</Button>
+                      </div>
+                    </div>
+                  ))}
+                {controls.filter((c) => !c.effectiveness || c.effectiveness === 'planned').length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No controls currently under implementation.</p>
+                    <p className="text-sm mt-2">All controls are operational.</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -1079,6 +1205,76 @@ export default function TestingCoordination() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Mark as Implemented Dialog */}
+      <Dialog open={isMarkImplementedOpen} onOpenChange={setIsMarkImplementedOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Mark Control as Implemented</DialogTitle>
+            <DialogDescription>
+              Confirm that this control is now operational and ready for testing
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="border rounded-lg p-4 bg-muted/50">
+              <h4 className="font-semibold mb-2">{selectedControl?.name}</h4>
+              <p className="text-sm text-muted-foreground">{selectedControl?.description}</p>
+            </div>
+            <div>
+              <Label>Implementation Notes</Label>
+              <Textarea 
+                placeholder="Describe how the control was implemented, any changes from the original plan, and confirmation that it is operational..."
+                rows={4}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Effective Date</Label>
+              <Input 
+                type="date"
+                className="mt-1"
+              />
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium text-blue-900 mb-1">Next Steps:</p>
+                  <ul className="text-blue-700 space-y-1">
+                    <li>• Control will move to "Operational Controls" tab</li>
+                    <li>• Control will be available for test scheduling</li>
+                    <li>• Control effectiveness status will be set to "Not Tested"</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsMarkImplementedOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={async () => {
+              if (selectedControl) {
+                try {
+                  await apiService.updateControl(selectedControl.id, {
+                    effectiveness: 'not_tested'
+                  });
+                  setIsMarkImplementedOpen(false);
+                  setSelectedControl(null);
+                  await loadData();
+                  alert('✅ Control marked as implemented and moved to Operational Controls!');
+                } catch (error) {
+                  console.error('Failed to update control:', error);
+                  alert('Failed to mark control as implemented. Please try again.');
+                }
+              }
+            }}>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Mark as Implemented
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

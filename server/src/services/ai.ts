@@ -667,6 +667,17 @@ export async function generateMaturityControlsForRisk(
     4: 'ADVANCED (Optimized)'
   };
 
+  // Generate a deterministic seed from risk title and maturity level
+  // This ensures the same risk/maturity combination always produces the same controls
+  const seedString = `${riskTitle.toLowerCase().trim()}-${maturityLevel}`;
+  let seed = 0;
+  for (let i = 0; i < seedString.length; i++) {
+    seed = ((seed << 5) - seed) + seedString.charCodeAt(i);
+    seed = seed & seed; // Convert to 32-bit integer
+  }
+  // Normalize seed to 0-1 range for temperature adjustment
+  const normalizedSeed = Math.abs(seed % 100) / 100;
+
   const prompt = `You are an expert in enterprise risk management and control frameworks. Generate risk-specific controls for a maturity level.
 
 RISK INFORMATION:
@@ -763,7 +774,8 @@ Make the controls realistic, specific to this risk, and appropriate for the matu
       },
     ],
     response_format: { type: 'json_object' },
-    temperature: 0.8,
+    temperature: 0.3, // Low temperature for consistent outputs
+    seed: seed, // Deterministic seed for same risk/maturity combination
   });
 
   const response = completion.choices[0].message.content;

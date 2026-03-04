@@ -157,6 +157,16 @@ export default function MaterialControlsWorkflow() {
     }
   };
 
+  const loadCompletedRiskControls = async (riskId: string) => {
+    try {
+      const controls = await apiService.getSection2Controls(riskId);
+      return controls;
+    } catch (error) {
+      console.error('Failed to load completed risk controls:', error);
+      return [];
+    }
+  };
+
   // ============================================================
   // Utility: Extract score from risk statement
   // ============================================================
@@ -183,7 +193,7 @@ export default function MaterialControlsWorkflow() {
   // Step Handlers
   // ============================================================
 
-  const handleSelectRisk = (risk: PrincipalRisk) => {
+  const handleSelectRisk = async (risk: PrincipalRisk) => {
     setSelectedRisk(risk);
     const rType = detectRiskType(risk.riskTitle, risk.riskStatement);
     setDetectedRiskType(rType);
@@ -202,6 +212,23 @@ export default function MaterialControlsWorkflow() {
     setImplementationPlan(null);
     setAiGeneratedControls({});
     setLoadingAIControls({});
+    
+    // Check if this risk is already completed
+    const completedRisk = completedRisks.find(cr => cr.riskId === risk.id);
+    if (completedRisk) {
+      // Load the saved controls and show them in a summary view
+      const savedControls = await loadCompletedRiskControls(risk.id);
+      if (savedControls.length > 0) {
+        // Set the state to show completed controls
+        setSelectedCurrentLevel(completedRisk.currentLevel || 2);
+        setTargetLevel(completedRisk.targetLevel || 3);
+        setAllDocumentedControls(savedControls);
+        // Skip to a summary/review step instead of step 1
+        setCurrentStep(6); // Go to implementation/summary view
+        return;
+      }
+    }
+    
     setCurrentStep(1);
   };
 
@@ -589,7 +616,8 @@ export default function MaterialControlsWorkflow() {
                     key={cr.riskId} 
                     className="flex items-center justify-between text-sm border rounded px-3 py-2 hover:bg-accent cursor-pointer transition-colors"
                     onClick={() => {
-                      navigate(`/material-controls?riskId=${cr.riskId}`);
+                      const risk = principalRisks.find(r => r.id === cr.riskId);
+                      if (risk) handleSelectRisk(risk);
                     }}
                   >
                     <div className="flex items-center gap-2">

@@ -288,11 +288,14 @@ export default function PrincipalRisksPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {risks.map((risk) => (
+              {risks.map((risk, index) => (
                 <div key={risk.id} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="font-mono text-xs">
+                          PR-{String(index + 1).padStart(3, '0')}
+                        </Badge>
                         <AlertTriangle className="h-5 w-5 text-orange-600" />
                         <h3 className="font-semibold text-lg">{risk.riskTitle}</h3>
                       </div>

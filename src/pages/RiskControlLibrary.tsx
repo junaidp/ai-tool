@@ -536,6 +536,11 @@ export default function RiskControlLibrary() {
                             <h3 className="font-semibold">{control.name}</h3>
                             {getControlTypeBadge(control.type)}
                             <Badge variant="outline">{control.automation}</Badge>
+                            {control.linkedRisks && control.linkedRisks.length > 0 && (
+                              <Badge className="bg-green-100 text-green-800 border-green-300">
+                                Selected
+                              </Badge>
+                            )}
                           </div>
                           <p className="text-sm text-muted-foreground">{control.description}</p>
                         </div>
