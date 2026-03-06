@@ -1799,9 +1799,17 @@ export default function MaterialControlsWorkflow() {
   const handleUpdatePhaseTimeline = (phaseNum: number, newTimeline: string) => {
     if (!implementationPlan) return;
     const updatedPlan = { ...implementationPlan };
-    updatedPlan.phases = updatedPlan.phases.map(p => 
-      p.phase === phaseNum ? { ...p, timeline: newTimeline } : p
-    );
+    updatedPlan.phases = updatedPlan.phases.map(p => {
+      if (p.phase === phaseNum) {
+        // Update timeline for the phase and all its controls
+        const updatedControls = p.controls.map(c => ({
+          ...c,
+          implementationTimeline: newTimeline
+        }));
+        return { ...p, timeline: newTimeline, controls: updatedControls };
+      }
+      return p;
+    });
     setImplementationPlan(updatedPlan);
     setEditingPhaseTimeline(null);
     setCustomTimeline('');

@@ -488,93 +488,89 @@ export default function RiskControlLibrary() {
                           </TabsTrigger>
                         </TabsList>
                         
-                        <TabsContent value="operational" className="space-y-3 mt-3">
+                        <TabsContent value="operational" className="mt-3">
                           {operationalControls.length === 0 ? (
                             <p className="text-sm text-muted-foreground text-center py-6">No operational controls for this risk</p>
                           ) : (
-                            operationalControls.map(control => (
-                              <div key={control.id} className="bg-white border rounded-lg p-4 space-y-3">
-                                <div className="flex items-start justify-between">
-                                  <div className="flex items-start gap-3 flex-1">
-                                    <Shield className="h-5 w-5 text-green-600 mt-0.5" />
-                                    <div className="space-y-1 flex-1">
-                                      <div className="flex items-center gap-2">
-                                        <h4 className="font-semibold">{control.title}</h4>
-                                        <Badge className="bg-green-100 text-green-800 border-green-300">Operational</Badge>
-                                        <Badge variant="outline">{control.type || control.controlType}</Badge>
-                                      </div>
-                                      <p className="text-sm text-muted-foreground">{control.description}</p>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-4 gap-4 text-sm">
-                                  <div>
-                                    <span className="font-medium">Owner:</span>
-                                    <p className="text-muted-foreground">{control.owner}</p>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Frequency:</span>
-                                    <p className="text-muted-foreground">{control.frequency}</p>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Evidence:</span>
-                                    <p className="text-muted-foreground">{control.evidence || 'TBD'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Maturity Level:</span>
-                                    <p className="text-muted-foreground">Level {control.maturityLevel || 'N/A'}</p>
-                                  </div>
-                                </div>
-                              </div>
-                            ))
+                            <div className="bg-white border rounded-lg overflow-hidden">
+                              <table className="w-full">
+                                <thead className="bg-gray-50 border-b">
+                                  <tr>
+                                    <th className="text-left p-3 font-medium text-sm">Control</th>
+                                    <th className="text-left p-3 font-medium text-sm w-32">Owner</th>
+                                    <th className="text-left p-3 font-medium text-sm w-28">Frequency</th>
+                                    <th className="text-left p-3 font-medium text-sm w-40">Evidence</th>
+                                    <th className="text-left p-3 font-medium text-sm w-24">Maturity</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {operationalControls.map((control, idx) => (
+                                    <tr key={control.id} className={idx !== operationalControls.length - 1 ? 'border-b' : ''}>
+                                      <td className="p-3">
+                                        <div className="flex items-start gap-3">
+                                          <Shield className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                                          <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                              <h4 className="font-semibold">{control.title}</h4>
+                                              <Badge className="bg-green-100 text-green-800 border-green-300 text-xs">Operational</Badge>
+                                              <Badge variant="outline" className="text-xs">{control.type || control.controlType}</Badge>
+                                            </div>
+                                            <p className="text-sm text-muted-foreground">{control.description}</p>
+                                          </div>
+                                        </div>
+                                      </td>
+                                      <td className="p-3 text-sm text-muted-foreground align-top">{control.owner}</td>
+                                      <td className="p-3 text-sm text-muted-foreground align-top">{control.frequency}</td>
+                                      <td className="p-3 text-sm text-muted-foreground align-top">{control.evidence || 'TBD'}</td>
+                                      <td className="p-3 text-sm text-muted-foreground align-top">Level {control.maturityLevel || 'N/A'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
                           )}
                         </TabsContent>
                         
-                        <TabsContent value="implementation" className="space-y-3 mt-3">
+                        <TabsContent value="implementation" className="mt-3">
                           {implementationControls.length === 0 ? (
                             <p className="text-sm text-muted-foreground text-center py-6">No controls under implementation for this risk</p>
                           ) : (
-                            implementationControls.map(control => (
-                              <div key={control.id} className="bg-white border rounded-lg p-4 space-y-3 bg-blue-50/50">
-                                <div className="flex items-start justify-between">
-                                  <div className="flex items-start gap-3 flex-1">
-                                    <Clock className="h-5 w-5 text-blue-600 mt-0.5" />
-                                    <div className="space-y-1 flex-1">
-                                      <div className="flex items-center gap-2">
-                                        <h4 className="font-semibold">{control.title}</h4>
-                                        <Badge className="bg-blue-100 text-blue-800 border-blue-300">Under Implementation</Badge>
-                                        <Badge variant="outline">{control.type || control.controlType}</Badge>
-                                      </div>
-                                      <p className="text-sm text-muted-foreground">{control.description}</p>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-4 gap-4 text-sm">
-                                  <div>
-                                    <span className="font-medium">Owner:</span>
-                                    <p className="text-muted-foreground">{control.owner}</p>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Target Frequency:</span>
-                                    <p className="text-muted-foreground">{control.frequency}</p>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Implementation Phase:</span>
-                                    <p className="text-muted-foreground">{control.implementationPhase ? `Phase ${control.implementationPhase}` : 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Timeline:</span>
-                                    <p className="text-muted-foreground">{control.implementationTimeline || 'TBD'}</p>
-                                  </div>
-                                </div>
-                                {control.implementedDate && (
-                                  <div className="text-sm">
-                                    <span className="font-medium">Expected Implementation:</span>
-                                    <p className="text-muted-foreground">{new Date(control.implementedDate).toLocaleDateString()}</p>
-                                  </div>
-                                )}
-                              </div>
-                            ))
+                            <div className="bg-white border rounded-lg overflow-hidden">
+                              <table className="w-full">
+                                <thead className="bg-blue-50 border-b">
+                                  <tr>
+                                    <th className="text-left p-3 font-medium text-sm">Control</th>
+                                    <th className="text-left p-3 font-medium text-sm w-32">Owner</th>
+                                    <th className="text-left p-3 font-medium text-sm w-28">Frequency</th>
+                                    <th className="text-left p-3 font-medium text-sm w-24">Phase</th>
+                                    <th className="text-left p-3 font-medium text-sm w-28">Timeline</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {implementationControls.map((control, idx) => (
+                                    <tr key={control.id} className={idx !== implementationControls.length - 1 ? 'border-b' : ''}>
+                                      <td className="p-3">
+                                        <div className="flex items-start gap-3">
+                                          <Clock className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                                          <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                              <h4 className="font-semibold">{control.title}</h4>
+                                              <Badge className="bg-blue-100 text-blue-800 border-blue-300 text-xs">Under Implementation</Badge>
+                                              <Badge variant="outline" className="text-xs">{control.type || control.controlType}</Badge>
+                                            </div>
+                                            <p className="text-sm text-muted-foreground">{control.description}</p>
+                                          </div>
+                                        </div>
+                                      </td>
+                                      <td className="p-3 text-sm text-muted-foreground align-top">{control.owner}</td>
+                                      <td className="p-3 text-sm text-muted-foreground align-top">{control.frequency}</td>
+                                      <td className="p-3 text-sm text-muted-foreground align-top">{control.implementationPhase ? `Phase ${control.implementationPhase}` : 'N/A'}</td>
+                                      <td className="p-3 text-sm text-muted-foreground align-top">{control.implementationTimeline || 'TBD'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
                           )}
                         </TabsContent>
                       </Tabs>

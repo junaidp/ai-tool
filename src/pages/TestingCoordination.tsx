@@ -42,6 +42,7 @@ export default function TestingCoordination() {
   const [isMarkImplementedOpen, setIsMarkImplementedOpen] = useState(false);
   const [selectedControl, setSelectedControl] = useState<any>(null);
   const [implementationDate, setImplementationDate] = useState('');
+  const [testingMethodology, setTestingMethodology] = useState<'self_assessment' | 'external_consultant' | 'internal_audit'>('internal_audit');
 
   const loadData = async () => {
     const [tests, issuesData, controlsData] = await Promise.all([
@@ -229,28 +230,41 @@ export default function TestingCoordination() {
 
   const handleGenerateTestPlan = async () => {
     try {
-      if (!testingPeriod || !testScope) {
-        alert('Please select testing period and scope');
+      if (!testingPeriod || !testScope || !testingMethodology) {
+        alert('Please select testing period, scope, and methodology');
         return;
       }
 
       setIsGenerating(true);
 
-      // Get all material controls to generate test plans for
-      const controls = await apiService.getMaterialControls();
+      // Use Section2Controls from Material Controls workflow (operational controls only)
+      const operationalControls = section2Controls.filter(c => 
+        c.status === 'existing' || (!c.implementationPhase && c.status !== 'planned')
+      );
+      
+      if (operationalControls.length === 0) {
+        alert('No operational controls found. Please complete Material Controls workflow first.');
+        setIsGenerating(false);
+        return;
+      }
       
       // Filter based on scope
-      let controlsToTest = controls;
+      let controlsToTest = operationalControls;
       if (testScope === 'high_risk') {
-        controlsToTest = controls.filter(c => c.materialityScore >= 70);
+        // Filter for higher maturity level controls (Level 3+)
+        controlsToTest = operationalControls.filter(c => c.maturityLevel >= 3);
       } else if (testScope === 'manual_only') {
-        controlsToTest = controls.filter(c => !c.name.toLowerCase().includes('automated'));
+        // Filter for manual controls (detective or preventive)
+        controlsToTest = operationalControls.filter(c => 
+          c.type === 'detective' || c.type === 'preventive'
+        );
       }
 
       // Generate test plans for each control
+      const createdPlans = [];
       for (const control of controlsToTest) {
-        // Determine test type based on control
-        const testType = control.name.toLowerCase().includes('design') ? 'design' : 'operating';
+        // Determine test type based on control type
+        const testType = control.type === 'preventive' ? 'design' : 'operating';
         
         // Calculate scheduled date based on period
         const today = new Date();
@@ -265,25 +279,32 @@ export default function TestingCoordination() {
           scheduledDate = new Date(today.getFullYear(), 9, 15); // Oct 15
         }
 
-        await apiService.createTestPlan({
+        // Map testing methodology to tester
+        const tester = testingMethodology === 'self_assessment' ? 'Self Assessment' :
+                      testingMethodology === 'external_consultant' ? 'External Consultant' :
+                      'Internal Audit';
+
+        const testPlan = await apiService.createTestPlan({
           controlId: control.id,
-          controlName: control.name,
+          controlName: control.title,
           testType,
-          tester: 'Internal Audit',
+          tester,
           scheduledDate: scheduledDate.toISOString(),
           status: 'not_started',
           remediationRequired: false,
           results: null,
           exceptions: []
         });
+        createdPlans.push(testPlan);
       }
 
       setIsGeneratePlanOpen(false);
       setIsGenerating(false);
       setTestingPeriod('');
       setTestScope('');
+      setTestingMethodology('internal_audit');
       await loadData();
-      alert(`✨ AI generated ${controlsToTest.length} test plans for ${testingPeriod}!`);
+      alert(`✨ AI generated ${createdPlans.length} test plans for ${testingPeriod} using ${tester}!`);
     } catch (error: any) {
       console.error('Failed to generate test plan:', error);
       console.error('Error details:', error.message, error.stack);
@@ -371,11 +392,28 @@ export default function TestingCoordination() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Material Controls</SelectItem>
-                      <SelectItem value="high_risk">High Risk Controls Only (Score ≥70)</SelectItem>
+                      <SelectItem value="high_risk">High Risk Controls Only (Level 3+)</SelectItem>
                       <SelectItem value="manual_only">Manual Controls Only</SelectItem>
                       <SelectItem value="key_controls">Key Financial Controls</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div>
+                  <Label>Testing Methodology</Label>
+                  <Select value={testingMethodology} onValueChange={(v: any) => setTestingMethodology(v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select testing methodology" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="self_assessment">Self Assessment</SelectItem>
+                      <SelectItem value="external_consultant">External Consultant</SelectItem>
+                      <SelectItem value="internal_audit">Internal Audit</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Who will perform the testing
+                  </p>
                 </div>
 
                 <div className="border rounded-lg p-4 bg-muted/50">
