@@ -494,21 +494,89 @@ export default function FrameworkBuilder() {
 
   const handleExportPDF = async () => {
     try {
-      // For now, export as formatted text that can be converted to PDF
-      const content = `INTERNAL CONTROL FRAMEWORK\n\nOrganization: [Your Organization Name]\nEffective Date: ${new Date().toLocaleDateString()}\nVersion: 1.0\n\n${sections.map(section => `\n${section.title.toUpperCase()}\n${'='.repeat(section.title.length)}\n\n${section.content}\n`).join('\n')}\n\nBoard Summary\n=============\n\nThis Internal Control Framework provides the board with assurance that:\n\n1. Principal risks that could prevent achievement of strategic objectives are identified, owned, and actively managed.\n2. Material controls are defined for all principal risks with clear design, ownership, and evidence requirements.\n3. Monitoring processes ensure controls operate as intended with timely escalation.\n4. Remediation processes address deficiencies through time-bound action plans.\n5. Integration mechanisms ensure the framework adapts to business changes.\n\nGenerated: ${new Date().toLocaleString()}`;
+      // Use browser's print-to-PDF functionality
+      // Create a printable version of the document
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        alert('Please allow pop-ups to export PDF');
+        return;
+      }
 
-      const blob = new Blob([content], { type: 'application/pdf' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `internal-control-framework-${new Date().toISOString().split('T')[0]}.pdf`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Internal Control Framework</title>
+          <style>
+            @page { margin: 1in; }
+            body { font-family: 'Times New Roman', serif; line-height: 1.6; color: #333; }
+            h1 { font-size: 24pt; font-weight: bold; margin-top: 0; }
+            h2 { font-size: 18pt; font-weight: bold; margin-top: 24pt; border-bottom: 2px solid #333; padding-bottom: 4pt; }
+            h3 { font-size: 14pt; font-weight: bold; margin-top: 16pt; }
+            p { margin: 8pt 0; text-align: justify; }
+            ul { margin: 8pt 0; padding-left: 24pt; }
+            li { margin: 4pt 0; }
+            .header { background: #1e293b; color: white; padding: 24pt; margin: -1in -1in 24pt -1in; }
+            .header h1 { color: white; margin: 0; }
+            .header .subtitle { color: #fbbf24; font-size: 24pt; font-weight: bold; }
+            .header .description { color: #cbd5e1; font-style: italic; margin-top: 8pt; }
+            .metadata { margin-top: 16pt; }
+            .badge { display: inline-block; background: #3b82f6; color: white; padding: 4pt 8pt; margin-right: 8pt; border-radius: 4pt; font-size: 10pt; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <p style="font-size: 10pt; text-transform: uppercase; letter-spacing: 2pt; margin: 0;">UK CGC - PROVISION 29</p>
+            <h1>Internal Control</h1>
+            <div class="subtitle">Effectiveness Framework</div>
+            <p class="description">A Guidance Document for Implementation</p>
+            <div class="metadata">
+              <span class="badge">Version: 1.0, ${new Date().getFullYear()}</span>
+              <span class="badge">Generated: ${new Date().toLocaleDateString()}</span>
+            </div>
+          </div>
+          
+          ${sections.map(section => `
+            <h2>${section.title}</h2>
+            ${section.content.split('\n').map(line => {
+              if (line.startsWith('**') && line.endsWith('**')) {
+                return `<h3>${line.replace(/\*\*/g, '')}</h3>`;
+              } else if (line.startsWith('•')) {
+                return `<li>${line.substring(1).trim()}</li>`;
+              } else if (line.trim() === '') {
+                return '';
+              } else {
+                return `<p>${line}</p>`;
+              }
+            }).join('\n')}
+          `).join('\n')}
+          
+          <h2>Board Summary</h2>
+          <p>This Internal Control Framework provides the board with assurance that:</p>
+          <ul>
+            <li>Principal risks that could prevent achievement of strategic objectives are identified, owned, and actively managed.</li>
+            <li>Material controls are defined for all principal risks with clear design, ownership, and evidence requirements.</li>
+            <li>Monitoring processes ensure controls operate as intended with timely escalation.</li>
+            <li>Remediation processes address deficiencies through time-bound action plans.</li>
+            <li>Integration mechanisms ensure the framework adapts to business changes.</li>
+          </ul>
+          
+          <p style="margin-top: 24pt; font-size: 10pt; color: #666;">Generated: ${new Date().toLocaleString()}</p>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
       
-      alert('✅ Framework exported to PDF successfully!');
+      // Wait for content to load, then trigger print dialog
+      setTimeout(() => {
+        printWindow.print();
+        // Note: User will use browser's "Save as PDF" option in print dialog
+      }, 500);
+      
+      alert('✅ Print dialog opened. Use "Save as PDF" or "Microsoft Print to PDF" as the printer to save as PDF.');
     } catch (error) {
       console.error('Export failed:', error);
       alert('Failed to export framework. Please try again.');
@@ -643,78 +711,104 @@ ${criteria.map(c => `
         </TabsList>
 
         <TabsContent value="document" className="space-y-0">
-          {/* Main Framework Document Card */}
-          <Card className="border-2">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-white border-b">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-2xl flex items-center gap-2">
-                    <FileText className="h-6 w-6 text-blue-600" />
-                    Internal Control Framework
-                  </CardTitle>
-                  <CardDescription className="mt-2">
-                    A comprehensive, business-friendly framework covering purpose, governance, risk, controls, and monitoring. Click <Pencil className="h-3 w-3 inline" /> on any section to edit.
-                  </CardDescription>
+          {/* Main Framework Document - Matching Reference Design */}
+          <div className="bg-white rounded-lg shadow-sm border">
+            {/* Document Header */}
+            <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white px-8 py-12 rounded-t-lg">
+              <div className="max-w-5xl mx-auto">
+                <p className="text-sm uppercase tracking-wider text-slate-300 mb-2">UK CGC - PROVISION 29</p>
+                <h1 className="text-4xl font-bold mb-2">
+                  Internal Control
+                </h1>
+                <h1 className="text-4xl font-bold text-yellow-400 mb-4">
+                  Effectiveness Framework
+                </h1>
+                <p className="text-slate-300 italic text-lg">A Guidance Document for Implementation</p>
+                
+                <div className="flex gap-3 mt-6">
+                  <Badge className="bg-yellow-600 text-white border-0 px-3 py-1">Company: FTSE 250 Manufacturing</Badge>
+                  <Badge className="bg-blue-600 text-white border-0 px-3 py-1">Maturity: Developing</Badge>
+                  <Badge className="bg-green-600 text-white border-0 px-3 py-1">Regulation: Moderately Regulated</Badge>
+                  <Badge className="bg-slate-600 text-white border-0 px-3 py-1">Version: 1.0, 2025</Badge>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {/* Document-style content */}
-              <div className="max-w-5xl mx-auto px-12 py-8 bg-white">
-                {sections.map((section, sectionIdx) => {
-                  const Icon = section.icon;
-                  return (
-                    <div key={section.id} className={`${sectionIdx > 0 ? 'mt-12' : ''} group relative`}>
-                      {/* Section Header with Edit Button */}
-                      <div className="flex items-start justify-between mb-4 pb-3 border-b-2 border-blue-100">
-                        <div className="flex items-center gap-3">
-                          <Icon className="h-6 w-6 text-blue-600" />
-                          <h2 className="text-2xl font-bold text-gray-900">{section.title}</h2>
+            </div>
+
+            {/* Document Content */}
+            <div className="max-w-5xl mx-auto px-8 py-12">
+              {sections.map((section, sectionIdx) => {
+                const Icon = section.icon;
+                const sectionColors = [
+                  'bg-blue-50 border-blue-200',
+                  'bg-purple-50 border-purple-200', 
+                  'bg-green-50 border-green-200',
+                  'bg-orange-50 border-orange-200',
+                  'bg-pink-50 border-pink-200',
+                  'bg-teal-50 border-teal-200',
+                  'bg-indigo-50 border-indigo-200',
+                  'bg-red-50 border-red-200',
+                  'bg-yellow-50 border-yellow-200',
+                  'bg-cyan-50 border-cyan-200',
+                  'bg-violet-50 border-violet-200'
+                ];
+                const colorClass = sectionColors[sectionIdx % sectionColors.length];
+                
+                return (
+                  <div key={section.id} className={`${sectionIdx > 0 ? 'mt-16' : ''} group relative`}>
+                    {/* Section Header with Icon Badge */}
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-lg ${colorClass} border-2 flex items-center justify-center`}>
+                          <Icon className="h-6 w-6 text-slate-700" />
                         </div>
-                        {section.editable && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(section.id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Pencil className="h-4 w-4 text-blue-600" />
-                          </Button>
-                        )}
+                        <div>
+                          <h2 className="text-3xl font-bold text-slate-900">{section.title}</h2>
+                          <div className="h-1 w-24 bg-yellow-400 mt-2"></div>
+                        </div>
                       </div>
-                      
-                      {/* Section Content */}
-                      <div className="prose prose-lg max-w-none text-gray-700">
-                        {section.content.split('\n').map((line, idx) => {
-                          if (line.startsWith('**') && line.endsWith('**')) {
-                            return (
-                              <h3 key={idx} className="font-semibold text-lg mt-6 mb-3 text-gray-900">
-                                {line.replace(/\*\*/g, '')}
-                              </h3>
-                            );
-                          } else if (line.startsWith('•')) {
-                            return (
-                              <li key={idx} className="ml-6 mb-2 text-gray-700">
-                                {line.substring(1).trim()}
-                              </li>
-                            );
-                          } else if (line.trim() === '') {
-                            return <div key={idx} className="h-3" />;
-                          } else {
-                            return (
-                              <p key={idx} className="mb-3 leading-relaxed text-gray-700">
-                                {line}
-                              </p>
-                            );
-                          }
-                        })}
-                      </div>
+                      {section.editable && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(section.id)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Pencil className="h-4 w-4 text-slate-600" />
+                        </Button>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+                    
+                    {/* Section Content */}
+                    <div className="prose prose-lg max-w-none">
+                      {section.content.split('\n').map((line, idx) => {
+                        if (line.startsWith('**') && line.endsWith('**')) {
+                          return (
+                            <h3 key={idx} className="font-bold text-xl mt-8 mb-4 text-slate-800">
+                              {line.replace(/\*\*/g, '')}
+                            </h3>
+                          );
+                        } else if (line.startsWith('•')) {
+                          return (
+                            <li key={idx} className="ml-6 mb-3 text-slate-700 leading-relaxed">
+                              {line.substring(1).trim()}
+                            </li>
+                          );
+                        } else if (line.trim() === '') {
+                          return <div key={idx} className="h-2" />;
+                        } else {
+                          return (
+                            <p key={idx} className="mb-4 leading-relaxed text-slate-700 text-base">
+                              {line}
+                            </p>
+                          );
+                        }
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="board-summary">
