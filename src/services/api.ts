@@ -507,6 +507,13 @@ class ApiService {
     });
   }
 
+  updateSection2Control(id: string, data: any) {
+    return this.request(`/section2/controls/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
   getSection2Controls(riskId: string) {
     return this.request<any[]>(`/section2/controls/${riskId}`);
   }

@@ -38,8 +38,10 @@ export default function TestingCoordination() {
     scheduledDate: ''
   });
   const [controls, setControls] = useState<any[]>([]);
+  const [section2Controls, setSection2Controls] = useState<any[]>([]);
   const [isMarkImplementedOpen, setIsMarkImplementedOpen] = useState(false);
   const [selectedControl, setSelectedControl] = useState<any>(null);
+  const [implementationDate, setImplementationDate] = useState('');
 
   const loadData = async () => {
     const [tests, issuesData, controlsData] = await Promise.all([
@@ -50,6 +52,23 @@ export default function TestingCoordination() {
     setTestPlans(tests);
     setIssues(issuesData);
     setControls(controlsData);
+    
+    // Load all Section2Controls from Material Controls workflow
+    try {
+      const principalRisks = await apiService.getPrincipalRisks();
+      const allSection2Controls = [];
+      for (const risk of principalRisks) {
+        try {
+          const riskControls = await apiService.getSection2Controls(risk.id);
+          allSection2Controls.push(...riskControls.map((c: any) => ({ ...c, riskTitle: risk.riskTitle })));
+        } catch (e) {
+          // Risk might not have controls yet
+        }
+      }
+      setSection2Controls(allSection2Controls);
+    } catch (error) {
+      console.error('Failed to load section2 controls:', error);
+    }
   };
 
   useEffect(() => {
@@ -583,8 +602,9 @@ export default function TestingCoordination() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {controls
-                  .filter((c) => c.effectiveness === 'effective' || c.effectiveness === 'not_tested')
+                {/* Show Section2Controls that are existing/operational */}
+                {section2Controls
+                  .filter((c) => c.status === 'existing' || (!c.implementationPhase && c.status !== 'planned'))
                   .map((control) => (
                     <div key={control.id} className="border rounded-lg p-4 space-y-3">
                       <div className="flex items-start justify-between">
@@ -592,13 +612,16 @@ export default function TestingCoordination() {
                           <Shield className="h-5 w-5 text-green-600 mt-0.5" />
                           <div className="space-y-1 flex-1">
                             <div className="flex items-center gap-2">
-                              <h3 className="font-semibold">{control.name}</h3>
+                              <h3 className="font-semibold">{control.title}</h3>
                               <Badge className="bg-green-100 text-green-800 border-green-300">
                                 Operational
                               </Badge>
-                              <Badge variant="outline">{control.type}</Badge>
+                              <Badge variant="outline">{control.type || control.controlType}</Badge>
                             </div>
                             <p className="text-sm text-muted-foreground">{control.description}</p>
+                            {control.riskTitle && (
+                              <p className="text-xs text-muted-foreground mt-1">Risk: {control.riskTitle}</p>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -612,8 +635,8 @@ export default function TestingCoordination() {
                           <p className="text-muted-foreground">{control.frequency}</p>
                         </div>
                         <div>
-                          <span className="font-medium">Status:</span>
-                          <p className="text-muted-foreground">{control.effectiveness || 'Not tested'}</p>
+                          <span className="font-medium">Maturity Level:</span>
+                          <p className="text-muted-foreground">Level {control.maturityLevel || 'N/A'}</p>
                         </div>
                       </div>
                     </div>
@@ -633,8 +656,9 @@ export default function TestingCoordination() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {controls
-                  .filter((c) => !c.effectiveness || c.effectiveness === 'planned')
+                {/* Show Section2Controls that are planned or have implementation phase */}
+                {section2Controls
+                  .filter((c) => c.status === 'planned' || (c.implementationPhase && c.status !== 'existing'))
                   .map((control) => (
                     <div key={control.id} className="border rounded-lg p-4 space-y-3 bg-blue-50/50">
                       <div className="flex items-start justify-between">
@@ -642,17 +666,20 @@ export default function TestingCoordination() {
                           <Clock className="h-5 w-5 text-blue-600 mt-0.5" />
                           <div className="space-y-1 flex-1">
                             <div className="flex items-center gap-2">
-                              <h3 className="font-semibold">{control.name}</h3>
+                              <h3 className="font-semibold">{control.title}</h3>
                               <Badge className="bg-blue-100 text-blue-800 border-blue-300">
                                 Under Implementation
                               </Badge>
-                              <Badge variant="outline">{control.type}</Badge>
+                              <Badge variant="outline">{control.type || control.controlType}</Badge>
                             </div>
                             <p className="text-sm text-muted-foreground">{control.description}</p>
+                            {control.riskTitle && (
+                              <p className="text-xs text-muted-foreground mt-1">Risk: {control.riskTitle}</p>
+                            )}
                           </div>
                         </div>
                       </div>
-                      <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div className="grid grid-cols-4 gap-4 text-sm">
                         <div>
                           <span className="font-medium">Owner:</span>
                           <p className="text-muted-foreground">{control.owner}</p>
@@ -662,8 +689,12 @@ export default function TestingCoordination() {
                           <p className="text-muted-foreground">{control.frequency}</p>
                         </div>
                         <div>
-                          <span className="font-medium">Implementation Status:</span>
-                          <p className="text-muted-foreground">In Progress</p>
+                          <span className="font-medium">Implementation Phase:</span>
+                          <p className="text-muted-foreground">{control.implementationPhase ? `Phase ${control.implementationPhase}` : 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Timeline:</span>
+                          <p className="text-muted-foreground">{control.implementationTimeline || 'TBD'}</p>
                         </div>
                       </div>
                       <div className="flex gap-2 pt-2 border-t">
@@ -671,6 +702,7 @@ export default function TestingCoordination() {
                           size="sm" 
                           onClick={() => {
                             setSelectedControl(control);
+                            setImplementationDate(new Date().toISOString().split('T')[0]);
                             setIsMarkImplementedOpen(true);
                           }}
                         >
@@ -680,7 +712,7 @@ export default function TestingCoordination() {
                       </div>
                     </div>
                   ))}
-                {controls.filter((c) => !c.effectiveness || c.effectiveness === 'planned').length === 0 && (
+                {section2Controls.filter((c) => c.status === 'planned' || (c.implementationPhase && c.status !== 'existing')).length === 0 && (
                   <div className="text-center py-12 text-muted-foreground">
                     <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>No controls currently under implementation.</p>
@@ -1217,7 +1249,7 @@ export default function TestingCoordination() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="border rounded-lg p-4 bg-muted/50">
-              <h4 className="font-semibold mb-2">{selectedControl?.name}</h4>
+              <h4 className="font-semibold mb-2">{selectedControl?.title}</h4>
               <p className="text-sm text-muted-foreground">{selectedControl?.description}</p>
             </div>
             <div>
@@ -1232,6 +1264,8 @@ export default function TestingCoordination() {
               <Label>Effective Date</Label>
               <Input 
                 type="date"
+                value={implementationDate}
+                onChange={(e) => setImplementationDate(e.target.value)}
                 className="mt-1"
               />
             </div>
@@ -1256,11 +1290,14 @@ export default function TestingCoordination() {
             <Button onClick={async () => {
               if (selectedControl) {
                 try {
-                  await apiService.updateControl(selectedControl.id, {
-                    effectiveness: 'not_tested'
+                  // Update Section2Control status from 'planned' to 'existing'
+                  await apiService.updateSection2Control(selectedControl.id, {
+                    status: 'existing',
+                    implementedDate: implementationDate || new Date().toISOString()
                   });
                   setIsMarkImplementedOpen(false);
                   setSelectedControl(null);
+                  setImplementationDate('');
                   await loadData();
                   alert('✅ Control marked as implemented and moved to Operational Controls!');
                 } catch (error) {

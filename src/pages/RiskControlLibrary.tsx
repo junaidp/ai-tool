@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { apiService } from '@/services/api';
 import type { Risk, Control } from '@/types';
 import type { Risk as ApiRisk, Control as ApiControl } from '@/types/api.types';
-import { AlertTriangle, Shield, Search, Sparkles, Plus, Link2 } from 'lucide-react';
+import { AlertTriangle, Shield, Search, Sparkles, Plus, Link2, Clock } from 'lucide-react';
 
 const safeJsonParse = (value: string | string[], fallback: string[] = []): string[] => {
   if (Array.isArray(value)) return value;
@@ -53,6 +53,7 @@ const transformApiControl = (apiControl: ApiControl): Control => ({
 export default function RiskControlLibrary() {
   const [risks, setRisks] = useState<Risk[]>([]);
   const [controls, setControls] = useState<Control[]>([]);
+  const [section2Controls, setSection2Controls] = useState<any[]>([]);
   const [isGenerateOpen, setIsGenerateOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAddCustomOpen, setIsAddCustomOpen] = useState(false);
@@ -95,6 +96,23 @@ export default function RiskControlLibrary() {
     ]);
     setRisks(risksData.map(transformApiRisk));
     setControls(controlsData.map(transformApiControl));
+    
+    // Load Section2Controls from Material Controls workflow
+    try {
+      const principalRisks = await apiService.getPrincipalRisks();
+      const allSection2Controls = [];
+      for (const risk of principalRisks) {
+        try {
+          const riskControls = await apiService.getSection2Controls(risk.id);
+          allSection2Controls.push(...riskControls.map((c: any) => ({ ...c, riskTitle: risk.riskTitle, riskId: risk.id })));
+        } catch (e) {
+          // Risk might not have controls yet
+        }
+      }
+      setSection2Controls(allSection2Controls);
+    } catch (error) {
+      console.error('Failed to load section2 controls:', error);
+    }
   };
 
   useEffect(() => {
@@ -419,167 +437,163 @@ export default function RiskControlLibrary() {
         </div>
       </div>
 
-      <Tabs defaultValue="risks">
+      <Tabs defaultValue="by-risk">
         <TabsList>
-          <TabsTrigger value="risks">Risk Library</TabsTrigger>
-          <TabsTrigger value="controls">Control Library</TabsTrigger>
+          <TabsTrigger value="by-risk">Controls by Risk</TabsTrigger>
           <TabsTrigger value="linkage">Risk-Control Linkage</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="risks" className="space-y-4">
+        <TabsContent value="by-risk" className="space-y-4">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Risk Library</CardTitle>
-                  <CardDescription>Tailored to your objectives and process architecture</CardDescription>
+                  <CardTitle>Controls by Risk</CardTitle>
+                  <CardDescription>All controls organized by the risks they mitigate</CardDescription>
                 </div>
                 <div className="relative w-72">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search risks..." className="pl-8" />
+                  <Input placeholder="Search risks or controls..." className="pl-8" />
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {risks.map((risk) => (
-                  <div key={risk.id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3 flex-1">
+              <div className="space-y-6">
+                {/* Group controls by risk using section2Controls */}
+                {Array.from(new Set(section2Controls.map(c => c.riskId))).map(riskId => {
+                  const riskControls = section2Controls.filter(c => c.riskId === riskId);
+                  const operationalControls = riskControls.filter(c => c.status === 'existing' || (!c.implementationPhase && c.status !== 'planned'));
+                  const implementationControls = riskControls.filter(c => c.status === 'planned' || (c.implementationPhase && c.status !== 'existing'));
+                  const riskTitle = riskControls[0]?.riskTitle || 'Unknown Risk';
+                  
+                  return (
+                    <div key={riskId} className="border-2 rounded-lg p-5 bg-gray-50">
+                      <div className="flex items-start gap-3 mb-4">
                         <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                        <div className="space-y-1 flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold">{risk.title}</h3>
-                            <Badge variant="outline">{risk.category}</Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{risk.description}</p>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg">{riskTitle}</h3>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {operationalControls.length} Operational • {implementationControls.length} Under Implementation
+                          </p>
                         </div>
                       </div>
+                      
+                      <Tabs defaultValue="operational" className="mt-4">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="operational">
+                            Operational ({operationalControls.length})
+                          </TabsTrigger>
+                          <TabsTrigger value="implementation">
+                            Under Implementation ({implementationControls.length})
+                          </TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="operational" className="space-y-3 mt-3">
+                          {operationalControls.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-6">No operational controls for this risk</p>
+                          ) : (
+                            operationalControls.map(control => (
+                              <div key={control.id} className="bg-white border rounded-lg p-4 space-y-3">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex items-start gap-3 flex-1">
+                                    <Shield className="h-5 w-5 text-green-600 mt-0.5" />
+                                    <div className="space-y-1 flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <h4 className="font-semibold">{control.title}</h4>
+                                        <Badge className="bg-green-100 text-green-800 border-green-300">Operational</Badge>
+                                        <Badge variant="outline">{control.type || control.controlType}</Badge>
+                                      </div>
+                                      <p className="text-sm text-muted-foreground">{control.description}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-4 gap-4 text-sm">
+                                  <div>
+                                    <span className="font-medium">Owner:</span>
+                                    <p className="text-muted-foreground">{control.owner}</p>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Frequency:</span>
+                                    <p className="text-muted-foreground">{control.frequency}</p>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Evidence:</span>
+                                    <p className="text-muted-foreground">{control.evidence || 'TBD'}</p>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Maturity Level:</span>
+                                    <p className="text-muted-foreground">Level {control.maturityLevel || 'N/A'}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </TabsContent>
+                        
+                        <TabsContent value="implementation" className="space-y-3 mt-3">
+                          {implementationControls.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-6">No controls under implementation for this risk</p>
+                          ) : (
+                            implementationControls.map(control => (
+                              <div key={control.id} className="bg-white border rounded-lg p-4 space-y-3 bg-blue-50/50">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex items-start gap-3 flex-1">
+                                    <Clock className="h-5 w-5 text-blue-600 mt-0.5" />
+                                    <div className="space-y-1 flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <h4 className="font-semibold">{control.title}</h4>
+                                        <Badge className="bg-blue-100 text-blue-800 border-blue-300">Under Implementation</Badge>
+                                        <Badge variant="outline">{control.type || control.controlType}</Badge>
+                                      </div>
+                                      <p className="text-sm text-muted-foreground">{control.description}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-4 gap-4 text-sm">
+                                  <div>
+                                    <span className="font-medium">Owner:</span>
+                                    <p className="text-muted-foreground">{control.owner}</p>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Target Frequency:</span>
+                                    <p className="text-muted-foreground">{control.frequency}</p>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Implementation Phase:</span>
+                                    <p className="text-muted-foreground">{control.implementationPhase ? `Phase ${control.implementationPhase}` : 'N/A'}</p>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Timeline:</span>
+                                    <p className="text-muted-foreground">{control.implementationTimeline || 'TBD'}</p>
+                                  </div>
+                                </div>
+                                {control.implementedDate && (
+                                  <div className="text-sm">
+                                    <span className="font-medium">Expected Implementation:</span>
+                                    <p className="text-muted-foreground">{new Date(control.implementedDate).toLocaleDateString()}</p>
+                                  </div>
+                                )}
+                              </div>
+                            ))
+                          )}
+                        </TabsContent>
+                      </Tabs>
                     </div>
-
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium">Inherent Risk:</span>
-                        <div className="mt-1">
-                          <Badge variant={getRiskLevelColor(risk.inherentRisk)}>
-                            {risk.inherentRisk.toUpperCase()}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div>
-                        <span className="font-medium">Residual Risk:</span>
-                        <div className="mt-1">
-                          <Badge variant={getRiskLevelColor(risk.residualRisk)}>
-                            {risk.residualRisk.toUpperCase()}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div>
-                        <span className="font-medium">Owner:</span>
-                        <p className="text-muted-foreground mt-1">{risk.owner}</p>
-                      </div>
-                    </div>
-
-                    <div className="text-sm">
-                      <span className="font-medium">Linked Objectives:</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {risk.linkedObjectives.map((obj, idx) => (
-                          <Badge key={idx} variant="secondary">
-                            {obj}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="text-sm">
-                      <span className="font-medium">Linked Controls:</span>
-                      <p className="text-muted-foreground mt-1">
-                        {risk.linkedControls.length} control(s) mitigating this risk
-                      </p>
-                    </div>
-
-                    <div className="flex gap-2 pt-2 border-t">
-                      <Button size="sm" variant="outline" onClick={() => handleViewDetails(risk)}>View Details</Button>
-                      <Button size="sm" variant="outline" onClick={() => handleViewControls(risk)}>View Controls</Button>
-                      <Button size="sm" variant="outline" onClick={() => handleRiskAssessment(risk)}>Risk Assessment</Button>
-                    </div>
+                  );
+                })}
+                
+                {section2Controls.length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No controls found in the library.</p>
+                    <p className="text-sm mt-2">Complete Material Controls workflow to add controls.</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="controls" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Control Library</CardTitle>
-                  <CardDescription>Manual vs automated, with system-specific controls</CardDescription>
-                </div>
-                <div className="relative w-72">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search controls..." className="pl-8" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {controls.map((control) => (
-                  <div key={control.id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3 flex-1">
-                        <Shield className="h-5 w-5 text-primary mt-0.5" />
-                        <div className="space-y-1 flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold">{control.name}</h3>
-                            {getControlTypeBadge(control.type)}
-                            <Badge variant="outline">{control.automation}</Badge>
-                            {control.linkedRisks && control.linkedRisks.length > 0 && (
-                              <Badge className="bg-green-100 text-green-800 border-green-300">
-                                Selected
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">{control.description}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium">Frequency:</span>
-                        <p className="text-muted-foreground">{control.frequency}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Owner:</span>
-                        <p className="text-muted-foreground">{control.owner}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Evidence Source:</span>
-                        <p className="text-muted-foreground">{control.evidenceSource}</p>
-                      </div>
-                    </div>
-
-                    <div className="text-sm">
-                      <span className="font-medium">Linked Risks:</span>
-                      <p className="text-muted-foreground mt-1">
-                        Mitigates {control.linkedRisks.length} identified risk(s)
-                      </p>
-                    </div>
-
-                    <div className="flex gap-2 pt-2 border-t">
-                      <Button size="sm" variant="outline">View Details</Button>
-                      <Button size="sm" variant="outline">Test Scripts</Button>
-                      <Button size="sm" variant="outline">Evidence</Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="linkage" className="space-y-4">
           <Card>

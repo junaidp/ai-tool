@@ -275,9 +275,13 @@ export default function MaterialControlsWorkflow() {
     const pkg = maturityPackages.find(p => p.level === level) || null;
     setCurrentLevelPackage(pkg);
     if (pkg) {
+      // Use AI-generated specific controls if available, otherwise fall back to templates
+      const aiControls = aiGeneratedControls[level]?.specificControls || [];
+      const controlsToUse = aiControls.length > 0 ? aiControls : pkg.controlTemplates;
+      
       setDocumentedControls(
-        pkg.controlTemplates.map(t => ({
-          templateId: t.id,
+        controlsToUse.map((t: any) => ({
+          templateId: t.id || `ai-${level}-${Math.random().toString(36).substr(2, 9)}`,
           hasControl: 'yes' as const,
           controlName: '',
           preparedBy: t.defaultOwner,
@@ -309,7 +313,10 @@ export default function MaterialControlsWorkflow() {
     const existingControls = documentedControls
       .filter(dc => dc.hasControl === 'yes' || dc.hasControl === 'similar')
       .map(dc => {
-        const template = currentLevelPackage?.controlTemplates.find(t => t.id === dc.templateId);
+        // Check AI-generated controls first, then fall back to templates
+        const aiControls = aiGeneratedControls[selectedCurrentLevel]?.specificControls || [];
+        const template = aiControls.find((t: any) => t.id === dc.templateId || dc.templateId.startsWith('ai-')) 
+          || currentLevelPackage?.controlTemplates.find(t => t.id === dc.templateId);
         return {
           templateId: dc.templateId,
           type: template?.type || 'detective',
@@ -334,7 +341,10 @@ export default function MaterialControlsWorkflow() {
       existingControls: documentedControls
         .filter(dc => dc.hasControl === 'yes' || dc.hasControl === 'similar')
         .map((dc, idx) => {
-          const template = currentLevelPackage?.controlTemplates.find(t => t.id === dc.templateId);
+          // Check AI-generated controls first, then fall back to templates
+          const aiControls = aiGeneratedControls[selectedCurrentLevel!]?.specificControls || [];
+          const template = aiControls.find((t: any) => t.id === dc.templateId || dc.templateId.startsWith('ai-')) 
+            || currentLevelPackage?.controlTemplates.find(t => t.id === dc.templateId);
           return {
             id: `CTRL-${String(idx + 1).padStart(3, '0')}`,
             riskId: selectedRisk!.id,
@@ -1018,7 +1028,9 @@ export default function MaterialControlsWorkflow() {
     }
     
     if (!currentLevelPackage || !selectedCurrentLevel) return null;
-    const templates = currentLevelPackage.controlTemplates;
+    // Use AI-generated specific controls if available, otherwise use templates
+    const aiControls = aiGeneratedControls[selectedCurrentLevel]?.specificControls || [];
+    const templates = aiControls.length > 0 ? aiControls : currentLevelPackage.controlTemplates;
     const template = templates[currentControlIdx];
     const doc = documentedControls[currentControlIdx];
     if (!template || !doc) return null;
@@ -1287,7 +1299,10 @@ export default function MaterialControlsWorkflow() {
             </p>
             <ul className="space-y-1 mb-3">
               {documentedControls.map((dc, idx) => {
-                const template = currentLevelPackage?.controlTemplates[idx];
+                // Check AI-generated controls first, then fall back to templates
+                const aiControls = aiGeneratedControls[selectedCurrentLevel!]?.specificControls || [];
+                const templates = aiControls.length > 0 ? aiControls : currentLevelPackage?.controlTemplates || [];
+                const template = templates[idx];
                 if (dc.hasControl === 'no') return null;
                 return (
                   <li key={dc.templateId} className="flex items-center gap-2 text-sm">
