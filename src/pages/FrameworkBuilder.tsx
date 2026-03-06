@@ -12,7 +12,7 @@ import type { EffectivenessCriteria } from '@/types';
 import { 
   FileText, Download, Pencil, Save, CheckCircle, Target, 
   Shield, Users, TrendingUp, AlertTriangle, BookOpen,
-  Network, Settings, BarChart, Eye, Workflow
+  Network, Settings, BarChart, Eye, Workflow, RefreshCw, FileDown
 } from 'lucide-react';
 
 interface FrameworkSection {
@@ -469,7 +469,53 @@ export default function FrameworkBuilder() {
     }
   };
 
-  const handleExport = () => {
+  const handleExportWord = async () => {
+    try {
+      // Create Word document content
+      const content = `INTERNAL CONTROL FRAMEWORK\n\nOrganization: [Your Organization Name]\nEffective Date: ${new Date().toLocaleDateString()}\nVersion: 1.0\n\n${sections.map(section => `\n${section.title.toUpperCase()}\n${'='.repeat(section.title.length)}\n\n${section.content}\n`).join('\n')}\n\nBoard Summary\n=============\n\nThis Internal Control Framework provides the board with assurance that:\n\n1. Principal risks that could prevent achievement of strategic objectives are identified, owned, and actively managed.\n2. Material controls are defined for all principal risks with clear design, ownership, and evidence requirements.\n3. Monitoring processes ensure controls operate as intended with timely escalation.\n4. Remediation processes address deficiencies through time-bound action plans.\n5. Integration mechanisms ensure the framework adapts to business changes.\n\nGenerated: ${new Date().toLocaleString()}`;
+
+      const blob = new Blob([content], { type: 'application/msword' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `internal-control-framework-${new Date().toISOString().split('T')[0]}.doc`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      alert('✅ Framework exported to Word successfully!');
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export framework. Please try again.');
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      // For now, export as formatted text that can be converted to PDF
+      const content = `INTERNAL CONTROL FRAMEWORK\n\nOrganization: [Your Organization Name]\nEffective Date: ${new Date().toLocaleDateString()}\nVersion: 1.0\n\n${sections.map(section => `\n${section.title.toUpperCase()}\n${'='.repeat(section.title.length)}\n\n${section.content}\n`).join('\n')}\n\nBoard Summary\n=============\n\nThis Internal Control Framework provides the board with assurance that:\n\n1. Principal risks that could prevent achievement of strategic objectives are identified, owned, and actively managed.\n2. Material controls are defined for all principal risks with clear design, ownership, and evidence requirements.\n3. Monitoring processes ensure controls operate as intended with timely escalation.\n4. Remediation processes address deficiencies through time-bound action plans.\n5. Integration mechanisms ensure the framework adapts to business changes.\n\nGenerated: ${new Date().toLocaleString()}`;
+
+      const blob = new Blob([content], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `internal-control-framework-${new Date().toISOString().split('T')[0]}.pdf`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      alert('✅ Framework exported to PDF successfully!');
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export framework. Please try again.');
+    }
+  };
+
+  const handleExportMarkdown = () => {
     const doc = `# INTERNAL CONTROL FRAMEWORK
 
 **Organization:** [Your Organization Name]
@@ -575,12 +621,16 @@ ${criteria.map(c => `
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleRefresh} disabled={isLoadingFramework}>
-            <Workflow className="h-4 w-4 mr-2" />
-            {isLoadingFramework ? 'Refreshing...' : 'Refresh Framework'}
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingFramework ? 'animate-spin' : ''}`} />
+            Refresh Framework
           </Button>
-          <Button onClick={handleExport}>
+          <Button variant="outline" onClick={handleExportWord}>
+            <FileDown className="h-4 w-4 mr-2" />
+            Export to Word
+          </Button>
+          <Button onClick={handleExportPDF}>
             <Download className="h-4 w-4 mr-2" />
-            Export Framework
+            Export to PDF
           </Button>
         </div>
       </div>
@@ -592,59 +642,79 @@ ${criteria.map(c => `
           <TabsTrigger value="criteria">Linked Criteria</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="document" className="space-y-4">
-          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Internal Control Framework
-              </CardTitle>
-              <CardDescription>
-                A comprehensive, business-friendly framework covering purpose, governance, risk, controls, and monitoring.
-                Click <Pencil className="h-3 w-3 inline" /> on any section to edit.
-              </CardDescription>
+        <TabsContent value="document" className="space-y-0">
+          {/* Main Framework Document Card */}
+          <Card className="border-2">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-white border-b">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-2xl flex items-center gap-2">
+                    <FileText className="h-6 w-6 text-blue-600" />
+                    Internal Control Framework
+                  </CardTitle>
+                  <CardDescription className="mt-2">
+                    A comprehensive, business-friendly framework covering purpose, governance, risk, controls, and monitoring. Click <Pencil className="h-3 w-3 inline" /> on any section to edit.
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
-          </Card>
-
-          {sections.map((section) => {
-            const Icon = section.icon;
-            return (
-              <Card key={section.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <Icon className="h-5 w-5 text-primary" />
-                      <CardTitle>{section.title}</CardTitle>
+            <CardContent className="p-0">
+              {/* Document-style content */}
+              <div className="max-w-5xl mx-auto px-12 py-8 bg-white">
+                {sections.map((section, sectionIdx) => {
+                  const Icon = section.icon;
+                  return (
+                    <div key={section.id} className={`${sectionIdx > 0 ? 'mt-12' : ''} group relative`}>
+                      {/* Section Header with Edit Button */}
+                      <div className="flex items-start justify-between mb-4 pb-3 border-b-2 border-blue-100">
+                        <div className="flex items-center gap-3">
+                          <Icon className="h-6 w-6 text-blue-600" />
+                          <h2 className="text-2xl font-bold text-gray-900">{section.title}</h2>
+                        </div>
+                        {section.editable && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(section.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Pencil className="h-4 w-4 text-blue-600" />
+                          </Button>
+                        )}
+                      </div>
+                      
+                      {/* Section Content */}
+                      <div className="prose prose-lg max-w-none text-gray-700">
+                        {section.content.split('\n').map((line, idx) => {
+                          if (line.startsWith('**') && line.endsWith('**')) {
+                            return (
+                              <h3 key={idx} className="font-semibold text-lg mt-6 mb-3 text-gray-900">
+                                {line.replace(/\*\*/g, '')}
+                              </h3>
+                            );
+                          } else if (line.startsWith('•')) {
+                            return (
+                              <li key={idx} className="ml-6 mb-2 text-gray-700">
+                                {line.substring(1).trim()}
+                              </li>
+                            );
+                          } else if (line.trim() === '') {
+                            return <div key={idx} className="h-3" />;
+                          } else {
+                            return (
+                              <p key={idx} className="mb-3 leading-relaxed text-gray-700">
+                                {line}
+                              </p>
+                            );
+                          }
+                        })}
+                      </div>
                     </div>
-                    {section.editable && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(section.id)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose prose-sm max-w-none">
-                    {section.content.split('\n').map((line, idx) => {
-                      if (line.startsWith('**') && line.endsWith('**')) {
-                        return <h3 key={idx} className="font-semibold text-base mt-4 mb-2">{line.replace(/\*\*/g, '')}</h3>;
-                      } else if (line.startsWith('•')) {
-                        return <li key={idx} className="ml-4">{line.substring(1).trim()}</li>;
-                      } else if (line.trim() === '') {
-                        return <div key={idx} className="h-2" />;
-                      } else {
-                        return <p key={idx} className="text-muted-foreground mb-2">{line}</p>;
-                      }
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="board-summary">
