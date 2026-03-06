@@ -181,24 +181,26 @@ export default function FrameworkBuilder() {
 <html><head><meta charset="UTF-8"><title>Internal Control Framework</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-@page { margin: 0.75in; }
-body { font-family: 'Source Sans 3', sans-serif; line-height: 1.7; color: #2C3040; margin: 0; }
-.header { background: linear-gradient(135deg, #0F2240 0%, #162D50 60%, #0A1A30 100%); color: white; padding: 48pt; margin: -0.75in -0.75in 32pt -0.75in; }
-.header .eyebrow { font-size: 9pt; letter-spacing: 3pt; color: #C9A84C; text-transform: uppercase; margin-bottom: 12pt; }
-.header h1 { font-family: 'Playfair Display', serif; font-size: 36pt; font-weight: 700; margin: 0 0 8pt 0; }
+@page { margin: 0.5in; }
+body { font-family: 'Source Sans 3', sans-serif; line-height: 1.7; color: #2C3040; margin: 0; padding: 0; }
+.header { background: linear-gradient(135deg, #0F2240 0%, #162D50 60%, #0A1A30 100%); color: white; padding: 36pt 32pt; margin: 0 0 24pt 0; }
+.header .eyebrow { font-size: 9pt; letter-spacing: 3pt; color: #C9A84C; text-transform: uppercase; margin-bottom: 10pt; }
+.header h1 { font-family: 'Playfair Display', serif; font-size: 32pt; font-weight: 700; margin: 0 0 6pt 0; line-height: 1.1; }
 .header .gold { color: #C9A84C; }
-.header .sub { font-size: 14pt; font-style: italic; color: rgba(255,255,255,0.6); font-family: 'Playfair Display', serif; }
-h2 { font-family: 'Playfair Display', serif; font-size: 24pt; font-weight: 700; color: #0F2240; margin: 32pt 0 8pt 0; padding-bottom: 8pt; border-bottom: 2px solid #C9A84C; }
-h3 { font-family: 'Playfair Display', serif; font-size: 16pt; font-weight: 600; color: #0F2240; margin: 20pt 0 8pt 0; }
-p { margin: 8pt 0; font-size: 11pt; line-height: 1.7; }
-ul { padding-left: 20pt; margin: 8pt 0; }
-li { margin: 4pt 0; font-size: 10.5pt; }
+.header .sub { font-size: 13pt; font-style: italic; color: rgba(255,255,255,0.6); font-family: 'Playfair Display', serif; margin-top: 8pt; }
+.content { padding: 0 16pt; }
+h2 { font-family: 'Playfair Display', serif; font-size: 20pt; font-weight: 700; color: #0F2240; margin: 28pt 0 8pt 0; padding-bottom: 6pt; border-bottom: 2px solid #C9A84C; }
+h3 { font-family: 'Playfair Display', serif; font-size: 14pt; font-weight: 600; color: #0F2240; margin: 16pt 0 6pt 0; }
+p { margin: 6pt 0; font-size: 10.5pt; line-height: 1.7; }
+ul { padding-left: 18pt; margin: 6pt 0; }
+li { margin: 3pt 0; font-size: 10pt; }
 </style></head><body>
 <div class="header">
 <div class="eyebrow">UK CGC · Provision 29</div>
 <h1>Internal Control<br><span class="gold">Effectiveness Framework</span></h1>
 <div class="sub">A Guidance Document for Implementation</div>
 </div>
+<div class="content">
 ${sections.map(section => `
 <h2>${section.title}</h2>
 ${section.content.split('\n').map(line => {
@@ -213,6 +215,7 @@ ${section.content.split('\n').map(line => {
 }).join('\n')}
 `).join('\n')}
 <p style="margin-top: 32pt; font-size: 9pt; color: #666;">Generated: ${new Date().toLocaleString()}</p>
+</div>
 </body></html>`;
 
     printWindow.document.write(htmlContent);
