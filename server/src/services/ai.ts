@@ -64,7 +64,7 @@ Return as valid JSON with a "criteria" array containing objects with these exact
         content: prompt,
       },
     ],
-    response_format: { type: 'json_schema' },
+    response_format: { type: 'json_object' },
     temperature: 0.7,
   });
 
@@ -130,7 +130,7 @@ Return as JSON with fields: score, reasoning, recommendations (array).`;
         content: prompt,
       },
     ],
-    response_format: { type: 'json_schema' },
+    response_format: { type: 'json_object' },
     temperature: 0.5,
   });
 
@@ -172,7 +172,7 @@ Return as JSON array with fields: title, description, priority, affectedAreas (a
         content: prompt,
       },
     ],
-    response_format: { type: 'json_schema' },
+    response_format: { type: 'json_object' },
     temperature: 0.6,
   });
 
@@ -219,7 +219,7 @@ Return as valid JSON with a "controls" array containing objects with these exact
           content: prompt,
         },
       ],
-      response_format: { type: 'json_schema' },
+      response_format: { type: 'json_object' },
       temperature: 0.6,
     });
 
@@ -401,7 +401,7 @@ export async function generateRisksByCategory(
         content: prompt,
       },
     ],
-    response_format: { type: 'json_schema' },
+    response_format: { type: 'json_object' },
     temperature: 0.7,
     max_tokens: 4096,
   });
@@ -494,7 +494,7 @@ Return as JSON with:
         content: prompt,
       },
     ],
-    response_format: { type: 'json_schema' },
+    response_format: { type: 'json_object' },
     temperature: 0.6,
   });
 
@@ -554,7 +554,7 @@ Return as JSON with: likelihoodScore, likelihoodReasoning, impactScore, impactRe
         content: prompt,
       },
     ],
-    response_format: { type: 'json_schema' },
+    response_format: { type: 'json_object' },
     temperature: 0.5,
   });
 
@@ -627,7 +627,7 @@ Ensure the updated criterion is specific, measurable, and aligned with the user'
         content: prompt,
       },
     ],
-    response_format: { type: 'json_schema' },
+    response_format: { type: 'json_object' },
     temperature: 0.7,
   });
 
@@ -773,7 +773,7 @@ Make the controls realistic, specific to this risk, and appropriate for the matu
         content: prompt,
       },
     ],
-    response_format: { type: 'json_schema' },
+    response_format: { type: 'json_object' },
     temperature: 0.3, // Low temperature for consistent outputs
     seed: seed, // Deterministic seed for same risk/maturity combination
   });
