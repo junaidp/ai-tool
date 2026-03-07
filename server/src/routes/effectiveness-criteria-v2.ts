@@ -424,7 +424,7 @@ router.post('/generate-custom-framework', async (req, res) => {
 
     // Use AI to generate the complete custom framework
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini',
       max_tokens: 16000,
       temperature: 0.7,
       messages: [{
@@ -659,7 +659,7 @@ router.post('/generate-board-document', async (req, res) => {
 
     // Use AI to generate board approval document
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini',
       max_tokens: 4000,
       messages: [{
         role: 'user',

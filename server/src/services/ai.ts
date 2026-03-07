@@ -53,7 +53,7 @@ CATEGORIZATION LOGIC:
 Return as valid JSON with a "criteria" array containing objects with these exact fields: dimension, criteria, threshold, evidenceType (array), frequency, categorization.`;
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4-turbo-preview',
+    model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
@@ -119,7 +119,7 @@ Provide:
 Return as JSON with fields: score, reasoning, recommendations (array).`;
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4-turbo-preview',
+    model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
@@ -161,7 +161,7 @@ Identify 3-5 potential control gaps with:
 Return as JSON array with fields: title, description, priority, affectedAreas (array), recommendedAction.`;
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4-turbo-preview',
+    model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
@@ -208,7 +208,7 @@ Return as valid JSON with a "controls" array containing objects with these exact
 
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -390,7 +390,7 @@ export async function generateRisksByCategory(
   const prompt = buildCategoryPrompt(threatCategory, context, categoryAnswers);
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4-turbo-preview',
+    model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
@@ -483,7 +483,7 @@ Return as JSON with:
 - explanation (string, brief description of what changed)`;
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4-turbo-preview',
+    model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
@@ -543,7 +543,7 @@ Score on two dimensions (1-5 scale):
 Return as JSON with: likelihoodScore, likelihoodReasoning, impactScore, impactReasoning`;
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4-turbo-preview',
+    model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
@@ -616,7 +616,7 @@ Return as JSON with:
 Ensure the updated criterion is specific, measurable, and aligned with the user's request.`;
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4-turbo-preview',
+    model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
@@ -762,7 +762,7 @@ Return JSON with:
 Make the controls realistic, specific to this risk, and appropriate for the maturity level.`;
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4-turbo-preview',
+    model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
