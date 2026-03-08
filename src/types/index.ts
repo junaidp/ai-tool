@@ -172,6 +172,7 @@ export interface DashboardData {
 
 export interface PrincipalRisk {
   id: string;
+  riskNumber?: string; // e.g., "R-001", "R-002"
   riskTitle: string;
   riskStatement: string;
   domainTags: string[]; // ops, reporting, financial, compliance

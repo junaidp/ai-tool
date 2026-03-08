@@ -747,7 +747,7 @@ Return JSON with:
   "specificControls": [
     {
       "title": "Control name",
-      "description": "Detailed description of what this control does and how it mitigates the risk. Should be 2-4 sentences.",
+      "description": "Detailed description written in PRESENT TENSE describing what this control currently does and how it mitigates the risk. Write as if the control is already in place and being performed. Use phrases like 'is performed', 'is reviewed', 'are monitored', 'enables identification' rather than 'implement', 'monitor', 'review'. Should be 2-4 sentences.",
       "type": "preventive|detective|corrective",
       "objectives": ["operations", "financial", "compliance", "reporting"],
       "defaultOwner": "Role (e.g., CFO, CRO, IT Director)",

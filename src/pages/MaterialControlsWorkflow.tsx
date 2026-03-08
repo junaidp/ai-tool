@@ -694,6 +694,11 @@ export default function MaterialControlsWorkflow() {
                             ) : (
                               <AlertTriangle className="h-5 w-5 text-orange-600" />
                             )}
+                            {risk.riskNumber && (
+                              <Badge variant="outline" className="font-mono text-xs">
+                                {risk.riskNumber}
+                              </Badge>
+                            )}
                             <h3 className="font-semibold">{risk.riskTitle}</h3>
                             <Badge
                               variant={priority === 'HIGH' ? 'destructive' : priority === 'MEDIUM' ? 'default' : 'secondary'}
@@ -925,9 +930,21 @@ export default function MaterialControlsWorkflow() {
                 <ChevronLeft className="h-4 w-4 mr-2" />
                 Back
               </Button>
-              <Button disabled={!selectedCurrentLevel} onClick={handleProceedToDocumentation}>
-                Continue with Level {selectedCurrentLevel}
-                <ChevronRight className="h-4 w-4 ml-2" />
+              <Button 
+                disabled={!selectedCurrentLevel || (selectedCurrentLevel && loadingAIControls[selectedCurrentLevel])} 
+                onClick={handleProceedToDocumentation}
+              >
+                {selectedCurrentLevel && loadingAIControls[selectedCurrentLevel] ? (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2 animate-pulse" />
+                    AI Processing...
+                  </>
+                ) : (
+                  <>
+                    Continue with Level {selectedCurrentLevel}
+                    <ChevronRight className="h-4 w-4 ml-2" />
+                  </>
+                )}
               </Button>
             </div>
           </CardContent>
