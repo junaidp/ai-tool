@@ -304,7 +304,12 @@ export default function MaterialControlsWorkflow() {
 
   const handleProceedToTarget = () => {
     if (!selectedRisk || !selectedCurrentLevel) {
-      console.error('Missing required data for target selection');
+      console.error('Missing required data for target selection', {
+        selectedRisk,
+        selectedCurrentLevel,
+        currentLevelPackage
+      });
+      alert('Error: Missing risk or maturity level data. Please go back and select again.');
       return;
     }
     
@@ -1053,13 +1058,59 @@ export default function MaterialControlsWorkflow() {
       );
     }
     
-    if (!currentLevelPackage || !selectedCurrentLevel) return null;
+    if (!currentLevelPackage || !selectedCurrentLevel) {
+      console.error('renderStep2: Missing currentLevelPackage or selectedCurrentLevel', {
+        currentLevelPackage,
+        selectedCurrentLevel,
+        currentStep
+      });
+      return (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-orange-500" />
+            <p className="text-lg font-medium mb-2">Missing Control Data</p>
+            <p className="text-muted-foreground mb-4">
+              Unable to load controls. Please go back and select a maturity level again.
+            </p>
+            <Button onClick={() => setCurrentStep(1)}>
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Back to Maturity Level Selection
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+    
     // Use AI-generated specific controls if available, otherwise use templates
     const aiControls = aiGeneratedControls[selectedCurrentLevel]?.specificControls || [];
     const templates = aiControls.length > 0 ? aiControls : currentLevelPackage.controlTemplates;
     const template = templates[currentControlIdx];
     const doc = documentedControls[currentControlIdx];
-    if (!template || !doc) return null;
+    
+    if (!template || !doc) {
+      console.error('renderStep2: Missing template or doc', {
+        template,
+        doc,
+        currentControlIdx,
+        templatesLength: templates.length,
+        documentedControlsLength: documentedControls.length
+      });
+      return (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-orange-500" />
+            <p className="text-lg font-medium mb-2">Control Not Found</p>
+            <p className="text-muted-foreground mb-4">
+              Unable to load control #{currentControlIdx + 1}. Please go back and try again.
+            </p>
+            <Button onClick={() => setCurrentStep(1)}>
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Back to Maturity Level Selection
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
 
     const updateDoc = (updates: Partial<DocumentedControl>) => {
       const newDocs = [...documentedControls];
@@ -1279,13 +1330,16 @@ export default function MaterialControlsWorkflow() {
               <Button
                 disabled={!doc.hasControl}
                 onClick={() => {
+                  console.log('Button clicked - currentControlIdx:', currentControlIdx, 'templates.length:', templates.length);
                   if (!doc.hasControl) {
                     alert('Please select whether you have this control before proceeding.');
                     return;
                   }
                   if (currentControlIdx < templates.length - 1) {
+                    console.log('Moving to next control');
                     setCurrentControlIdx(currentControlIdx + 1);
                   } else {
+                    console.log('Last control - calling handleProceedToTarget');
                     handleProceedToTarget();
                   }
                 }}
@@ -1305,7 +1359,29 @@ export default function MaterialControlsWorkflow() {
   // ============================================================
 
   const renderStep3 = () => {
-    if (!selectedCurrentLevel || !selectedRisk) return null;
+    if (!selectedCurrentLevel || !selectedRisk) {
+      console.error('renderStep3: Missing required state', {
+        selectedCurrentLevel,
+        selectedRisk,
+        currentStep
+      });
+      return (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-orange-500" />
+            <p className="text-lg font-medium mb-2">Missing Required Data</p>
+            <p className="text-muted-foreground mb-4">
+              Unable to load target selection. Please go back and try again.
+            </p>
+            <Button onClick={() => setCurrentStep(0)}>
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Back to Risk Selection
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+    
     const { score } = extractRiskScore(selectedRisk);
     const documentedCount = documentedControls.filter(
       dc => dc.hasControl === 'yes' || dc.hasControl === 'similar'
