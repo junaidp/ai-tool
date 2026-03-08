@@ -459,6 +459,19 @@ export default function RiskControlLibrary() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
+                {section2Controls.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Shield className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                    <p className="text-lg font-medium mb-2">No controls found in the library.</p>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Complete Material Controls workflow to add controls.
+                    </p>
+                    <Button onClick={() => window.location.href = '/material-controls'}>
+                      Go to Material Controls
+                    </Button>
+                  </div>
+                ) : (
+                  <>
                 {/* Group controls by risk using section2Controls */}
                 {Array.from(new Set(section2Controls.map(c => c.riskId))).map(riskId => {
                   const riskControls = section2Controls.filter(c => c.riskId === riskId);
@@ -577,13 +590,7 @@ export default function RiskControlLibrary() {
                     </div>
                   );
                 })}
-                
-                {section2Controls.length === 0 && (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No controls found in the library.</p>
-                    <p className="text-sm mt-2">Complete Material Controls workflow to add controls.</p>
-                  </div>
+                </>
                 )}
               </div>
             </CardContent>

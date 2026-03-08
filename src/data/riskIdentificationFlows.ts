@@ -87,6 +87,183 @@ export const financialReportingFlows: FinancialReportingQuestionFlow[] = [
       },
     ],
   },
+  {
+    area: 'fixed_assets',
+    questions: [
+      {
+        id: 'fa_001',
+        text: 'What is the value of fixed assets relative to total assets?',
+        type: 'multiple_choice',
+        options: ['< 10%', '10% - 30%', '30% - 50%', '> 50%'],
+        riskIndicator: 'medium',
+      },
+      {
+        id: 'fa_002',
+        text: 'Do you capitalize software development costs or other intangibles?',
+        type: 'yes_no',
+        riskIndicator: 'high',
+      },
+      {
+        id: 'fa_003',
+        text: 'How frequently do you review assets for impairment?',
+        type: 'multiple_choice',
+        options: ['Quarterly', 'Annually', 'Only when triggered', 'Never'],
+        riskIndicator: 'high',
+      },
+    ],
+    riskLogic: [
+      {
+        conditions: [
+          { questionId: 'fa_002', answer: 'yes' },
+        ],
+        riskTitle: 'Capitalization and Amortization Risk',
+        riskDescription: 'Risk of improper capitalization of costs and incorrect amortization patterns',
+        materialityLevel: 'high',
+        suggestedControls: ['Capitalization policy', 'Project tracking', 'Amortization schedules', 'Impairment testing'],
+      },
+      {
+        conditions: [
+          { questionId: 'fa_003', answer: ['Only when triggered', 'Never'] },
+        ],
+        riskTitle: 'Asset Impairment Risk',
+        riskDescription: 'Risk of carrying impaired assets at values exceeding recoverable amounts',
+        materialityLevel: 'medium',
+        suggestedControls: ['Regular impairment reviews', 'Asset utilization monitoring', 'Market value assessments'],
+      },
+    ],
+  },
+  {
+    area: 'payroll',
+    questions: [
+      {
+        id: 'pay_001',
+        text: 'How many employees do you have?',
+        type: 'multiple_choice',
+        options: ['< 10', '10 - 50', '50 - 200', '> 200'],
+        riskIndicator: 'medium',
+      },
+      {
+        id: 'pay_002',
+        text: 'Do you have complex compensation arrangements (bonuses, equity, commissions)?',
+        type: 'yes_no',
+        riskIndicator: 'high',
+      },
+      {
+        id: 'pay_003',
+        text: 'Are payroll changes independently reviewed and approved?',
+        type: 'yes_no',
+        riskIndicator: 'high',
+      },
+    ],
+    riskLogic: [
+      {
+        conditions: [
+          { questionId: 'pay_002', answer: 'yes' },
+        ],
+        riskTitle: 'Complex Compensation Accounting',
+        riskDescription: 'Risk of errors in accruals and expense recognition for variable compensation',
+        materialityLevel: 'high',
+        suggestedControls: ['Bonus accrual calculations', 'Equity compensation tracking', 'Commission reconciliations'],
+      },
+      {
+        conditions: [
+          { questionId: 'pay_003', answer: 'no' },
+        ],
+        riskTitle: 'Payroll Processing Controls',
+        riskDescription: 'Risk of unauthorized or erroneous payroll changes',
+        materialityLevel: 'medium',
+        suggestedControls: ['Segregation of duties', 'Approval workflows', 'Payroll reconciliations'],
+      },
+    ],
+  },
+  {
+    area: 'treasury',
+    questions: [
+      {
+        id: 'treas_001',
+        text: 'Do you have debt or credit facilities?',
+        type: 'yes_no',
+        riskIndicator: 'high',
+      },
+      {
+        id: 'treas_002',
+        text: 'Do you hold investments or derivatives?',
+        type: 'yes_no',
+        riskIndicator: 'high',
+      },
+      {
+        id: 'treas_003',
+        text: 'How frequently are bank reconciliations performed?',
+        type: 'multiple_choice',
+        options: ['Daily', 'Weekly', 'Monthly', 'Quarterly'],
+        riskIndicator: 'high',
+      },
+    ],
+    riskLogic: [
+      {
+        conditions: [
+          { questionId: 'treas_001', answer: 'yes' },
+        ],
+        riskTitle: 'Debt Covenant Compliance',
+        riskDescription: 'Risk of debt covenant violations and improper debt classification',
+        materialityLevel: 'high',
+        suggestedControls: ['Covenant monitoring', 'Debt schedule maintenance', 'Classification reviews'],
+      },
+      {
+        conditions: [
+          { questionId: 'treas_002', answer: 'yes' },
+        ],
+        riskTitle: 'Investment Valuation and Accounting',
+        riskDescription: 'Risk of incorrect fair value measurements and classification',
+        materialityLevel: 'high',
+        suggestedControls: ['Fair value assessments', 'Investment policy', 'Hedge accounting documentation'],
+      },
+    ],
+  },
+  {
+    area: 'financial_close',
+    questions: [
+      {
+        id: 'close_001',
+        text: 'How long does your month-end close process take?',
+        type: 'multiple_choice',
+        options: ['< 5 days', '5 - 10 days', '10 - 15 days', '> 15 days'],
+        riskIndicator: 'medium',
+      },
+      {
+        id: 'close_002',
+        text: 'Are all balance sheet accounts reconciled monthly?',
+        type: 'yes_no',
+        riskIndicator: 'high',
+      },
+      {
+        id: 'close_003',
+        text: 'Do you have a documented close checklist and timeline?',
+        type: 'yes_no',
+        riskIndicator: 'medium',
+      },
+    ],
+    riskLogic: [
+      {
+        conditions: [
+          { questionId: 'close_002', answer: 'no' },
+        ],
+        riskTitle: 'Incomplete Account Reconciliations',
+        riskDescription: 'Risk of undetected errors due to incomplete reconciliation processes',
+        materialityLevel: 'high',
+        suggestedControls: ['Reconciliation policy', 'Account ownership', 'Review and sign-off procedures'],
+      },
+      {
+        conditions: [
+          { questionId: 'close_001', answer: ['10 - 15 days', '> 15 days'] },
+        ],
+        riskTitle: 'Extended Close Process',
+        riskDescription: 'Risk of delayed financial reporting and increased error rates',
+        materialityLevel: 'medium',
+        suggestedControls: ['Close calendar', 'Process automation', 'Standardized procedures', 'Early close activities'],
+      },
+    ],
+  },
 ];
 
 // Fraud Risk Question Flows

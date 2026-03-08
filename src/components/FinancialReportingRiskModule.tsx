@@ -109,7 +109,10 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
       }
     });
 
+    // Add new risks to the list
     setIdentifiedRisks(prev => [...prev, ...newRisks]);
+    
+    // Reset to area selection to allow assessing more areas
     setCurrentArea(null);
     setCurrentQuestionIndex(0);
     setAnswers({});

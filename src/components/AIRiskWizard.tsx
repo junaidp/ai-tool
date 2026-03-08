@@ -40,12 +40,64 @@ const EMPLOYEE_RANGES = [
   '251 - 500', '501 - 1,000', '1,001 - 5,000', 'Over 5,000',
 ];
 
-const STRATEGIC_PRIORITIES = [
-  'Achieve/maintain profitability', 'Grow revenue', 'Launch new products/services',
-  'Enter new markets/geographies', 'Raise funding (next round)',
-  'Improve operational efficiency', 'Scale infrastructure/systems',
-  'Acquire or integrate another company', 'Prepare for exit/IPO',
-];
+const getStrategicPriorities = (industry: string, customerBase: string, fundingType: string): string[] => {
+  const basePriorities = ['Achieve/maintain profitability', 'Grow revenue', 'Improve operational efficiency'];
+  
+  // Industry-specific priorities
+  const industryPriorities: Record<string, string[]> = {
+    'Manufacturing': ['Scale production capacity', 'Invest in automation/modernization', 'Improve supply chain resilience'],
+    'SaaS / Technology': ['Launch new products/services', 'Scale infrastructure/systems', 'Reduce customer churn'],
+    'Retail': ['Expand omnichannel capabilities', 'Improve customer experience', 'Optimize inventory management'],
+    'Professional Services': ['Expand service offerings', 'Grow client base', 'Develop talent and expertise'],
+    'Financial Services': ['Enhance regulatory compliance', 'Digital transformation', 'Expand product portfolio'],
+    'Healthcare': ['Improve patient outcomes', 'Expand service capacity', 'Enhance clinical quality'],
+    'Real Estate': ['Increase occupancy rates', 'Develop new properties', 'Improve asset values'],
+    'Construction': ['Win larger contracts', 'Improve project margins', 'Expand geographic reach'],
+    'Energy & Utilities': ['Invest in renewable transition', 'Modernize infrastructure', 'Improve reliability'],
+  };
+  
+  // Customer base specific priorities
+  const customerPriorities: Record<string, string[]> = {
+    'B2B - Few large customers': ['Diversify customer base', 'Deepen key relationships', 'Reduce customer concentration'],
+    'B2B - Diversified business customer base': ['Enter new markets/geographies', 'Cross-sell additional services'],
+    'B2C - High volume individual consumers': ['Scale customer acquisition', 'Improve retention/loyalty'],
+    'Mixed B2B and B2C customer base': ['Balance B2B and B2C strategies', 'Optimize channel mix'],
+    'Government/public sector as primary customer': ['Win framework agreements', 'Navigate policy changes'],
+  };
+  
+  // Funding type specific priorities
+  const fundingPriorities: Record<string, string[]> = {
+    'Bootstrapped / Self-funded': ['Maintain cash flow positive', 'Grow sustainably without external funding'],
+    'VC-backed': ['Achieve growth targets', 'Raise funding (next round)', 'Prepare for exit/IPO'],
+    'Private Equity owned': ['Hit EBITDA targets', 'Prepare for exit/IPO', 'Acquire or integrate another company'],
+    'Bank debt / Loans': ['Meet debt covenants', 'Improve cash generation', 'Reduce leverage'],
+    'Public company (listed)': ['Meet market expectations', 'Maintain share price', 'Deliver shareholder returns'],
+  };
+  
+  const priorities = [...basePriorities];
+  
+  // Add industry-specific priorities
+  if (industryPriorities[industry]) {
+    priorities.push(...industryPriorities[industry]);
+  }
+  
+  // Add customer-specific priorities
+  const customerKey = Object.keys(customerPriorities).find(key => customerBase.includes(key.split(' - ')[0]));
+  if (customerKey && customerPriorities[customerKey]) {
+    priorities.push(...customerPriorities[customerKey]);
+  }
+  
+  // Add funding-specific priorities
+  if (fundingPriorities[fundingType]) {
+    priorities.push(...fundingPriorities[fundingType]);
+  }
+  
+  // Add common strategic priorities
+  priorities.push('Launch new products/services', 'Enter new markets/geographies', 'Acquire or integrate another company');
+  
+  // Remove duplicates and return
+  return Array.from(new Set(priorities));
+};
 
 const THREAT_CATEGORIES: { key: ThreatCategory; label: string; description: string; icon: typeof Building2; color: string }[] = [
   { key: 'business_model', label: 'Business Model', description: 'Threats that could fundamentally undermine how you create and deliver value, making your business unviable.', icon: Building2, color: 'text-purple-600' },
@@ -776,7 +828,7 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-2">
-            {STRATEGIC_PRIORITIES.map(priority => {
+            {getStrategicPriorities(context.industry, context.customerDescription, context.fundingType).map(priority => {
               const isSelected = context.strategicPriorities.includes(priority);
               const isDisabled = !isSelected && context.strategicPriorities.length >= 3;
               return (
