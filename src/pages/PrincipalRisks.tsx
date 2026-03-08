@@ -6,13 +6,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { apiService } from '@/services/api';
-import type { PrincipalRisk, AIRiskCandidate } from '@/types';
-import { Plus, AlertTriangle, Pencil, Trash2, TrendingDown, DollarSign, Target, Building2, Sparkles } from 'lucide-react';
+import type { PrincipalRisk, AIRiskCandidate, FinancialReportingRisk, FraudRisk, CyberSecurityRisk } from '@/types';
+import { Plus, AlertTriangle, Pencil, Trash2, TrendingDown, DollarSign, Target, Building2, Sparkles, FileText, ShieldAlert, Lock } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import AIRiskWizard from '@/components/AIRiskWizard';
+import FinancialReportingRiskModule from '@/components/FinancialReportingRiskModule';
+import FraudRiskModule from '@/components/FraudRiskModule';
+import CyberSecurityRiskModule from '@/components/CyberSecurityRiskModule';
 
-export default function PrincipalRisksPage() {
+export default function RiskIdentificationPage() {
+  const [activeTab, setActiveTab] = useState('principal');
+  const [financialReportingRisks, setFinancialReportingRisks] = useState<FinancialReportingRisk[]>([]);
+  const [fraudRisks, setFraudRisks] = useState<FraudRisk[]>([]);
+  const [cyberSecurityRisks, setCyberSecurityRisks] = useState<CyberSecurityRisk[]>([]);
   const [risks, setRisks] = useState<PrincipalRisk[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRisk, setEditingRisk] = useState<PrincipalRisk | null>(null);
@@ -154,29 +162,59 @@ export default function PrincipalRisksPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Principal Risks</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Risk Identification</h1>
           <p className="text-muted-foreground mt-1">
-            Risks that could threaten business model, performance, solvency, or liquidity
+            Identify and assess principal, financial reporting, fraud, and cyber security risks
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => {
-            if (risks.length > 0) {
-              setShowReconfigureDialog(true);
-            } else {
-              setShowAIWizard(true);
-            }
-          }} className="border-blue-300 text-blue-700 hover:bg-blue-50">
-            <Sparkles className="h-4 w-4 mr-2" />
-            {risks.length > 0 ? 'Reconfigure Risks' : 'AI Risk Identification'}
-          </Button>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Manual Risk
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="principal" className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Principal Risks
+          </TabsTrigger>
+          <TabsTrigger value="financial" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Financial Reporting
+          </TabsTrigger>
+          <TabsTrigger value="fraud" className="flex items-center gap-2">
+            <ShieldAlert className="h-4 w-4" />
+            Fraud Risks
+          </TabsTrigger>
+          <TabsTrigger value="cyber" className="flex items-center gap-2">
+            <Lock className="h-4 w-4" />
+            Cyber Security
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="principal" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold">Principal Risks</h2>
+              <p className="text-muted-foreground mt-1">
+                Risks that could threaten business model, performance, solvency, or liquidity
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => {
+                if (risks.length > 0) {
+                  setShowReconfigureDialog(true);
+                } else {
+                  setShowAIWizard(true);
+                }
+              }} className="border-blue-300 text-blue-700 hover:bg-blue-50">
+                <Sparkles className="h-4 w-4 mr-2" />
+                {risks.length > 0 ? 'Reconfigure Risks' : 'AI Risk Identification'}
               </Button>
-            </DialogTrigger>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Manual Risk
+                  </Button>
+                </DialogTrigger>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>{editingRisk ? 'Edit' : 'Add'} Principal Risk</DialogTitle>
@@ -363,6 +401,35 @@ export default function PrincipalRisksPage() {
           </ul>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="financial" className="space-y-6">
+          <FinancialReportingRiskModule
+            onRisksIdentified={(risks) => {
+              setFinancialReportingRisks(risks);
+              console.log('Financial Reporting Risks identified:', risks);
+            }}
+          />
+        </TabsContent>
+
+        <TabsContent value="fraud" className="space-y-6">
+          <FraudRiskModule
+            onRisksIdentified={(risks) => {
+              setFraudRisks(risks);
+              console.log('Fraud Risks identified:', risks);
+            }}
+          />
+        </TabsContent>
+
+        <TabsContent value="cyber" className="space-y-6">
+          <CyberSecurityRiskModule
+            onRisksIdentified={(risks) => {
+              setCyberSecurityRisks(risks);
+              console.log('Cyber Security Risks identified:', risks);
+            }}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Reconfigure Dialog */}
       <Dialog open={showReconfigureDialog} onOpenChange={setShowReconfigureDialog}>

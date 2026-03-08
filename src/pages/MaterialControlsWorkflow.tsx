@@ -303,7 +303,16 @@ export default function MaterialControlsWorkflow() {
   };
 
   const handleProceedToTarget = () => {
-    setTargetLevel(recommendedTarget);
+    if (!selectedRisk || !selectedCurrentLevel) {
+      console.error('Missing required data for target selection');
+      return;
+    }
+    
+    // Calculate recommended target if not already set
+    const { score } = extractRiskScore(selectedRisk);
+    const recommended = getRecommendedTarget(detectedRiskType, selectedCurrentLevel, score);
+    setRecommendedTarget(recommended);
+    setTargetLevel(recommended);
     setCurrentStep(3);
   };
 

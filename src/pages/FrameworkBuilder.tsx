@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from '@/components/ui/textarea';
 import { apiService } from '@/services/api';
 import { Pencil, Save, Download, FileDown, RefreshCw } from 'lucide-react';
+import { comprehensiveFrameworkSections } from '@/data/frameworkContent';
 
 interface FrameworkSection {
   id: string;
@@ -12,129 +13,7 @@ interface FrameworkSection {
   editable: boolean;
 }
 
-const defaultFrameworkSections: FrameworkSection[] = [
-  {
-    id: 'purpose-scope',
-    title: 'Purpose & Scope',
-    content: `This Internal Control Framework establishes a systematic approach to managing risk and ensuring the achievement of organizational objectives.
-
-**Purpose:**
-• Provide reasonable assurance regarding achievement of strategic, operational, reporting, and compliance objectives
-• Enable proactive risk identification and management across all business activities
-• Foster a culture of accountability and continuous improvement
-• Support informed decision-making at all organizational levels
-
-**Scope:**
-This framework applies to all business units, processes, and activities across the organization, including:
-• Strategic planning and execution
-• Financial and operational processes
-• Technology and information systems
-• Third-party relationships and outsourced activities
-• Regulatory and compliance obligations`,
-    editable: true
-  },
-  {
-    id: 'governance',
-    title: 'Governance Structure',
-    content: `**Board of Directors:**
-• Ultimate accountability for framework effectiveness
-• Approves risk appetite, material risk decisions, and framework changes
-• Reviews effectiveness quarterly through Audit Committee
-• Receives attestation on internal control effectiveness
-
-**Audit Committee:**
-• Oversees framework design and operation
-• Reviews principal risks and material control deficiencies
-• Monitors remediation of significant issues
-• Assesses adequacy of assurance activities
-
-**Executive Risk Committee:**
-• Owns day-to-day framework operation
-• Reviews risk profile, control status, and emerging issues monthly
-• Approves changes to risk taxonomy and control design
-• Escalates matters requiring board attention`,
-    editable: true
-  },
-  {
-    id: 'risk-identification',
-    title: 'Risk Identification',
-    content: `**Objective-Driven Risk Identification:**
-
-**Step 1: Define Objectives**
-Establish clear, measurable objectives at strategic, operational, reporting, and compliance levels across all business units and functions.
-
-**Step 2: Identify Threats**
-For each objective, identify what could prevent achievement:
-• Internal factors (process failures, resource constraints, capability gaps)
-• External factors (market changes, regulatory shifts, technology disruption)
-• Known risks (historical losses, peer incidents, audit findings)
-• Emerging risks (trends, leading indicators, scenario analysis)
-
-**Step 3: Assess Impact**
-Evaluate how each threat would affect objective achievement:
-• Strategic impact - mission/vision compromise
-• Financial impact - earnings, capital, liquidity
-• Operational impact - service disruption, quality degradation
-• Reputational impact - stakeholder confidence, brand damage`,
-    editable: true
-  },
-  {
-    id: 'control-design',
-    title: 'Control Design',
-    content: `**Design Principles:**
-• Specificity — the control must address a specific risk assertion
-• Linkage — every control must be explicitly linked to its risk
-• Prevention before detection — preventive controls are preferred where practicable
-• Automation — automated controls are intrinsically more reliable than manual ones
-• Proportionality — control strength must match risk magnitude
-• Simplicity — complex controls are harder to operate consistently
-
-**Control Types:**
-• Preventive controls - stop issues before occurrence
-• Detective controls - identify issues that have occurred
-• Corrective controls - remedy identified issues
-• Technology controls - automated enforcement and monitoring`,
-    editable: true
-  },
-  {
-    id: 'monitoring',
-    title: 'Control Monitoring',
-    content: `**Ongoing Monitoring (First Line):**
-• Real-time dashboards showing control execution status
-• Automated exception alerts for control failures or threshold breaches
-• Management review of control metrics in business performance meetings
-• Process owner walkthroughs and observations
-
-**Periodic Testing (Second Line):**
-• Risk-based control testing program covering all material controls
-• Sample testing of manual controls using statistical methods
-• Automated control validation through data analytics
-• Control owner self-assessment and attestation
-
-**Independent Assurance (Third Line):**
-• Internal audit reviews using risk-based audit planning
-• Deep-dive assessments of control design and operating effectiveness
-• Follow-up on remediation of audit findings
-• Coordination with external auditors`,
-    editable: true
-  },
-  {
-    id: 'continuous-improvement',
-    title: 'Continuous Improvement',
-    content: `**Improvement Activities:**
-• Lessons learned from control failures inform design improvements
-• Benchmarking against industry practices
-• Technology adoption to automate or enhance controls
-• Simplification to remove unnecessary complexity
-
-**Maturity Advancement:**
-• Annual assessment of governance maturity
-• Structured progression from developing to established to advanced
-• Investment in continuous monitoring and AI-based testing
-• Integration of controls into business-as-usual activities`,
-    editable: true
-  }
-];
+const defaultFrameworkSections: FrameworkSection[] = comprehensiveFrameworkSections;
 
 export default function FrameworkBuilder() {
   const [sections, setSections] = useState<FrameworkSection[]>(defaultFrameworkSections);

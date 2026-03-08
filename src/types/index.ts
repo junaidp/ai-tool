@@ -516,5 +516,201 @@ export interface CoverageAnalysis {
   warnings: string[];
 }
 
+// ============================================================
+// Risk Identification Module Types
+// ============================================================
+
+// Financial Reporting Risk Module
+export type FinancialReportingArea = 
+  | 'revenue_recognition'
+  | 'inventory'
+  | 'fixed_assets'
+  | 'payroll'
+  | 'treasury'
+  | 'financial_close';
+
+export interface FinancialReportingRisk {
+  id: string;
+  area: FinancialReportingArea;
+  riskTitle: string;
+  riskDescription: string;
+  accountsAffected: string[];
+  materialityLevel: 'high' | 'medium' | 'low';
+  complexity: 'high' | 'medium' | 'low';
+  volume: 'high' | 'medium' | 'low';
+  judgmentRequired: 'high' | 'medium' | 'low';
+  regulatoryRequirements: string[];
+  identifiedControls: string[];
+  aiSuggested: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface FinancialReportingQuestionFlow {
+  area: FinancialReportingArea;
+  questions: FinancialReportingQuestion[];
+  riskLogic: RiskIdentificationLogic[];
+}
+
+export interface FinancialReportingQuestion {
+  id: string;
+  text: string;
+  type: 'yes_no' | 'multiple_choice' | 'text' | 'number';
+  options?: string[];
+  conditionalOn?: { questionId: string; answer: string | string[] };
+  riskIndicator?: 'high' | 'medium' | 'low';
+}
+
+export interface RiskIdentificationLogic {
+  conditions: { questionId: string; answer: string | string[] }[];
+  riskTitle: string;
+  riskDescription: string;
+  materialityLevel: 'high' | 'medium' | 'low';
+  suggestedControls: string[];
+}
+
+// Fraud Risk Module
+export type FraudCategory = 
+  | 'asset_misappropriation'
+  | 'financial_reporting_fraud'
+  | 'procurement_fraud'
+  | 'payroll_fraud'
+  | 'cyber_enabled_fraud'
+  | 'bribery_corruption';
+
+export interface FraudRisk {
+  id: string;
+  category: FraudCategory;
+  riskTitle: string;
+  riskDescription: string;
+  fraudScheme: string;
+  perpetratorProfile: string[];
+  redFlags: string[];
+  likelihoodScore: number;
+  impactScore: number;
+  inherentRiskScore: number;
+  controlEnvironment: 'strong' | 'adequate' | 'weak';
+  identifiedControls: string[];
+  confidential: boolean;
+  aiSuggested: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface FraudQuestionFlow {
+  category: FraudCategory;
+  questions: FraudQuestion[];
+  riskLogic: FraudRiskLogic[];
+}
+
+export interface FraudQuestion {
+  id: string;
+  text: string;
+  type: 'yes_no' | 'multiple_choice' | 'text' | 'scale';
+  options?: string[];
+  scaleRange?: { min: number; max: number; labels: { [key: number]: string } };
+  conditionalOn?: { questionId: string; answer: string | string[] };
+  confidentialityNote?: string;
+}
+
+export interface FraudRiskLogic {
+  conditions: { questionId: string; answer: string | string[] | number }[];
+  riskTitle: string;
+  riskDescription: string;
+  fraudScheme: string;
+  likelihoodScore: number;
+  impactScore: number;
+  redFlags: string[];
+  suggestedControls: string[];
+}
+
+// Cyber Security Risk Module
+export type CyberSecurityDomain = 
+  | 'ransomware'
+  | 'phishing_social_engineering'
+  | 'identity_access_management'
+  | 'data_protection'
+  | 'third_party_vendor'
+  | 'ot_security'
+  | 'cloud_security';
+
+export interface CyberSecurityRisk {
+  id: string;
+  domain: CyberSecurityDomain;
+  riskTitle: string;
+  riskDescription: string;
+  threatVector: string[];
+  assetsCritical: string[];
+  regulatoryRequirements: string[];
+  likelihoodScore: number;
+  impactScore: number;
+  inherentRiskScore: number;
+  currentMaturity: 'initial' | 'developing' | 'defined' | 'managed' | 'optimizing';
+  identifiedControls: string[];
+  aiSuggested: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CyberSecurityQuestionFlow {
+  domain: CyberSecurityDomain;
+  questions: CyberSecurityQuestion[];
+  riskLogic: CyberSecurityRiskLogic[];
+}
+
+export interface CyberSecurityQuestion {
+  id: string;
+  text: string;
+  type: 'yes_no' | 'multiple_choice' | 'text' | 'scale';
+  options?: string[];
+  scaleRange?: { min: number; max: number; labels: { [key: number]: string } };
+  conditionalOn?: { questionId: string; answer: string | string[] };
+  technicalNote?: string;
+}
+
+export interface CyberSecurityRiskLogic {
+  conditions: { questionId: string; answer: string | string[] | number }[];
+  riskTitle: string;
+  riskDescription: string;
+  threatVector: string[];
+  likelihoodScore: number;
+  impactScore: number;
+  regulatoryRequirements: string[];
+  suggestedControls: string[];
+}
+
+// Cross-Module Integration
+export interface RiskOverlap {
+  id: string;
+  riskIds: string[];
+  riskModules: ('principal' | 'financial' | 'fraud' | 'cyber')[];
+  overlapType: 'identical' | 'related' | 'cascading';
+  description: string;
+  recommendation: 'merge' | 'link' | 'separate';
+}
+
+export interface ControlDeduplication {
+  id: string;
+  controlIds: string[];
+  controlModules: ('principal' | 'financial' | 'fraud' | 'cyber')[];
+  similarity: number;
+  recommendation: 'merge' | 'keep_separate';
+  mergedControl?: Section2Control;
+}
+
+export interface CombinedRiskOutput {
+  principalRisks: PrincipalRisk[];
+  financialReportingRisks: FinancialReportingRisk[];
+  fraudRisks: FraudRisk[];
+  cyberSecurityRisks: CyberSecurityRisk[];
+  riskOverlaps: RiskOverlap[];
+  totalRiskCount: number;
+  materialControls: Section2Control[];
+  controlDeduplications: ControlDeduplication[];
+  totalControlCount: number;
+  coverageAnalysis: CoverageAnalysis;
+  generatedAt: string;
+}
+
 // Re-export effectiveness types
 export * from './effectiveness';
