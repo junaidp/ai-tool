@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -51,6 +52,7 @@ const transformApiControl = (apiControl: ApiControl): Control => ({
 });
 
 export default function RiskControlLibrary() {
+  const navigate = useNavigate();
   const [risks, setRisks] = useState<Risk[]>([]);
   const [controls, setControls] = useState<Control[]>([]);
   const [section2Controls, setSection2Controls] = useState<any[]>([]);
@@ -459,14 +461,14 @@ export default function RiskControlLibrary() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {section2Controls.length === 0 ? (
+                {section2Controls.length === 0 && controls.filter(c => c.linkedRisks.length > 0).length === 0 ? (
                   <div className="text-center py-12">
                     <Shield className="h-16 w-16 mx-auto mb-4 text-gray-300" />
                     <p className="text-lg font-medium mb-2">No controls found in the library.</p>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Complete Material Controls workflow to add controls.
+                      Complete Material Controls workflow or add controls via Generate Library / Add Custom Entry.
                     </p>
-                    <Button onClick={() => window.location.href = '/material-controls'}>
+                    <Button onClick={() => navigate('/material-controls')}>
                       Go to Material Controls
                     </Button>
                   </div>
@@ -589,6 +591,68 @@ export default function RiskControlLibrary() {
                       </Tabs>
                     </div>
                   );
+                })}
+                
+                {/* Also show controls from regular controls table that have linked risks */}
+                {controls.filter(c => c.linkedRisks.length > 0).map(control => {
+                  // Group by each linked risk
+                  return control.linkedRisks.map(riskId => {
+                    const risk = risks.find(r => r.id === riskId);
+                    if (!risk) return null;
+                    
+                    return (
+                      <div key={`${control.id}-${riskId}`} className="border-2 rounded-lg p-5 bg-gray-50">
+                        <div className="flex items-start gap-3 mb-4">
+                          <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg">{risk.title}</h3>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {risk.category} • {risk.inherentRisk} inherent risk
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-white border rounded-lg overflow-hidden">
+                          <table className="w-full">
+                            <thead className="bg-gray-50 border-b">
+                              <tr>
+                                <th className="text-left p-3 font-medium text-sm">Control</th>
+                                <th className="text-left p-3 font-medium text-sm w-32">Owner</th>
+                                <th className="text-left p-3 font-medium text-sm w-28">Frequency</th>
+                                <th className="text-left p-3 font-medium text-sm w-40">Evidence</th>
+                                <th className="text-left p-3 font-medium text-sm w-32">Effectiveness</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td className="p-3">
+                                  <div className="flex items-start gap-3">
+                                    <Shield className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                                    <div className="space-y-1">
+                                      <div className="flex items-center gap-2">
+                                        <h4 className="font-semibold">{control.name}</h4>
+                                        <Badge variant="outline" className="text-xs">{control.type}</Badge>
+                                        <Badge variant="outline" className="text-xs">{control.automation}</Badge>
+                                      </div>
+                                      <p className="text-sm text-muted-foreground">{control.description}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="p-3 text-sm text-muted-foreground align-top">{control.owner}</td>
+                                <td className="p-3 text-sm text-muted-foreground align-top">{control.frequency}</td>
+                                <td className="p-3 text-sm text-muted-foreground align-top">{control.evidenceSource || 'TBD'}</td>
+                                <td className="p-3 text-sm text-muted-foreground align-top">
+                                  <Badge variant={control.effectiveness === 'effective' ? 'default' : 'secondary'}>
+                                    {control.effectiveness}
+                                  </Badge>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  });
                 })}
                 </>
                 )}
