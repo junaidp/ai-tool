@@ -678,15 +678,24 @@ export default function MaterialControlsWorkflow() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Select Principal Risk</CardTitle>
-            <CardDescription>Choose a principal risk to build its mitigation blueprint</CardDescription>
+            <CardTitle>Select Risk</CardTitle>
+            <CardDescription>Choose a risk to build its mitigation blueprint and control framework</CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-900">
+                  <p className="font-medium mb-1">Material Controls for All Risk Types</p>
+                  <p>This workflow currently shows <strong>Principal Risks</strong>. To build controls for Financial Reporting, Fraud, or Cyber Security risks, first complete those assessments in the <strong>Risk Identification</strong> page, then those risks will appear here for control mapping.</p>
+                </div>
+              </div>
+            </div>
             {principalRisks.length === 0 ? (
               <div className="text-center py-12">
                 <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">No principal risks defined.</p>
-                <p className="text-sm mt-2">Go to Principal Risks page to create one.</p>
+                <p className="text-muted-foreground">No risks defined yet.</p>
+                <p className="text-sm mt-2">Go to <strong>Risk Identification</strong> page to identify principal, financial reporting, fraud, or cyber security risks.</p>
               </div>
             ) : (
               <div className="space-y-3">

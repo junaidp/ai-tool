@@ -35,6 +35,32 @@ export const financialReportingFlows: FinancialReportingQuestionFlow[] = [
         type: 'yes_no',
         riskIndicator: 'medium',
       },
+      {
+        id: 'rev_005',
+        text: 'Do you have performance obligations that span multiple periods?',
+        type: 'yes_no',
+        riskIndicator: 'high',
+      },
+      {
+        id: 'rev_006',
+        text: 'How do you determine standalone selling prices for bundled products/services?',
+        type: 'multiple_choice',
+        options: ['Observable prices', 'Cost-plus margin', 'Residual approach', 'Not applicable'],
+        conditionalOn: { questionId: 'rev_001', answer: 'yes' },
+        riskIndicator: 'high',
+      },
+      {
+        id: 'rev_007',
+        text: 'Do you have variable consideration (discounts, rebates, refunds, penalties)?',
+        type: 'yes_no',
+        riskIndicator: 'high',
+      },
+      {
+        id: 'rev_008',
+        text: 'Are revenue recognition policies documented and approved by management?',
+        type: 'yes_no',
+        riskIndicator: 'high',
+      },
     ],
     riskLogic: [
       {
@@ -72,6 +98,36 @@ export const financialReportingFlows: FinancialReportingQuestionFlow[] = [
         type: 'yes_no',
         conditionalOn: { questionId: 'inv_001', answer: 'yes' },
         riskIndicator: 'high',
+      },
+      {
+        id: 'inv_004',
+        text: 'How frequently do you perform physical inventory counts?',
+        type: 'multiple_choice',
+        options: ['Continuous/cycle counting', 'Quarterly', 'Semi-annually', 'Annually', 'Never'],
+        conditionalOn: { questionId: 'inv_001', answer: 'yes' },
+        riskIndicator: 'high',
+      },
+      {
+        id: 'inv_005',
+        text: 'Do you have a formal obsolescence review process?',
+        type: 'yes_no',
+        conditionalOn: { questionId: 'inv_003', answer: 'yes' },
+        riskIndicator: 'high',
+      },
+      {
+        id: 'inv_006',
+        text: 'Is inventory stored in multiple locations or held by third parties?',
+        type: 'yes_no',
+        conditionalOn: { questionId: 'inv_001', answer: 'yes' },
+        riskIndicator: 'medium',
+      },
+      {
+        id: 'inv_007',
+        text: 'What costing method do you use?',
+        type: 'multiple_choice',
+        options: ['FIFO', 'LIFO', 'Weighted Average', 'Specific Identification'],
+        conditionalOn: { questionId: 'inv_001', answer: 'yes' },
+        riskIndicator: 'medium',
       },
     ],
     riskLogic: [
@@ -342,6 +398,172 @@ export const fraudRiskFlows: FraudQuestionFlow[] = [
       },
     ],
   },
+  {
+    category: 'financial_reporting_fraud',
+    questions: [
+      {
+        id: 'fraud_fr_001',
+        text: 'Are there significant pressures to meet financial targets or analyst expectations?',
+        type: 'yes_no',
+      },
+      {
+        id: 'fraud_fr_002',
+        text: 'Does management have significant equity-based compensation?',
+        type: 'yes_no',
+      },
+      {
+        id: 'fraud_fr_003',
+        text: 'Are there frequent adjusting journal entries near period-end?',
+        type: 'yes_no',
+      },
+      {
+        id: 'fraud_fr_004',
+        text: 'Is there independent review of significant accounting estimates and judgments?',
+        type: 'yes_no',
+      },
+    ],
+    riskLogic: [
+      {
+        conditions: [
+          { questionId: 'fraud_fr_001', answer: 'yes' },
+          { questionId: 'fraud_fr_002', answer: 'yes' },
+        ],
+        riskTitle: 'Financial Statement Manipulation Risk',
+        riskDescription: 'Risk of intentional misstatement of financial results to meet targets',
+        fraudScheme: 'Revenue manipulation, expense deferral, cookie jar reserves',
+        likelihoodScore: 3,
+        impactScore: 5,
+        redFlags: ['Unusual revenue patterns', 'Aggressive accounting policies', 'Frequent restatements'],
+        suggestedControls: ['Independent audit committee', 'Whistleblower hotline', 'Forensic analytics', 'Management certifications'],
+      },
+    ],
+  },
+  {
+    category: 'payroll_fraud',
+    questions: [
+      {
+        id: 'fraud_pay_001',
+        text: 'How many employees do you have?',
+        type: 'multiple_choice',
+        options: ['< 50', '50 - 200', '200 - 1000', '> 1000'],
+      },
+      {
+        id: 'fraud_pay_002',
+        text: 'Are payroll additions and changes independently approved?',
+        type: 'yes_no',
+      },
+      {
+        id: 'fraud_pay_003',
+        text: 'Do you perform periodic verification of employee existence?',
+        type: 'yes_no',
+      },
+      {
+        id: 'fraud_pay_004',
+        text: 'Are timesheets independently reviewed and approved?',
+        type: 'yes_no',
+      },
+    ],
+    riskLogic: [
+      {
+        conditions: [
+          { questionId: 'fraud_pay_001', answer: ['200 - 1000', '> 1000'] },
+          { questionId: 'fraud_pay_002', answer: 'no' },
+        ],
+        riskTitle: 'Payroll Fraud Risk',
+        riskDescription: 'Risk of ghost employees, timesheet fraud, or unauthorized payroll changes',
+        fraudScheme: 'Ghost employees, timesheet manipulation, unauthorized rate changes',
+        likelihoodScore: 3,
+        impactScore: 3,
+        redFlags: ['Employees without tax withholdings', 'Duplicate addresses', 'Manual checks', 'Timesheet anomalies'],
+        suggestedControls: ['Segregation of duties', 'Payroll analytics', 'Employee verification', 'Approval workflows'],
+      },
+    ],
+  },
+  {
+    category: 'cyber_enabled_fraud',
+    questions: [
+      {
+        id: 'fraud_cyber_001',
+        text: 'Do you process electronic payments or wire transfers?',
+        type: 'yes_no',
+      },
+      {
+        id: 'fraud_cyber_002',
+        text: 'Is multi-person approval required for payment changes or large transfers?',
+        type: 'yes_no',
+      },
+      {
+        id: 'fraud_cyber_003',
+        text: 'Do you have controls to verify payment instruction changes?',
+        type: 'yes_no',
+      },
+      {
+        id: 'fraud_cyber_004',
+        text: 'Have employees received training on business email compromise (BEC) schemes?',
+        type: 'yes_no',
+      },
+    ],
+    riskLogic: [
+      {
+        conditions: [
+          { questionId: 'fraud_cyber_001', answer: 'yes' },
+          { questionId: 'fraud_cyber_002', answer: 'no' },
+        ],
+        riskTitle: 'Business Email Compromise Risk',
+        riskDescription: 'Risk of fraudulent payment diversion through email compromise',
+        fraudScheme: 'BEC, payment diversion, invoice fraud, CEO fraud',
+        likelihoodScore: 4,
+        impactScore: 4,
+        redFlags: ['Urgent payment requests', 'Email address variations', 'Unusual payment instructions'],
+        suggestedControls: ['Dual approval for payments', 'Out-of-band verification', 'Email authentication', 'User awareness training'],
+      },
+    ],
+  },
+  {
+    category: 'bribery_corruption',
+    questions: [
+      {
+        id: 'fraud_brib_001',
+        text: 'Do you operate in high-risk jurisdictions for corruption?',
+        type: 'yes_no',
+      },
+      {
+        id: 'fraud_brib_002',
+        text: 'Do you use third-party agents, intermediaries, or consultants?',
+        type: 'yes_no',
+      },
+      {
+        id: 'fraud_brib_003',
+        text: 'Do you have a formal anti-bribery and corruption policy?',
+        type: 'yes_no',
+      },
+      {
+        id: 'fraud_brib_004',
+        text: 'Are gifts, hospitality, and entertainment tracked and approved?',
+        type: 'yes_no',
+      },
+      {
+        id: 'fraud_brib_005',
+        text: 'Do you conduct due diligence on third-party intermediaries?',
+        type: 'yes_no',
+      },
+    ],
+    riskLogic: [
+      {
+        conditions: [
+          { questionId: 'fraud_brib_001', answer: 'yes' },
+          { questionId: 'fraud_brib_003', answer: 'no' },
+        ],
+        riskTitle: 'Bribery and Corruption Risk',
+        riskDescription: 'Risk of improper payments to government officials or business partners',
+        fraudScheme: 'Facilitation payments, kickbacks, conflicts of interest, improper gifts',
+        likelihoodScore: 3,
+        impactScore: 5,
+        redFlags: ['Unusual consulting fees', 'Payments to shell companies', 'Lack of documentation', 'Conflicts of interest'],
+        suggestedControls: ['ABC policy', 'Third-party due diligence', 'Gift registers', 'Whistleblower hotline', 'Training'],
+      },
+    ],
+  },
 ];
 
 // Cyber Security Question Flows
@@ -414,6 +636,225 @@ export const cyberSecurityFlows: CyberSecurityQuestionFlow[] = [
         impactScore: 4,
         regulatoryRequirements: ['GDPR Article 32', 'PCI DSS 8.3', 'SOC 2'],
         suggestedControls: ['MFA enforcement', 'Password policies', 'Access reviews', 'Privileged access management'],
+      },
+    ],
+  },
+  {
+    domain: 'phishing_social_engineering',
+    questions: [
+      {
+        id: 'cyber_phish_001',
+        text: 'Do you have email security controls (spam filters, link protection)?',
+        type: 'yes_no',
+      },
+      {
+        id: 'cyber_phish_002',
+        text: 'How frequently do employees receive security awareness training?',
+        type: 'multiple_choice',
+        options: ['Monthly', 'Quarterly', 'Annually', 'Never'],
+      },
+      {
+        id: 'cyber_phish_003',
+        text: 'Do you conduct simulated phishing exercises?',
+        type: 'yes_no',
+      },
+      {
+        id: 'cyber_phish_004',
+        text: 'Is there a process for employees to report suspicious emails?',
+        type: 'yes_no',
+      },
+    ],
+    riskLogic: [
+      {
+        conditions: [
+          { questionId: 'cyber_phish_002', answer: ['Annually', 'Never'] },
+        ],
+        riskTitle: 'Phishing and Social Engineering Risk',
+        riskDescription: 'Risk of credential theft and malware infection through phishing attacks',
+        threatVector: ['Spear phishing', 'Credential harvesting', 'Malware delivery', 'CEO fraud'],
+        likelihoodScore: 5,
+        impactScore: 4,
+        regulatoryRequirements: ['GDPR Article 32', 'ISO 27001'],
+        suggestedControls: ['Security awareness training', 'Email filtering', 'Phishing simulations', 'Incident reporting'],
+      },
+    ],
+  },
+  {
+    domain: 'data_protection',
+    questions: [
+      {
+        id: 'cyber_data_001',
+        text: 'Is sensitive data encrypted at rest?',
+        type: 'yes_no',
+      },
+      {
+        id: 'cyber_data_002',
+        text: 'Is sensitive data encrypted in transit?',
+        type: 'yes_no',
+      },
+      {
+        id: 'cyber_data_003',
+        text: 'Do you have data loss prevention (DLP) controls?',
+        type: 'yes_no',
+      },
+      {
+        id: 'cyber_data_004',
+        text: 'Is data classified based on sensitivity?',
+        type: 'yes_no',
+      },
+      {
+        id: 'cyber_data_005',
+        text: 'Do you have a data retention and disposal policy?',
+        type: 'yes_no',
+      },
+    ],
+    riskLogic: [
+      {
+        conditions: [
+          { questionId: 'cyber_data_001', answer: 'no' },
+        ],
+        riskTitle: 'Data Breach Risk',
+        riskDescription: 'Risk of unauthorized disclosure of sensitive data due to inadequate encryption',
+        threatVector: ['Data theft', 'Insider threats', 'Lost devices', 'Unauthorized access'],
+        likelihoodScore: 4,
+        impactScore: 5,
+        regulatoryRequirements: ['GDPR Article 32', 'PCI DSS 3.4', 'HIPAA'],
+        suggestedControls: ['Encryption at rest', 'Encryption in transit', 'DLP', 'Data classification', 'Access controls'],
+      },
+    ],
+  },
+  {
+    domain: 'third_party_vendor',
+    questions: [
+      {
+        id: 'cyber_vendor_001',
+        text: 'Do third-party vendors have access to your systems or data?',
+        type: 'yes_no',
+      },
+      {
+        id: 'cyber_vendor_002',
+        text: 'Do you conduct security assessments of vendors before engagement?',
+        type: 'yes_no',
+        conditionalOn: { questionId: 'cyber_vendor_001', answer: 'yes' },
+      },
+      {
+        id: 'cyber_vendor_003',
+        text: 'Are vendor security requirements included in contracts?',
+        type: 'yes_no',
+        conditionalOn: { questionId: 'cyber_vendor_001', answer: 'yes' },
+      },
+      {
+        id: 'cyber_vendor_004',
+        text: 'Do you monitor vendor security posture on an ongoing basis?',
+        type: 'yes_no',
+        conditionalOn: { questionId: 'cyber_vendor_001', answer: 'yes' },
+      },
+    ],
+    riskLogic: [
+      {
+        conditions: [
+          { questionId: 'cyber_vendor_001', answer: 'yes' },
+          { questionId: 'cyber_vendor_002', answer: 'no' },
+        ],
+        riskTitle: 'Third-Party Security Risk',
+        riskDescription: 'Risk of security incidents through vendor access and supply chain vulnerabilities',
+        threatVector: ['Supply chain attacks', 'Vendor breaches', 'Unauthorized access', 'Data leakage'],
+        likelihoodScore: 4,
+        impactScore: 4,
+        regulatoryRequirements: ['GDPR Article 28', 'SOC 2', 'ISO 27001'],
+        suggestedControls: ['Vendor security assessments', 'Contract requirements', 'Access controls', 'Continuous monitoring'],
+      },
+    ],
+  },
+  {
+    domain: 'ot_security',
+    questions: [
+      {
+        id: 'cyber_ot_001',
+        text: 'Do you operate industrial control systems (ICS), SCADA, or IoT devices?',
+        type: 'yes_no',
+      },
+      {
+        id: 'cyber_ot_002',
+        text: 'Are OT networks segmented from IT networks?',
+        type: 'yes_no',
+        conditionalOn: { questionId: 'cyber_ot_001', answer: 'yes' },
+      },
+      {
+        id: 'cyber_ot_003',
+        text: 'Do you have visibility into OT network traffic and devices?',
+        type: 'yes_no',
+        conditionalOn: { questionId: 'cyber_ot_001', answer: 'yes' },
+      },
+      {
+        id: 'cyber_ot_004',
+        text: 'Are OT systems regularly patched and updated?',
+        type: 'yes_no',
+        conditionalOn: { questionId: 'cyber_ot_001', answer: 'yes' },
+      },
+    ],
+    riskLogic: [
+      {
+        conditions: [
+          { questionId: 'cyber_ot_001', answer: 'yes' },
+          { questionId: 'cyber_ot_002', answer: 'no' },
+        ],
+        riskTitle: 'OT Security Risk',
+        riskDescription: 'Risk of operational disruption through attacks on industrial control systems',
+        threatVector: ['Ransomware', 'Nation-state attacks', 'Malware propagation', 'Unauthorized access'],
+        likelihoodScore: 3,
+        impactScore: 5,
+        regulatoryRequirements: ['IEC 62443', 'NERC CIP', 'NIST CSF'],
+        suggestedControls: ['Network segmentation', 'OT monitoring', 'Patch management', 'Access controls', 'Incident response'],
+      },
+    ],
+  },
+  {
+    domain: 'cloud_security',
+    questions: [
+      {
+        id: 'cyber_cloud_001',
+        text: 'Do you use cloud services (SaaS, IaaS, PaaS)?',
+        type: 'yes_no',
+      },
+      {
+        id: 'cyber_cloud_002',
+        text: 'Are cloud configurations regularly reviewed for security misconfigurations?',
+        type: 'yes_no',
+        conditionalOn: { questionId: 'cyber_cloud_001', answer: 'yes' },
+      },
+      {
+        id: 'cyber_cloud_003',
+        text: 'Do you use cloud security posture management (CSPM) tools?',
+        type: 'yes_no',
+        conditionalOn: { questionId: 'cyber_cloud_001', answer: 'yes' },
+      },
+      {
+        id: 'cyber_cloud_004',
+        text: 'Are cloud access permissions reviewed regularly?',
+        type: 'yes_no',
+        conditionalOn: { questionId: 'cyber_cloud_001', answer: 'yes' },
+      },
+      {
+        id: 'cyber_cloud_005',
+        text: 'Do you have visibility into shadow IT and unauthorized cloud usage?',
+        type: 'yes_no',
+        conditionalOn: { questionId: 'cyber_cloud_001', answer: 'yes' },
+      },
+    ],
+    riskLogic: [
+      {
+        conditions: [
+          { questionId: 'cyber_cloud_001', answer: 'yes' },
+          { questionId: 'cyber_cloud_002', answer: 'no' },
+        ],
+        riskTitle: 'Cloud Misconfiguration Risk',
+        riskDescription: 'Risk of data exposure through cloud security misconfigurations',
+        threatVector: ['Misconfigured storage', 'Excessive permissions', 'Unpatched services', 'Data leakage'],
+        likelihoodScore: 4,
+        impactScore: 4,
+        regulatoryRequirements: ['GDPR Article 32', 'SOC 2', 'ISO 27001'],
+        suggestedControls: ['Configuration reviews', 'CSPM tools', 'Access governance', 'Cloud security training', 'Shadow IT detection'],
       },
     ],
   },
