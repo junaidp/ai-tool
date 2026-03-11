@@ -10,6 +10,8 @@ export interface AuthRequest extends Request {
     email: string;
     role: string;
     name?: string;
+    companyId: string;
+    companyName?: string;
   };
 }
 
@@ -26,10 +28,23 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
     // Verify user still exists and is active
     const user = await prisma.user.findUnique({ 
       where: { id: decoded.userId },
-      select: { id: true, email: true, role: true, name: true, isActive: true }
+      select: { 
+        id: true, 
+        email: true, 
+        role: true, 
+        name: true, 
+        isActive: true,
+        companyId: true,
+        company: {
+          select: {
+            name: true,
+            isActive: true
+          }
+        }
+      }
     });
 
-    if (!user || !user.isActive) {
+    if (!user || !user.isActive || !user.company.isActive) {
       return res.status(401).json({ error: 'Invalid or inactive user' });
     }
 
@@ -38,6 +53,8 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
       email: user.email,
       role: user.role,
       name: user.name,
+      companyId: user.companyId,
+      companyName: user.company.name,
     };
 
     next();

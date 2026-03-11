@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
+import CompanySignup from './pages/CompanySignup';
 import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
 import EffectivenessCriteria from './pages/EffectivenessCriteriaV2';
@@ -37,6 +38,10 @@ function App() {
         <Route 
           path="/login" 
           element={isAuthenticated ? <Navigate to="/" replace /> : <Login />} 
+        />
+        <Route 
+          path="/signup" 
+          element={isAuthenticated ? <Navigate to="/" replace /> : <CompanySignup />} 
         />
         <Route 
           path="/" 

@@ -7,6 +7,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Company {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -15,9 +25,11 @@ model User {
   department String?
   password  String
   isActive  Boolean  @default(true)
+  companyId String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  company            Company            @relation(fields: [companyId], references: [id])
   approvals          ApprovalWorkflow[] @relation("Approver")
   requestedApprovals ApprovalWorkflow[] @relation("Requester")
   ownedControls      MaterialControl[]
@@ -28,6 +40,9 @@ model User {
   auditLogs          AuditLog[]
   assignedControls   ControlAssignment[]
   createdVersions    Version[]
+
+  @@unique([email, companyId])
+  @@index([companyId])
 }
 
 enum UserRole {

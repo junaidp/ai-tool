@@ -7,6 +7,8 @@ export interface User {
   role: UserRole;
   department?: string;
   isActive: boolean;
+  companyId: string;
+  companyName?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -15,7 +17,7 @@ export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, companyName: string) => Promise<void>;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (permissions: string[]) => boolean;

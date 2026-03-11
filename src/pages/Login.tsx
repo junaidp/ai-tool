@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, Loader2 } from 'lucide-react';
+import { Shield, Loader2, Building2 } from 'lucide-react';
 
 export default function Login() {
+  const [companyName, setCompanyName] = useState('Demo');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -21,10 +22,10 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      await login(email, password, companyName);
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Invalid email or password');
+      setError(err.message || 'Invalid credentials');
     } finally {
       setIsLoading(false);
     }
@@ -46,6 +47,18 @@ export default function Login() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="companyName">Company Name</Label>
+              <Input
+                id="companyName"
+                type="text"
+                placeholder="Demo"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -85,10 +98,20 @@ export default function Login() {
                 'Sign In'
               )}
             </Button>
+
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-2">Don't have a company account?</p>
+              <Link to="/signup">
+                <Button type="button" variant="outline" className="w-full" disabled={isLoading}>
+                  <Building2 className="mr-2 h-4 w-4" />
+                  Create Company Account
+                </Button>
+              </Link>
+            </div>
           </form>
 
           <div className="mt-6 border-t pt-4">
-            <p className="text-sm text-center text-muted-foreground mb-3">Demo Accounts:</p>
+            <p className="text-sm text-center text-muted-foreground mb-3">Demo Company Accounts (Company: "Demo"):</p>
             <div className="space-y-2 text-xs">
               <div className="flex justify-between bg-gray-50 p-2 rounded">
                 <span className="font-medium">Board Member (Sarah):</span>

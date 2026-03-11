@@ -1,14 +1,18 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import prisma from '../db';
-import { authenticateToken, requireRole } from '../middleware/auth';
+import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
 
 export const usersRouter = Router();
 
-// Get all users (System Admin only)
+// Get all users (System Admin only) - filtered by company
 usersRouter.get('/', authenticateToken, requireRole(['SYSTEM_ADMIN', 'FRAMEWORK_OWNER']), async (req, res) => {
   try {
+    const authReq = req as AuthRequest;
     const users = await prisma.user.findMany({
+      where: {
+        companyId: authReq.user!.companyId,
+      },
       select: {
         id: true,
         email: true,
@@ -16,6 +20,7 @@ usersRouter.get('/', authenticateToken, requireRole(['SYSTEM_ADMIN', 'FRAMEWORK_
         role: true,
         department: true,
         isActive: true,
+        companyId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -33,8 +38,12 @@ usersRouter.get('/', authenticateToken, requireRole(['SYSTEM_ADMIN', 'FRAMEWORK_
 usersRouter.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await prisma.user.findUnique({
-      where: { id },
+    const authReq = req as AuthRequest;
+    const user = await prisma.user.findFirst({
+      where: { 
+        id,
+        companyId: authReq.user!.companyId,
+      },
       select: {
         id: true,
         email: true,
@@ -42,6 +51,7 @@ usersRouter.get('/:id', authenticateToken, async (req, res) => {
         role: true,
         department: true,
         isActive: true,
+        companyId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -62,10 +72,16 @@ usersRouter.get('/:id', authenticateToken, async (req, res) => {
 usersRouter.post('/', authenticateToken, requireRole(['SYSTEM_ADMIN']), async (req, res) => {
   try {
     const { email, password, name, role, department } = req.body;
+    const authReq = req as AuthRequest;
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findFirst({ 
+      where: { 
+        email,
+        companyId: authReq.user!.companyId,
+      } 
+    });
     if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
+      return res.status(400).json({ error: 'User already exists in this company' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -77,6 +93,7 @@ usersRouter.post('/', authenticateToken, requireRole(['SYSTEM_ADMIN']), async (r
         name,
         role,
         department,
+        companyId: authReq.user!.companyId,
         isActive: true,
       },
       select: {
@@ -86,6 +103,7 @@ usersRouter.post('/', authenticateToken, requireRole(['SYSTEM_ADMIN']), async (r
         role: true,
         department: true,
         isActive: true,
+        companyId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -94,9 +112,9 @@ usersRouter.post('/', authenticateToken, requireRole(['SYSTEM_ADMIN']), async (r
     // Log the action
     await prisma.auditLog.create({
       data: {
-        userId: (req as any).user.userId,
-        userEmail: (req as any).user.email,
-        userName: (req as any).user.name || (req as any).user.email,
+        userId: authReq.user!.userId,
+        userEmail: authReq.user!.email,
+        userName: authReq.user!.name || authReq.user!.email,
         action: 'CREATED',
         entity: 'User',
         entityId: user.id,
@@ -117,8 +135,14 @@ usersRouter.put('/:id', authenticateToken, requireRole(['SYSTEM_ADMIN']), async 
   try {
     const { id } = req.params;
     const { name, email, role, department, isActive } = req.body;
+    const authReq = req as AuthRequest;
 
-    const existingUser = await prisma.user.findUnique({ where: { id } });
+    const existingUser = await prisma.user.findFirst({ 
+      where: { 
+        id,
+        companyId: authReq.user!.companyId,
+      } 
+    });
     if (!existingUser) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -140,6 +164,7 @@ usersRouter.put('/:id', authenticateToken, requireRole(['SYSTEM_ADMIN']), async 
         role: true,
         department: true,
         isActive: true,
+        companyId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -148,9 +173,9 @@ usersRouter.put('/:id', authenticateToken, requireRole(['SYSTEM_ADMIN']), async 
     // Log the action
     await prisma.auditLog.create({
       data: {
-        userId: (req as any).user.userId,
-        userEmail: (req as any).user.email,
-        userName: (req as any).user.name || (req as any).user.email,
+        userId: authReq.user!.userId,
+        userEmail: authReq.user!.email,
+        userName: authReq.user!.name || authReq.user!.email,
         action: 'EDITED',
         entity: 'User',
         entityId: user.id,
@@ -170,8 +195,14 @@ usersRouter.put('/:id', authenticateToken, requireRole(['SYSTEM_ADMIN']), async 
 usersRouter.delete('/:id', authenticateToken, requireRole(['SYSTEM_ADMIN']), async (req, res) => {
   try {
     const { id } = req.params;
+    const authReq = req as AuthRequest;
 
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await prisma.user.findFirst({ 
+      where: { 
+        id,
+        companyId: authReq.user!.companyId,
+      } 
+    });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -185,9 +216,9 @@ usersRouter.delete('/:id', authenticateToken, requireRole(['SYSTEM_ADMIN']), asy
     // Log the action
     await prisma.auditLog.create({
       data: {
-        userId: (req as any).user.userId,
-        userEmail: (req as any).user.email,
-        userName: (req as any).user.name || (req as any).user.email,
+        userId: authReq.user!.userId,
+        userEmail: authReq.user!.email,
+        userName: authReq.user!.name || authReq.user!.email,
         action: 'DELETED',
         entity: 'User',
         entityId: id,
@@ -207,11 +238,13 @@ usersRouter.delete('/:id', authenticateToken, requireRole(['SYSTEM_ADMIN']), asy
 usersRouter.get('/by-role/:role', authenticateToken, async (req, res) => {
   try {
     const { role } = req.params;
+    const authReq = req as AuthRequest;
 
     const users = await prisma.user.findMany({
       where: { 
         role: role as any,
         isActive: true,
+        companyId: authReq.user!.companyId,
       },
       select: {
         id: true,

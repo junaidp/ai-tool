@@ -18,11 +18,21 @@ async function main() {
   await prisma.frameworkComponent.deleteMany();
   await prisma.effectivenessCriteria.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.company.deleteMany();
   console.log('✅ Cleared existing data');
+
+  // Create Demo company
+  const demoCompany = await prisma.company.create({
+    data: {
+      name: 'Demo',
+      isActive: true,
+    },
+  });
+  console.log('✅ Created Demo company');
 
   const hashedPassword = await bcrypt.hash('demo123', 10);
   
-  // Create 5 demo users with different roles
+  // Create 5 demo users with different roles assigned to Demo company
   const demoUsers = [
     {
       email: 'board@company.com',
@@ -52,15 +62,14 @@ async function main() {
   ];
 
   for (const userData of demoUsers) {
-    const user = await prisma.user.upsert({
-      where: { email: userData.email },
-      update: {},
-      create: {
+    const user = await prisma.user.create({
+      data: {
         ...userData,
         password: hashedPassword,
+        companyId: demoCompany.id,
       },
     });
-    console.log('✅ Created user:', user.email, '-', user.name, `(${user.role})`);
+    console.log('✅ Created user:', user.email, '-', user.name, `(${user.role}) - Company: Demo`);
   }
 
   await prisma.effectivenessCriteria.createMany({
