@@ -17,6 +17,7 @@ import ControlTesting from './pages/ControlTesting';
 import ControlTestingAssignment from './pages/ControlTestingAssignment';
 import Approvals from './pages/Approvals';
 import BoardReporting from './pages/BoardReporting';
+import UserManagement from './pages/UserManagement';
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -64,6 +65,7 @@ function App() {
           <Route path="control-testing-assignment" element={<ControlTestingAssignment />} />
           <Route path="approvals" element={<Approvals />} />
           <Route path="board-reporting" element={<BoardReporting />} />
+          <Route path="user-management" element={<UserManagement />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

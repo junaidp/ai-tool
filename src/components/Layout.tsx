@@ -15,6 +15,7 @@ import {
   LogOut,
   ClipboardCheck,
   UserCheck,
+  Users,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -37,6 +38,7 @@ const navigation = [
   { name: 'Testing Assignment', href: '/control-testing-assignment', icon: UserCheck },
   { name: 'Approvals', href: '/approvals', icon: CheckSquare },
   { name: 'Board Reporting', href: '/board-reporting', icon: FileText },
+  { name: 'User Management', href: '/user-management', icon: Users, adminOnly: true },
 ];
 
 const getRoleDisplay = (role: string) => {
@@ -84,6 +86,11 @@ export default function Layout() {
           <nav className="flex-1 overflow-y-auto py-4">
             <div className="px-3 space-y-1">
               {navigation.map((item) => {
+                // Hide admin-only items from non-admin users
+                if (item.adminOnly && user?.role !== 'SYSTEM_ADMIN' && user?.role !== 'FRAMEWORK_OWNER') {
+                  return null;
+                }
+                
                 const isActive = location.pathname === item.href;
                 return (
                   <Link
