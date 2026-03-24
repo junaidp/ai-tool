@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,38 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [identifiedRisks, setIdentifiedRisks] = useState<FinancialReportingRisk[]>([]);
   const [isComplete, setIsComplete] = useState(false);
+  const [completedAreas, setCompletedAreas] = useState<Set<FinancialReportingArea>>(new Set());
+
+  useEffect(() => {
+    const savedRisks = localStorage.getItem('financialReportingRisks');
+    const savedCompletedAreas = localStorage.getItem('financialReportingCompletedAreas');
+    
+    if (savedRisks) {
+      try {
+        const risks = JSON.parse(savedRisks);
+        setIdentifiedRisks(risks);
+      } catch (e) {
+        console.error('Failed to parse saved risks:', e);
+      }
+    }
+    
+    if (savedCompletedAreas) {
+      try {
+        const areas = JSON.parse(savedCompletedAreas);
+        setCompletedAreas(new Set(areas));
+      } catch (e) {
+        console.error('Failed to parse saved completed areas:', e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('financialReportingRisks', JSON.stringify(identifiedRisks));
+  }, [identifiedRisks]);
+
+  useEffect(() => {
+    localStorage.setItem('financialReportingCompletedAreas', JSON.stringify(Array.from(completedAreas)));
+  }, [completedAreas]);
 
   const areas: { value: FinancialReportingArea; label: string; description: string }[] = [
     { value: 'revenue_recognition', label: 'Revenue Recognition', description: 'Sales, deferred revenue, contract accounting' },
@@ -109,10 +141,12 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
       }
     });
 
-    // Add new risks to the list
     setIdentifiedRisks(prev => [...prev, ...newRisks]);
     
-    // Reset to area selection to allow assessing more areas
+    if (currentArea) {
+      setCompletedAreas(prev => new Set([...prev, currentArea]));
+    }
+    
     setCurrentArea(null);
     setCurrentQuestionIndex(0);
     setAnswers({});
@@ -121,6 +155,8 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
   const handleComplete = () => {
     setIsComplete(true);
     onRisksIdentified(identifiedRisks);
+    localStorage.removeItem('financialReportingRisks');
+    localStorage.removeItem('financialReportingCompletedAreas');
   };
 
   if (isComplete) {
@@ -185,18 +221,32 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {areas.map(area => (
-                <Card
-                  key={area.value}
-                  className="cursor-pointer hover:border-primary transition-colors"
-                  onClick={() => handleAreaSelect(area.value)}
-                >
-                  <CardHeader>
-                    <CardTitle className="text-base">{area.label}</CardTitle>
-                    <CardDescription className="text-sm">{area.description}</CardDescription>
-                  </CardHeader>
-                </Card>
-              ))}
+              {areas.map(area => {
+                const isCompleted = completedAreas.has(area.value);
+                return (
+                  <Card
+                    key={area.value}
+                    className={`cursor-pointer hover:border-primary transition-colors ${
+                      isCompleted ? 'border-green-500 bg-green-50' : ''
+                    }`}
+                    onClick={() => handleAreaSelect(area.value)}
+                  >
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-base">{area.label}</CardTitle>
+                          <CardDescription className="text-sm">{area.description}</CardDescription>
+                        </div>
+                        {isCompleted && (
+                          <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                            Assessed
+                          </Badge>
+                        )}
+                      </div>
+                    </CardHeader>
+                  </Card>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
