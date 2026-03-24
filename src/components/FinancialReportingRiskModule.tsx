@@ -20,10 +20,12 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
   const [identifiedRisks, setIdentifiedRisks] = useState<FinancialReportingRisk[]>([]);
   const [isComplete, setIsComplete] = useState(false);
   const [completedAreas, setCompletedAreas] = useState<Set<FinancialReportingArea>>(new Set());
+  const [areaAnswers, setAreaAnswers] = useState<Record<FinancialReportingArea, Record<string, string | string[]>>>({});
 
   useEffect(() => {
     const savedRisks = localStorage.getItem('financialReportingRisks');
     const savedCompletedAreas = localStorage.getItem('financialReportingCompletedAreas');
+    const savedAreaAnswers = localStorage.getItem('financialReportingAreaAnswers');
     
     if (savedRisks) {
       try {
@@ -42,6 +44,15 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
         console.error('Failed to parse saved completed areas:', e);
       }
     }
+    
+    if (savedAreaAnswers) {
+      try {
+        const answers = JSON.parse(savedAreaAnswers);
+        setAreaAnswers(answers);
+      } catch (e) {
+        console.error('Failed to parse saved area answers:', e);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -51,6 +62,10 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
   useEffect(() => {
     localStorage.setItem('financialReportingCompletedAreas', JSON.stringify(Array.from(completedAreas)));
   }, [completedAreas]);
+
+  useEffect(() => {
+    localStorage.setItem('financialReportingAreaAnswers', JSON.stringify(areaAnswers));
+  }, [areaAnswers]);
 
   const areas: { value: FinancialReportingArea; label: string; description: string }[] = [
     { value: 'revenue_recognition', label: 'Revenue Recognition', description: 'Sales, deferred revenue, contract accounting' },
@@ -64,7 +79,8 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
   const handleAreaSelect = (area: FinancialReportingArea) => {
     setCurrentArea(area);
     setCurrentQuestionIndex(0);
-    setAnswers({});
+    const savedAnswers = areaAnswers[area] || {};
+    setAnswers(savedAnswers);
   };
 
   const getCurrentFlow = () => {
@@ -145,6 +161,7 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
     
     if (currentArea) {
       setCompletedAreas(prev => new Set([...prev, currentArea]));
+      setAreaAnswers(prev => ({ ...prev, [currentArea]: answers }));
     }
     
     setCurrentArea(null);
@@ -157,6 +174,7 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
     onRisksIdentified(identifiedRisks);
     localStorage.removeItem('financialReportingRisks');
     localStorage.removeItem('financialReportingCompletedAreas');
+    localStorage.removeItem('financialReportingAreaAnswers');
   };
 
   if (isComplete) {
