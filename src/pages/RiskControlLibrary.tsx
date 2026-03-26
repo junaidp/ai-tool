@@ -56,6 +56,7 @@ export default function RiskControlLibrary() {
   const [risks, setRisks] = useState<Risk[]>([]);
   const [controls, setControls] = useState<Control[]>([]);
   const [section2Controls, setSection2Controls] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isGenerateOpen, setIsGenerateOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAddCustomOpen, setIsAddCustomOpen] = useState(false);
@@ -92,10 +93,12 @@ export default function RiskControlLibrary() {
   });
 
   const loadData = async () => {
-    const [risksData, controlsData] = await Promise.all([
-      apiService.getRisks(), 
-      apiService.getControls()
-    ]);
+    setIsLoading(true);
+    try {
+      const [risksData, controlsData] = await Promise.all([
+        apiService.getRisks(), 
+        apiService.getControls()
+      ]);
     setRisks(risksData.map(transformApiRisk));
     setControls(controlsData.map(transformApiControl));
     
@@ -179,6 +182,9 @@ export default function RiskControlLibrary() {
       setSection2Controls(allSection2Controls);
     } catch (error) {
       console.error('Failed to load section2 controls:', error);
+    }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -525,6 +531,15 @@ export default function RiskControlLibrary() {
               </div>
             </CardHeader>
             <CardContent>
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <div className="relative">
+                    <div className="w-16 h-16 border-4 border-gray-200 border-t-primary rounded-full animate-spin"></div>
+                  </div>
+                  <p className="mt-4 text-lg font-medium text-muted-foreground">Loading controls...</p>
+                  <p className="text-sm text-muted-foreground mt-1">Fetching data from all risk assessments</p>
+                </div>
+              ) : (
               <div className="space-y-6">
                 {section2Controls.length === 0 && controls.filter(c => c.linkedRisks.length > 0).length === 0 ? (
                   <div className="text-center py-12">
