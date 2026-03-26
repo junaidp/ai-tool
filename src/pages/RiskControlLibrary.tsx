@@ -737,6 +737,7 @@ export default function RiskControlLibrary() {
                 </>
                 )}
               </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
