@@ -366,7 +366,7 @@ export default function MaterialControlsWorkflow() {
       setDocumentedControls(
         controlsToUse.map((t: any) => ({
           templateId: t.id || `ai-${level}-${Math.random().toString(36).substr(2, 9)}`,
-          hasControl: 'yes' as const,
+          hasControl: null as any,
           controlName: '',
           preparedBy: t.defaultOwner,
           reviewedBy: '',
