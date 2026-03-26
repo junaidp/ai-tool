@@ -383,16 +383,30 @@ export default function MaterialControlsWorkflow() {
   const handleProceedToDocumentation = () => {
     if (!selectedCurrentLevel) return;
     
-    // Ensure currentControlIdx is valid
+    // Ensure currentControlIdx is valid and documentedControls is synchronized
     const pkg = currentLevelPackage;
     if (pkg) {
       const aiControls = aiGeneratedControls[selectedCurrentLevel]?.specificControls || [];
       const controlsToUse = aiControls.length > 0 ? aiControls : pkg.controlTemplates;
       
-      // Reset to 0 or clamp to valid range
-      if (currentControlIdx >= controlsToUse.length) {
-        setCurrentControlIdx(0);
-      }
+      // Re-initialize documentedControls to match the templates being used
+      // This ensures synchronization between templates and documentedControls
+      setDocumentedControls(
+        controlsToUse.map((t: any) => ({
+          templateId: t.id || `ai-${selectedCurrentLevel}-${Math.random().toString(36).substr(2, 9)}`,
+          hasControl: null as any,
+          controlName: '',
+          preparedBy: t.defaultOwner,
+          reviewedBy: '',
+          frequency: t.defaultFrequency,
+          evidence: '',
+          hasThresholds: false,
+          thresholdDetails: '',
+        }))
+      );
+      
+      // Reset to 0
+      setCurrentControlIdx(0);
     } else {
       setCurrentControlIdx(0);
     }
