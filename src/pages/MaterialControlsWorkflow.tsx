@@ -618,42 +618,63 @@ export default function MaterialControlsWorkflow() {
       // Save all controls to the Risk-Control Library
       const allControls = [...gapAnalysis.existingControls, ...implementationPlan.phases.flatMap(p => p.controls)];
       
+      // Get existing controls to check for duplicates
+      const existingControls = await apiService.getControls();
+      const existingControlNames = new Set(existingControls.map((c: any) => c.name.toLowerCase().trim()));
+      
+      // Get existing Section2Controls for this risk to check for duplicates
+      let existingSection2Controls: any[] = [];
+      try {
+        existingSection2Controls = await apiService.getSection2Controls(selectedRisk.id);
+      } catch (e) {
+        // Risk might not have controls yet
+      }
+      const existingSection2Titles = new Set(existingSection2Controls.map((c: any) => c.title.toLowerCase().trim()));
+      
       for (const control of allControls) {
-        // Create control in the Control table (Risk-Control Library)
-        await apiService.createControl({
-          name: control.title,
-          description: control.description || '',
-          type: control.type === 'preventive' ? 'preventive' : control.type === 'detective' ? 'detective' : 'corrective',
-          automation: 'manual',
-          frequency: control.frequency || 'monthly',
-          owner: control.owner || 'To be assigned',
-          linkedRisks: [selectedRisk.riskTitle],
-          effectiveness: 'effective',
-          evidenceSource: control.evidence || 'To be documented',
-        });
+        const controlNameLower = control.title.toLowerCase().trim();
+        
+        // Only create control in Control table if it doesn't already exist
+        if (!existingControlNames.has(controlNameLower)) {
+          await apiService.createControl({
+            name: control.title,
+            description: control.description || '',
+            type: control.type === 'preventive' ? 'preventive' : control.type === 'detective' ? 'detective' : 'corrective',
+            automation: 'manual',
+            frequency: control.frequency || 'monthly',
+            owner: control.owner || 'To be assigned',
+            linkedRisks: [selectedRisk.riskTitle],
+            effectiveness: 'effective',
+            evidenceSource: control.evidence || 'To be documented',
+          });
+          existingControlNames.add(controlNameLower); // Add to set to prevent duplicates in this batch
+        }
 
-        // Also save to Section2Control table for Material Controls tracking
-        const section2Data: any = {
-          riskId: selectedRisk.id,
-          title: control.title,
-          description: control.description || '',
-          controlType: control.type,
-          objectives: control.objectives || [],
-          owner: control.owner || '',
-          frequency: control.frequency || 'monthly',
-          evidence: control.evidence || '',
-          status: control.status || 'existing',
-          maturityLevel: selectedCurrentLevel || 1,
-          source: control.source || 'workflow_documented',
-        };
+        // Only save to Section2Control table if it doesn't already exist for this risk
+        if (!existingSection2Titles.has(controlNameLower)) {
+          const section2Data: any = {
+            riskId: selectedRisk.id,
+            title: control.title,
+            description: control.description || '',
+            controlType: control.type,
+            objectives: control.objectives || [],
+            owner: control.owner || '',
+            frequency: control.frequency || 'monthly',
+            evidence: control.evidence || '',
+            status: control.status || 'existing',
+            maturityLevel: selectedCurrentLevel || 1,
+            source: control.source || 'workflow_documented',
+          };
 
-        // Only add optional fields if they have actual values
-        if (control.reviewer) section2Data.reviewer = control.reviewer;
-        if (control.implementationPhase !== undefined) section2Data.implementationPhase = control.implementationPhase;
-        if (control.implementationEffort) section2Data.implementationEffort = control.implementationEffort;
-        if (control.implementationTimeline) section2Data.implementationTimeline = control.implementationTimeline;
+          // Only add optional fields if they have actual values
+          if (control.reviewer) section2Data.reviewer = control.reviewer;
+          if (control.implementationPhase !== undefined) section2Data.implementationPhase = control.implementationPhase;
+          if (control.implementationEffort) section2Data.implementationEffort = control.implementationEffort;
+          if (control.implementationTimeline) section2Data.implementationTimeline = control.implementationTimeline;
 
-        await apiService.saveSection2Control(section2Data);
+          await apiService.saveSection2Control(section2Data);
+          existingSection2Titles.add(controlNameLower); // Add to set to prevent duplicates in this batch
+        }
       }
 
       // Save completion status to database
