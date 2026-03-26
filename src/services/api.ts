@@ -322,30 +322,24 @@ class ApiService {
     });
   }
 
-  generateMaturityControlsForRisk(data: {
-    riskTitle: string;
-    riskStatement: string;
-    riskCategory: string;
-    maturityLevel: number;
+  async generateMaturityControlsForRisk(params: { riskTitle: string; riskStatement: string; riskCategory: string; maturityLevel: number }) {
+    return this.request<any>('/ai/generate-maturity-controls', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  }
+
+  async submitConsultationRequest(data: {
+    moduleName: string;
+    requestType: 'question' | 'call' | 'review';
+    name: string;
+    email: string;
+    phone?: string;
+    message: string;
+    preferredTime?: string;
+    context?: string;
   }) {
-    return this.request<{
-      level: number;
-      levelName: string;
-      maturityScore: string;
-      typicalControls: string[];
-      characteristics: string[];
-      specificControls: Array<{
-        title: string;
-        description: string;
-        type: string;
-        objectives: string[];
-        defaultOwner: string;
-        defaultFrequency: string;
-        defaultEvidence: string;
-        maturityScore: number;
-        implementationEffort: string;
-      }>;
-    }>('/ai/generate-maturity-controls', {
+    return this.request<{ success: boolean; message: string }>('/consultation-requests', {
       method: 'POST',
       body: JSON.stringify(data),
     });

@@ -53,7 +53,9 @@ import {
   FileText,
   ArrowRight,
   Info,
+  Users,
 } from 'lucide-react';
+import { HumanInLoopDialog, type ConsultationRequest } from '@/components/HumanInLoopDialog';
 
 // ============================================================
 // Types
@@ -97,6 +99,10 @@ export default function MaterialControlsWorkflow() {
   const [selectedCurrentLevel, setSelectedCurrentLevel] = useState<MaturityLevel | null>(null);
   const [aiGeneratedControls, setAiGeneratedControls] = useState<Record<number, any>>({});
   const [loadingAIControls, setLoadingAIControls] = useState<Record<number, boolean>>({});
+
+  // Human in Loop
+  const [isHumanInLoopOpen, setIsHumanInLoopOpen] = useState(false);
+  const [humanInLoopContext, setHumanInLoopContext] = useState('');
 
   // Step 2: Document Current Controls
   const [currentLevelPackage, setCurrentLevelPackage] = useState<MaturityPackage | null>(null);
@@ -610,6 +616,23 @@ export default function MaterialControlsWorkflow() {
     setCurrentStep(6);
   };
 
+  const handleConsultationRequest = async (data: ConsultationRequest) => {
+    try {
+      // In production, this would call an API endpoint to send the consultation request
+      // For now, we'll log it and could integrate with email service or CRM
+      console.log('Consultation Request Submitted:', data);
+      
+      // TODO: Integrate with backend API
+      // await apiService.submitConsultationRequest(data);
+      
+      // For demo purposes, show success
+      alert(`✅ Consultation request submitted successfully! Our expert will contact you at ${data.email} within 24 hours.`);
+    } catch (error) {
+      console.error('Failed to submit consultation request:', error);
+      throw error;
+    }
+  };
+
   const handleCompleteRisk = async () => {
     if (!selectedRisk || !gapAnalysis || !implementationPlan) return;
 
@@ -699,6 +722,10 @@ export default function MaterialControlsWorkflow() {
       setAllDocumentedControls([...allDocumentedControls, ...allControls]);
 
       alert(`✅ Risk completed! ${allControls.length} controls have been saved to the Risk-Control Library.`);
+      
+      // Show Human in Loop dialog after completion
+      setHumanInLoopContext(`Completed Material Controls Workflow for: ${selectedRisk.riskTitle}. Documented ${allControls.length} controls across maturity levels ${selectedCurrentLevel} to ${targetLevel}.`);
+      setIsHumanInLoopOpen(true);
       
       setSelectedRisk(null);
       setCurrentStep(0);
@@ -2249,11 +2276,23 @@ export default function MaterialControlsWorkflow() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Material Controls Workflow</h1>
-        <p className="text-muted-foreground mt-1">
-          Build mitigation blueprints for principal risks through 6-step workflow
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Material Controls Workflow</h1>
+          <p className="text-muted-foreground mt-1">
+            Build mitigation blueprints for principal risks through 6-step workflow
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setHumanInLoopContext(`Need assistance with Material Controls Workflow${selectedRisk ? ` for: ${selectedRisk.riskTitle}` : ''}.`);
+            setIsHumanInLoopOpen(true);
+          }}
+        >
+          <Users className="h-4 w-4 mr-2" />
+          Request Expert Help
+        </Button>
       </div>
 
       {renderStepIndicator()}
@@ -2265,6 +2304,14 @@ export default function MaterialControlsWorkflow() {
       {currentStep === 4 && renderStep4()}
       {currentStep === 5 && renderStep5()}
       {currentStep === 6 && renderStep6()}
+
+      <HumanInLoopDialog
+        isOpen={isHumanInLoopOpen}
+        onClose={() => setIsHumanInLoopOpen(false)}
+        moduleName="Material Controls Workflow"
+        moduleContext={humanInLoopContext}
+        onSubmit={handleConsultationRequest}
+      />
     </div>
   );
 }
