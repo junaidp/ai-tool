@@ -103,6 +103,8 @@ export default function RiskControlLibrary() {
     try {
       const principalRisks = await apiService.getPrincipalRisks();
       const allSection2Controls = [];
+      
+      // Load controls for principal risks
       for (const risk of principalRisks) {
         try {
           const riskControls = await apiService.getSection2Controls(risk.id);
@@ -111,6 +113,69 @@ export default function RiskControlLibrary() {
           // Risk might not have controls yet
         }
       }
+      
+      // Also load controls for Financial Reporting, Fraud, and Cyber risks from localStorage
+      // These risks are converted to PrincipalRisk format in MaterialControlsWorkflow
+      // So we need to check for their controls too
+      const savedFinancialRisks = localStorage.getItem('financialReportingRisks');
+      const savedFraudRisks = localStorage.getItem('fraudRisks');
+      const savedCyberRisks = localStorage.getItem('cyberSecurityRisks');
+      
+      const additionalRiskIds = [];
+      
+      if (savedFinancialRisks) {
+        try {
+          const financialRisks = JSON.parse(savedFinancialRisks);
+          additionalRiskIds.push(...financialRisks.map((r: any) => r.id));
+        } catch (e) {
+          console.error('Failed to parse financial risks:', e);
+        }
+      }
+      
+      if (savedFraudRisks) {
+        try {
+          const fraudRisks = JSON.parse(savedFraudRisks);
+          additionalRiskIds.push(...fraudRisks.map((r: any) => r.id));
+        } catch (e) {
+          console.error('Failed to parse fraud risks:', e);
+        }
+      }
+      
+      if (savedCyberRisks) {
+        try {
+          const cyberRisks = JSON.parse(savedCyberRisks);
+          additionalRiskIds.push(...cyberRisks.map((r: any) => r.id));
+        } catch (e) {
+          console.error('Failed to parse cyber risks:', e);
+        }
+      }
+      
+      // Load controls for these additional risks
+      for (const riskId of additionalRiskIds) {
+        try {
+          const riskControls = await apiService.getSection2Controls(riskId);
+          if (riskControls.length > 0) {
+            // Find the risk title from localStorage
+            let riskTitle = 'Unknown Risk';
+            if (savedFinancialRisks) {
+              const fr = JSON.parse(savedFinancialRisks).find((r: any) => r.id === riskId);
+              if (fr) riskTitle = fr.riskTitle;
+            }
+            if (savedFraudRisks && riskTitle === 'Unknown Risk') {
+              const fr = JSON.parse(savedFraudRisks).find((r: any) => r.id === riskId);
+              if (fr) riskTitle = fr.riskTitle;
+            }
+            if (savedCyberRisks && riskTitle === 'Unknown Risk') {
+              const cr = JSON.parse(savedCyberRisks).find((r: any) => r.id === riskId);
+              if (cr) riskTitle = cr.riskTitle;
+            }
+            allSection2Controls.push(...riskControls.map((c: any) => ({ ...c, riskTitle, riskId })));
+          }
+        } catch (e) {
+          // Risk might not have controls yet
+        }
+      }
+      
       setSection2Controls(allSection2Controls);
     } catch (error) {
       console.error('Failed to load section2 controls:', error);

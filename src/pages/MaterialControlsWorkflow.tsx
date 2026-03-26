@@ -382,7 +382,21 @@ export default function MaterialControlsWorkflow() {
 
   const handleProceedToDocumentation = () => {
     if (!selectedCurrentLevel) return;
-    setCurrentControlIdx(0);
+    
+    // Ensure currentControlIdx is valid
+    const pkg = currentLevelPackage;
+    if (pkg) {
+      const aiControls = aiGeneratedControls[selectedCurrentLevel]?.specificControls || [];
+      const controlsToUse = aiControls.length > 0 ? aiControls : pkg.controlTemplates;
+      
+      // Reset to 0 or clamp to valid range
+      if (currentControlIdx >= controlsToUse.length) {
+        setCurrentControlIdx(0);
+      }
+    } else {
+      setCurrentControlIdx(0);
+    }
+    
     setCurrentStep(2);
   };
 
@@ -1188,6 +1202,14 @@ export default function MaterialControlsWorkflow() {
         templatesLength: templates.length,
         documentedControlsLength: documentedControls.length
       });
+      
+      // Auto-fix: Reset to first control if index is out of bounds
+      if (currentControlIdx >= templates.length && templates.length > 0) {
+        console.log('Auto-fixing: Resetting currentControlIdx to 0');
+        setCurrentControlIdx(0);
+        return null; // Will re-render with correct index
+      }
+      
       return (
         <Card>
           <CardContent className="py-12 text-center">
@@ -1196,7 +1218,10 @@ export default function MaterialControlsWorkflow() {
             <p className="text-muted-foreground mb-4">
               Unable to load control #{currentControlIdx + 1}. Please go back and try again.
             </p>
-            <Button onClick={() => setCurrentStep(1)}>
+            <Button onClick={() => {
+              setCurrentControlIdx(0);
+              setCurrentStep(1);
+            }}>
               <ChevronLeft className="h-4 w-4 mr-2" />
               Back to Maturity Level Selection
             </Button>
