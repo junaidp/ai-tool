@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,53 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
   const [answers, setAnswers] = useState<Record<string, string | string[] | number>>({});
   const [identifiedRisks, setIdentifiedRisks] = useState<FraudRisk[]>([]);
   const [isComplete, setIsComplete] = useState(false);
+  const [completedCategories, setCompletedCategories] = useState<Set<FraudCategory>>(new Set());
+  const [categoryAnswers, setCategoryAnswers] = useState<Record<FraudCategory, Record<string, string | string[] | number>>>({});
+
+  useEffect(() => {
+    const savedRisks = localStorage.getItem('fraudRisks');
+    const savedCompletedCategories = localStorage.getItem('fraudCompletedCategories');
+    const savedCategoryAnswers = localStorage.getItem('fraudCategoryAnswers');
+    
+    if (savedRisks) {
+      try {
+        const risks = JSON.parse(savedRisks);
+        setIdentifiedRisks(risks);
+      } catch (e) {
+        console.error('Failed to parse saved fraud risks:', e);
+      }
+    }
+    
+    if (savedCompletedCategories) {
+      try {
+        const categories = JSON.parse(savedCompletedCategories);
+        setCompletedCategories(new Set(categories));
+      } catch (e) {
+        console.error('Failed to parse saved completed categories:', e);
+      }
+    }
+    
+    if (savedCategoryAnswers) {
+      try {
+        const answers = JSON.parse(savedCategoryAnswers);
+        setCategoryAnswers(answers);
+      } catch (e) {
+        console.error('Failed to parse saved category answers:', e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('fraudRisks', JSON.stringify(identifiedRisks));
+  }, [identifiedRisks]);
+
+  useEffect(() => {
+    localStorage.setItem('fraudCompletedCategories', JSON.stringify(Array.from(completedCategories)));
+  }, [completedCategories]);
+
+  useEffect(() => {
+    localStorage.setItem('fraudCategoryAnswers', JSON.stringify(categoryAnswers));
+  }, [categoryAnswers]);
 
   const categories: { value: FraudCategory; label: string; description: string }[] = [
     { value: 'asset_misappropriation', label: 'Asset Misappropriation', description: 'Theft of cash, inventory, or other assets' },
@@ -32,7 +79,8 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
   const handleCategorySelect = (category: FraudCategory) => {
     setCurrentCategory(category);
     setCurrentQuestionIndex(0);
-    setAnswers({});
+    const savedAnswers = categoryAnswers[category] || {};
+    setAnswers(savedAnswers);
   };
 
   const getCurrentFlow = () => {
@@ -115,6 +163,12 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
     });
 
     setIdentifiedRisks(prev => [...prev, ...newRisks]);
+    
+    if (currentCategory) {
+      setCompletedCategories(prev => new Set([...prev, currentCategory]));
+      setCategoryAnswers(prev => ({ ...prev, [currentCategory]: answers }));
+    }
+    
     setCurrentCategory(null);
     setCurrentQuestionIndex(0);
     setAnswers({});
@@ -123,6 +177,9 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
   const handleComplete = () => {
     setIsComplete(true);
     onRisksIdentified(identifiedRisks);
+    localStorage.removeItem('fraudRisks');
+    localStorage.removeItem('fraudCompletedCategories');
+    localStorage.removeItem('fraudCategoryAnswers');
   };
 
   const getRiskColor = (score: number) => {
@@ -225,18 +282,32 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {categories.map(category => (
-                <Card
-                  key={category.value}
-                  className="cursor-pointer hover:border-primary transition-colors"
-                  onClick={() => handleCategorySelect(category.value)}
-                >
-                  <CardHeader>
-                    <CardTitle className="text-base">{category.label}</CardTitle>
-                    <CardDescription className="text-sm">{category.description}</CardDescription>
-                  </CardHeader>
-                </Card>
-              ))}
+              {categories.map(category => {
+                const isCompleted = completedCategories.has(category.value);
+                return (
+                  <Card
+                    key={category.value}
+                    className={`cursor-pointer hover:border-primary transition-colors ${
+                      isCompleted ? 'border-green-500 bg-green-50' : ''
+                    }`}
+                    onClick={() => handleCategorySelect(category.value)}
+                  >
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-base">{category.label}</CardTitle>
+                          <CardDescription className="text-sm">{category.description}</CardDescription>
+                        </div>
+                        {isCompleted && (
+                          <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                            Assessed
+                          </Badge>
+                        )}
+                      </div>
+                    </CardHeader>
+                  </Card>
+                );
+              })}
             </div>
           </CardContent>
         </Card>

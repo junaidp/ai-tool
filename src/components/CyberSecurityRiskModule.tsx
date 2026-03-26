@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,53 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
   const [answers, setAnswers] = useState<Record<string, string | string[] | number>>({});
   const [identifiedRisks, setIdentifiedRisks] = useState<CyberSecurityRisk[]>([]);
   const [isComplete, setIsComplete] = useState(false);
+  const [completedDomains, setCompletedDomains] = useState<Set<CyberSecurityDomain>>(new Set());
+  const [domainAnswers, setDomainAnswers] = useState<Record<CyberSecurityDomain, Record<string, string | string[] | number>>>({});
+
+  useEffect(() => {
+    const savedRisks = localStorage.getItem('cyberSecurityRisks');
+    const savedCompletedDomains = localStorage.getItem('cyberCompletedDomains');
+    const savedDomainAnswers = localStorage.getItem('cyberDomainAnswers');
+    
+    if (savedRisks) {
+      try {
+        const risks = JSON.parse(savedRisks);
+        setIdentifiedRisks(risks);
+      } catch (e) {
+        console.error('Failed to parse saved cyber risks:', e);
+      }
+    }
+    
+    if (savedCompletedDomains) {
+      try {
+        const domains = JSON.parse(savedCompletedDomains);
+        setCompletedDomains(new Set(domains));
+      } catch (e) {
+        console.error('Failed to parse saved completed domains:', e);
+      }
+    }
+    
+    if (savedDomainAnswers) {
+      try {
+        const answers = JSON.parse(savedDomainAnswers);
+        setDomainAnswers(answers);
+      } catch (e) {
+        console.error('Failed to parse saved domain answers:', e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('cyberSecurityRisks', JSON.stringify(identifiedRisks));
+  }, [identifiedRisks]);
+
+  useEffect(() => {
+    localStorage.setItem('cyberCompletedDomains', JSON.stringify(Array.from(completedDomains)));
+  }, [completedDomains]);
+
+  useEffect(() => {
+    localStorage.setItem('cyberDomainAnswers', JSON.stringify(domainAnswers));
+  }, [domainAnswers]);
 
   const domains: { value: CyberSecurityDomain; label: string; description: string }[] = [
     { value: 'ransomware', label: 'Ransomware Protection', description: 'Backup, recovery, endpoint security' },
@@ -33,7 +80,8 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
   const handleDomainSelect = (domain: CyberSecurityDomain) => {
     setCurrentDomain(domain);
     setCurrentQuestionIndex(0);
-    setAnswers({});
+    const savedAnswers = domainAnswers[domain] || {};
+    setAnswers(savedAnswers);
   };
 
   const getCurrentFlow = () => {
@@ -115,6 +163,12 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
     });
 
     setIdentifiedRisks(prev => [...prev, ...newRisks]);
+    
+    if (currentDomain) {
+      setCompletedDomains(prev => new Set([...prev, currentDomain]));
+      setDomainAnswers(prev => ({ ...prev, [currentDomain]: answers }));
+    }
+    
     setCurrentDomain(null);
     setCurrentQuestionIndex(0);
     setAnswers({});
@@ -123,6 +177,9 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
   const handleComplete = () => {
     setIsComplete(true);
     onRisksIdentified(identifiedRisks);
+    localStorage.removeItem('cyberSecurityRisks');
+    localStorage.removeItem('cyberCompletedDomains');
+    localStorage.removeItem('cyberDomainAnswers');
   };
 
   const getRiskColor = (score: number) => {
@@ -211,21 +268,35 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {domains.map(domain => (
-                <Card
-                  key={domain.value}
-                  className="cursor-pointer hover:border-primary transition-colors"
-                  onClick={() => handleDomainSelect(domain.value)}
-                >
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      {domain.label}
-                    </CardTitle>
-                    <CardDescription className="text-sm">{domain.description}</CardDescription>
-                  </CardHeader>
-                </Card>
-              ))}
+              {domains.map(domain => {
+                const isCompleted = completedDomains.has(domain.value);
+                return (
+                  <Card
+                    key={domain.value}
+                    className={`cursor-pointer hover:border-primary transition-colors ${
+                      isCompleted ? 'border-green-500 bg-green-50' : ''
+                    }`}
+                    onClick={() => handleDomainSelect(domain.value)}
+                  >
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <Shield className="h-4 w-4" />
+                            {domain.label}
+                          </CardTitle>
+                          <CardDescription className="text-sm">{domain.description}</CardDescription>
+                        </div>
+                        {isCompleted && (
+                          <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                            Assessed
+                          </Badge>
+                        )}
+                      </div>
+                    </CardHeader>
+                  </Card>
+                );
+              })}
             </div>
           </CardContent>
         </Card>

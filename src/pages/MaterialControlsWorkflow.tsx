@@ -21,6 +21,9 @@ import type {
   RiskWorkflowProgress,
   ControlObjective,
   ControlFrequency,
+  FinancialReportingRisk,
+  FraudRisk,
+  CyberSecurityRisk,
 } from '@/types';
 import {
   detectRiskType,
@@ -83,6 +86,7 @@ export default function MaterialControlsWorkflow() {
 
   // Step 0: Select Risk
   const [principalRisks, setPrincipalRisks] = useState<PrincipalRisk[]>([]);
+  const [allRisks, setAllRisks] = useState<PrincipalRisk[]>([]);
   const [selectedRisk, setSelectedRisk] = useState<PrincipalRisk | null>(null);
   const [detectedRiskType, setDetectedRiskType] = useState<string>('generic');
   const [riskPriority, setRiskPriority] = useState<'HIGH' | 'MEDIUM' | 'LOWER'>('MEDIUM');
@@ -126,18 +130,24 @@ export default function MaterialControlsWorkflow() {
   useEffect(() => {
     loadPrincipalRisks();
     loadCompletedRisks();
+    loadAllRiskTypes();
   }, []);
+
+  // Reload all risk types when principal risks change
+  useEffect(() => {
+    loadAllRiskTypes();
+  }, [principalRisks]);
 
   // Auto-select risk from URL parameter
   useEffect(() => {
     const riskId = searchParams.get('riskId');
-    if (riskId && principalRisks.length > 0 && !selectedRisk) {
-      const risk = principalRisks.find(r => r.id === riskId);
+    if (riskId && allRisks.length > 0 && !selectedRisk) {
+      const risk = allRisks.find(r => r.id === riskId);
       if (risk) {
         handleSelectRisk(risk);
       }
     }
-  }, [searchParams, principalRisks, selectedRisk]);
+  }, [searchParams, allRisks, selectedRisk]);
 
   const loadPrincipalRisks = async () => {
     try {
@@ -145,6 +155,80 @@ export default function MaterialControlsWorkflow() {
       setPrincipalRisks(data);
     } catch (error) {
       console.error('Failed to load principal risks:', error);
+    }
+  };
+
+  const loadAllRiskTypes = () => {
+    try {
+      const principal = principalRisks;
+      const combined: PrincipalRisk[] = [...principal];
+
+      // Load Financial Reporting Risks from localStorage
+      const savedFinancialRisks = localStorage.getItem('financialReportingRisks');
+      if (savedFinancialRisks) {
+        try {
+          const financialRisks: FinancialReportingRisk[] = JSON.parse(savedFinancialRisks);
+          const convertedFinancial = financialRisks.map(risk => ({
+            id: risk.id,
+            riskTitle: risk.riskTitle,
+            riskStatement: `${risk.riskDescription}\n\nArea: ${risk.area}\nMateriality: ${risk.materialityLevel}\nAI Suggested Controls: ${risk.identifiedControls.join(', ')}`,
+            domainTags: ['financial', 'reporting'],
+            threatLensTags: ['performance'],
+            riskOwner: 'CFO',
+            createdAt: risk.createdAt,
+            updatedAt: risk.createdAt,
+          } as PrincipalRisk));
+          combined.push(...convertedFinancial);
+        } catch (e) {
+          console.error('Failed to parse financial reporting risks:', e);
+        }
+      }
+
+      // Load Fraud Risks from localStorage
+      const savedFraudRisks = localStorage.getItem('fraudRisks');
+      if (savedFraudRisks) {
+        try {
+          const fraudRisks: FraudRisk[] = JSON.parse(savedFraudRisks);
+          const convertedFraud = fraudRisks.map(risk => ({
+            id: risk.id,
+            riskTitle: risk.riskTitle,
+            riskStatement: `${risk.riskDescription}\n\nFraud Scheme: ${risk.fraudScheme}\nRisk Score: ${risk.inherentRiskScore}/25\nLikelihood: ${risk.likelihoodScore}/5 | Impact: ${risk.impactScore}/5\nRed Flags: ${risk.redFlags.join(', ')}\nAI Suggested Controls: ${risk.identifiedControls.join(', ')}`,
+            domainTags: ['compliance', 'ops'],
+            threatLensTags: ['performance', 'solvency'],
+            riskOwner: 'CFO / Compliance Officer',
+            createdAt: risk.createdAt,
+            updatedAt: risk.createdAt,
+          } as PrincipalRisk));
+          combined.push(...convertedFraud);
+        } catch (e) {
+          console.error('Failed to parse fraud risks:', e);
+        }
+      }
+
+      // Load Cyber Security Risks from localStorage
+      const savedCyberRisks = localStorage.getItem('cyberSecurityRisks');
+      if (savedCyberRisks) {
+        try {
+          const cyberRisks: CyberSecurityRisk[] = JSON.parse(savedCyberRisks);
+          const convertedCyber = cyberRisks.map(risk => ({
+            id: risk.id,
+            riskTitle: risk.riskTitle,
+            riskStatement: `${risk.riskDescription}\n\nDomain: ${risk.domain}\nRisk Score: ${risk.inherentRiskScore}/25\nLikelihood: ${risk.likelihoodScore}/5 | Impact: ${risk.impactScore}/5\nThreat Vectors: ${risk.threatVector.join(', ')}\nRegulatory: ${risk.regulatoryRequirements.join(', ') || 'None'}\nAI Suggested Controls: ${risk.identifiedControls.join(', ')}`,
+            domainTags: ['ops', 'compliance'],
+            threatLensTags: ['business_model', 'performance'],
+            riskOwner: 'CISO / IT Director',
+            createdAt: risk.createdAt,
+            updatedAt: risk.createdAt,
+          } as PrincipalRisk));
+          combined.push(...convertedCyber);
+        } catch (e) {
+          console.error('Failed to parse cyber security risks:', e);
+        }
+      }
+
+      setAllRisks(combined);
+    } catch (error) {
+      console.error('Failed to load all risk types:', error);
     }
   };
 
@@ -687,11 +771,11 @@ export default function MaterialControlsWorkflow() {
                 <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-blue-900">
                   <p className="font-medium mb-1">Material Controls for All Risk Types</p>
-                  <p>This workflow currently shows <strong>Principal Risks</strong>. To build controls for Financial Reporting, Fraud, or Cyber Security risks, first complete those assessments in the <strong>Risk Identification</strong> page, then those risks will appear here for control mapping.</p>
+                  <p>This workflow shows risks from all sources: <strong>Principal Risks</strong> ({principalRisks.length}), <strong>Financial Reporting</strong>, <strong>Fraud</strong>, and <strong>Cyber Security</strong>. Complete assessments in the <strong>Risk Identification</strong> page to add more risks here for control mapping.</p>
                 </div>
               </div>
             </div>
-            {principalRisks.length === 0 ? (
+            {allRisks.length === 0 ? (
               <div className="text-center py-12">
                 <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-muted-foreground">No risks defined yet.</p>
@@ -699,7 +783,7 @@ export default function MaterialControlsWorkflow() {
               </div>
             ) : (
               <div className="space-y-3">
-                {principalRisks.map(risk => {
+                {allRisks.map(risk => {
                   const isCompleted = completedIds.has(risk.id);
                   const { score } = extractRiskScore(risk);
                   const priority = getRiskPriority(risk);
