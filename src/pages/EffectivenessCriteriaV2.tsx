@@ -45,6 +45,8 @@ export default function EffectivenessCriteriaV2Page() {
   const [editedBoardDoc, setEditedBoardDoc] = useState('');
   const [customFramework, setCustomFramework] = useState<CustomFramework | null>(null);
   const [companyName, setCompanyName] = useState('');
+  const [isEditingWeights, setIsEditingWeights] = useState(false);
+  const [editedWeights, setEditedWeights] = useState<Record<string, number>>({});
 
   useEffect(() => {
     loadExistingConfig();
@@ -986,6 +988,80 @@ export default function EffectivenessCriteriaV2Page() {
     </div>
   );
 
+  const handleStartEditWeights = () => {
+    if (!savedConfig) return;
+    const criteria = savedConfig.criteriaConfig;
+    setEditedWeights({
+      riskIdentification: criteria.riskIdentification.weight,
+      frameworkDesign: criteria.frameworkDesign.weight,
+      controlOperating: criteria.controlOperating.weight,
+      issueResponsiveness: criteria.issueResponsiveness.weight,
+      riskOutcome: criteria.riskOutcome.weight,
+      governance: criteria.governance.weight,
+      continuousImprovement: criteria.continuousImprovement.weight
+    });
+    setIsEditingWeights(true);
+  };
+
+  const handleWeightChange = (criterionId: string, value: number) => {
+    setEditedWeights(prev => ({ ...prev, [criterionId]: value }));
+  };
+
+  const getTotalWeight = () => {
+    return Object.values(editedWeights).reduce((sum, weight) => sum + weight, 0);
+  };
+
+  const handleSaveWeights = async () => {
+    const total = getTotalWeight();
+    if (total > 100) {
+      alert(`Total percentage cannot exceed 100%. Current total: ${total}%`);
+      return;
+    }
+
+    if (!savedConfig) return;
+    setIsLoading(true);
+    try {
+      const updatedCriteria = {
+        riskIdentification: { ...savedConfig.criteriaConfig.riskIdentification, weight: editedWeights.riskIdentification },
+        frameworkDesign: { ...savedConfig.criteriaConfig.frameworkDesign, weight: editedWeights.frameworkDesign },
+        controlOperating: { ...savedConfig.criteriaConfig.controlOperating, weight: editedWeights.controlOperating },
+        issueResponsiveness: { ...savedConfig.criteriaConfig.issueResponsiveness, weight: editedWeights.issueResponsiveness },
+        riskOutcome: { ...savedConfig.criteriaConfig.riskOutcome, weight: editedWeights.riskOutcome },
+        governance: { ...savedConfig.criteriaConfig.governance, weight: editedWeights.governance },
+        continuousImprovement: { ...savedConfig.criteriaConfig.continuousImprovement, weight: editedWeights.continuousImprovement }
+      };
+
+      const data = await fetchJson<EffectivenessCriteriaConfig>(
+        `${API_ROOT}/effectiveness-criteria-v2/save-config`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            companyProfile: savedConfig.companyProfile,
+            criteria: updatedCriteria,
+            overallTarget: savedConfig.overallTarget,
+            pathway: savedConfig.pathway
+          })
+        }
+      );
+
+      const parsedConfig: EffectivenessCriteriaConfig = {
+        ...data,
+        companyProfile: typeof data.companyProfile === 'string' ? JSON.parse(data.companyProfile) : data.companyProfile,
+        criteriaConfig: typeof data.criteriaConfig === 'string' ? JSON.parse(data.criteriaConfig) : data.criteriaConfig,
+      };
+
+      setSavedConfig(parsedConfig);
+      setIsEditingWeights(false);
+      alert('✅ Weights updated successfully!');
+    } catch (error) {
+      console.error('Error saving weights:', error);
+      alert('Failed to save weights. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const renderDisplay = () => {
     if (!savedConfig) return null;
 
@@ -1059,12 +1135,55 @@ export default function EffectivenessCriteriaV2Page() {
 
         <Card>
           <CardHeader>
-            <CardTitle>The 7 Effectiveness Criteria</CardTitle>
-            <CardDescription>
-              Weighted framework for assessing control effectiveness
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>The 7 Effectiveness Criteria</CardTitle>
+                <CardDescription>
+                  Weighted framework for assessing control effectiveness
+                </CardDescription>
+              </div>
+              {!isEditingWeights ? (
+                <Button variant="outline" size="sm" onClick={handleStartEditWeights}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Weights
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setIsEditingWeights(false)}>
+                    Cancel
+                  </Button>
+                  <Button size="sm" onClick={handleSaveWeights} disabled={isLoading || getTotalWeight() > 100}>
+                    {isLoading ? 'Saving...' : 'Save Weights'}
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            {isEditingWeights && (
+              <div className={`p-4 rounded-lg border-2 ${
+                getTotalWeight() > 100 ? 'bg-red-50 border-red-300' : 
+                getTotalWeight() === 100 ? 'bg-green-50 border-green-300' : 
+                'bg-blue-50 border-blue-300'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">Total Weight:</span>
+                  <span className={`text-2xl font-bold ${
+                    getTotalWeight() > 100 ? 'text-red-600' : 
+                    getTotalWeight() === 100 ? 'text-green-600' : 
+                    'text-blue-600'
+                  }`}>
+                    {getTotalWeight()}%
+                  </span>
+                </div>
+                {getTotalWeight() > 100 && (
+                  <p className="text-sm text-red-600 mt-2">⚠️ Total cannot exceed 100%</p>
+                )}
+                {getTotalWeight() < 100 && (
+                  <p className="text-sm text-blue-600 mt-2">Remaining: {100 - getTotalWeight()}%</p>
+                )}
+              </div>
+            )}
             {criteriaArray.map((criterion) => (
               <Card key={criterion.id}>
                 <CardHeader>
@@ -1073,7 +1192,21 @@ export default function EffectivenessCriteriaV2Page() {
                       <CardTitle className="text-lg">{criterion.name}</CardTitle>
                       <p className="text-sm text-muted-foreground italic">{criterion.question}</p>
                     </div>
-                    <Badge className="text-lg font-bold">{criterion.config.weight}%</Badge>
+                    {isEditingWeights ? (
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={editedWeights[criterion.id] || 0}
+                          onChange={(e) => handleWeightChange(criterion.id, parseInt(e.target.value) || 0)}
+                          className="w-20 px-3 py-2 border rounded-md text-center font-bold text-lg"
+                        />
+                        <span className="text-lg font-bold">%</span>
+                      </div>
+                    ) : (
+                      <Badge className="text-lg font-bold">{criterion.config.weight}%</Badge>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">

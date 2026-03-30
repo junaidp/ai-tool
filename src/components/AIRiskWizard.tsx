@@ -14,7 +14,7 @@ import type { BusinessContext, AIRiskCandidate, ThreatCategory, CategoryAnswers 
 import {
   ArrowLeft, ArrowRight, Check, X, Pencil, Sparkles, Loader2,
   Building2, Target, DollarSign, TrendingDown, AlertTriangle,
-  ChevronDown, ChevronUp, FileText, Info
+  ChevronDown, ChevronUp, FileText, Info, Trash2
 } from 'lucide-react';
 
 // ==================== CONSTANTS ====================
@@ -578,6 +578,15 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
     }));
   };
 
+  const handleDeleteRisk = (riskId: string, category: ThreatCategory) => {
+    if (confirm('Are you sure you want to delete this risk? This action cannot be undone.')) {
+      setAllRisks(prev => ({
+        ...prev,
+        [category]: prev[category].filter(r => r.id !== riskId),
+      }));
+    }
+  };
+
   const handleNextCategory = () => {
     if (currentCategoryIndex < THREAT_CATEGORIES.length - 1) {
       setCurrentCategoryIndex(prev => prev + 1);
@@ -1130,9 +1139,14 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
                         </div>
                       )}
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => handleStartEdit(risk)} title="Edit definition">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => handleStartEdit(risk)} title="Edit definition">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteRisk(risk.id, cat.key)} title="Delete risk" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

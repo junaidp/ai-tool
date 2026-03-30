@@ -5,6 +5,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { apiService } from '@/services/api';
 import { Pencil, Save, Download, FileDown, RefreshCw } from 'lucide-react';
 import { comprehensiveFrameworkSections } from '@/data/frameworkContent';
+import type { EffectivenessCriteriaConfig } from '@/types/effectiveness';
+
+const API_BASE_RAW = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3001';
+const API_BASE = API_BASE_RAW.replace(/\/$/, '');
+const API_ROOT = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
+
+async function fetchJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
+  const response = await fetch(input, init);
+  if (!response.ok && response.status !== 304) {
+    const errorText = await response.text().catch(() => '');
+    throw new Error(`Request failed (${response.status}): ${errorText || response.statusText}`);
+  }
+  if (response.status === 304) {
+    return null as T;
+  }
+  return response.json() as Promise<T>;
+}
 
 interface FrameworkSection {
   id: string;
@@ -20,6 +37,29 @@ export default function FrameworkBuilder() {
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [isLoadingFramework, setIsLoadingFramework] = useState(false);
+  const [effectivenessCriteria, setEffectivenessCriteria] = useState<EffectivenessCriteriaConfig | null>(null);
+
+  useEffect(() => {
+    loadEffectivenessCriteria();
+  }, []);
+
+  const loadEffectivenessCriteria = async () => {
+    try {
+      const data = await fetchJson<EffectivenessCriteriaConfig | null>(
+        `${API_ROOT}/effectiveness-criteria-v2/config`
+      );
+      if (data) {
+        const parsedConfig: EffectivenessCriteriaConfig = {
+          ...data,
+          companyProfile: typeof data.companyProfile === 'string' ? JSON.parse(data.companyProfile) : data.companyProfile,
+          criteriaConfig: typeof data.criteriaConfig === 'string' ? JSON.parse(data.criteriaConfig) : data.criteriaConfig,
+        };
+        setEffectivenessCriteria(parsedConfig);
+      }
+    } catch (error) {
+      console.error('Error loading effectiveness criteria:', error);
+    }
+  };
 
   const handleEdit = (sectionId: string) => {
     const section = sections.find(s => s.id === sectionId);
@@ -149,10 +189,22 @@ ${section.content.split('\n').map(line => {
           <div className="hero-title">Internal Control<br /><span>Effectiveness Framework</span></div>
           <div className="hero-sub">A Guidance Document for Implementation</div>
           <div>
-            <div className="meta-pill"><strong>Company:</strong> FTSE 250 Manufacturing</div>
-            <div className="meta-pill"><strong>Maturity:</strong> Developing</div>
-            <div className="meta-pill"><strong>Regulation:</strong> Moderately Regulated</div>
-            <div className="meta-pill"><strong>Version:</strong> 1.0 · 2025</div>
+            {effectivenessCriteria ? (
+              <>
+                <div className="meta-pill"><strong>Stage:</strong> {effectivenessCriteria.companyProfile.stage}</div>
+                <div className="meta-pill"><strong>Ownership:</strong> {effectivenessCriteria.companyProfile.ownership}</div>
+                <div className="meta-pill"><strong>Maturity:</strong> Level {effectivenessCriteria.companyProfile.maturity}</div>
+                <div className="meta-pill"><strong>Regulation:</strong> {effectivenessCriteria.companyProfile.regulatory}</div>
+                <div className="meta-pill"><strong>Version:</strong> {effectivenessCriteria.version} · {new Date(effectivenessCriteria.createdAt).getFullYear()}</div>
+              </>
+            ) : (
+              <>
+                <div className="meta-pill"><strong>Company:</strong> FTSE 250 Manufacturing</div>
+                <div className="meta-pill"><strong>Maturity:</strong> Developing</div>
+                <div className="meta-pill"><strong>Regulation:</strong> Moderately Regulated</div>
+                <div className="meta-pill"><strong>Version:</strong> 1.0 · 2025</div>
+              </>
+            )}
           </div>
         </div>
 
