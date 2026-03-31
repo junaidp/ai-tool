@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { apiService } from '@/services/api';
 import type { Risk, Control } from '@/types';
 import type { Risk as ApiRisk, Control as ApiControl } from '@/types/api.types';
-import { AlertTriangle, Shield, Search, Sparkles, Plus, Link2, Clock } from 'lucide-react';
+import { AlertTriangle, Shield, Search, Sparkles, Plus, Link2, Clock, RefreshCw } from 'lucide-react';
 
 const safeJsonParse = (value: string | string[], fallback: string[] = []): string[] => {
   if (Array.isArray(value)) return value;
@@ -95,94 +95,75 @@ export default function RiskControlLibrary() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [risksData, controlsData] = await Promise.all([
+      // Load all data in parallel for better performance
+      const [risksData, controlsData, principalRisks, allSection2ControlsData] = await Promise.all([
         apiService.getRisks(), 
-        apiService.getControls()
+        apiService.getControls(),
+        apiService.getPrincipalRisks(),
+        apiService.getAllSection2Controls()
       ]);
-    setRisks(risksData.map(transformApiRisk));
-    setControls(controlsData.map(transformApiControl));
-    
-    // Load Section2Controls from Material Controls workflow
-    try {
-      const principalRisks = await apiService.getPrincipalRisks();
-      const allSection2Controls = [];
       
-      // Load controls for principal risks
-      for (const risk of principalRisks) {
-        try {
-          const riskControls = await apiService.getSection2Controls(risk.id);
-          allSection2Controls.push(...riskControls.map((c: any) => ({ ...c, riskTitle: risk.riskTitle, riskId: risk.id })));
-        } catch (e) {
-          // Risk might not have controls yet
-        }
-      }
+      setRisks(risksData.map(transformApiRisk));
+      setControls(controlsData.map(transformApiControl));
       
-      // Also load controls for Financial Reporting, Fraud, and Cyber risks from localStorage
-      // These risks are converted to PrincipalRisk format in MaterialControlsWorkflow
-      // So we need to check for their controls too
+      // Load risks from localStorage for title mapping
       const savedFinancialRisks = localStorage.getItem('financialReportingRisks');
       const savedFraudRisks = localStorage.getItem('fraudRisks');
       const savedCyberRisks = localStorage.getItem('cyberSecurityRisks');
       
-      const additionalRiskIds = [];
+      // Create a map of riskId to riskTitle for fast lookup
+      const riskTitleMap = new Map<string, string>();
       
+      // Add principal risks to map
+      principalRisks.forEach(risk => {
+        riskTitleMap.set(risk.id, risk.riskTitle);
+      });
+      
+      // Add financial reporting risks to map
       if (savedFinancialRisks) {
         try {
           const financialRisks = JSON.parse(savedFinancialRisks);
-          additionalRiskIds.push(...financialRisks.map((r: any) => r.id));
+          financialRisks.forEach((r: any) => {
+            riskTitleMap.set(r.id, r.riskTitle);
+          });
         } catch (e) {
           console.error('Failed to parse financial risks:', e);
         }
       }
       
+      // Add fraud risks to map
       if (savedFraudRisks) {
         try {
           const fraudRisks = JSON.parse(savedFraudRisks);
-          additionalRiskIds.push(...fraudRisks.map((r: any) => r.id));
+          fraudRisks.forEach((r: any) => {
+            riskTitleMap.set(r.id, r.riskTitle);
+          });
         } catch (e) {
           console.error('Failed to parse fraud risks:', e);
         }
       }
       
+      // Add cyber risks to map
       if (savedCyberRisks) {
         try {
           const cyberRisks = JSON.parse(savedCyberRisks);
-          additionalRiskIds.push(...cyberRisks.map((r: any) => r.id));
+          cyberRisks.forEach((r: any) => {
+            riskTitleMap.set(r.id, r.riskTitle);
+          });
         } catch (e) {
           console.error('Failed to parse cyber risks:', e);
         }
       }
       
-      // Load controls for these additional risks
-      for (const riskId of additionalRiskIds) {
-        try {
-          const riskControls = await apiService.getSection2Controls(riskId);
-          if (riskControls.length > 0) {
-            // Find the risk title from localStorage
-            let riskTitle = 'Unknown Risk';
-            if (savedFinancialRisks) {
-              const fr = JSON.parse(savedFinancialRisks).find((r: any) => r.id === riskId);
-              if (fr) riskTitle = fr.riskTitle;
-            }
-            if (savedFraudRisks && riskTitle === 'Unknown Risk') {
-              const fr = JSON.parse(savedFraudRisks).find((r: any) => r.id === riskId);
-              if (fr) riskTitle = fr.riskTitle;
-            }
-            if (savedCyberRisks && riskTitle === 'Unknown Risk') {
-              const cr = JSON.parse(savedCyberRisks).find((r: any) => r.id === riskId);
-              if (cr) riskTitle = cr.riskTitle;
-            }
-            allSection2Controls.push(...riskControls.map((c: any) => ({ ...c, riskTitle, riskId })));
-          }
-        } catch (e) {
-          // Risk might not have controls yet
-        }
-      }
+      // Map controls to include risk titles
+      const controlsWithTitles = allSection2ControlsData.map((c: any) => ({
+        ...c,
+        riskTitle: riskTitleMap.get(c.riskId) || 'Unknown Risk',
+      }));
       
-      setSection2Controls(allSection2Controls);
+      setSection2Controls(controlsWithTitles);
     } catch (error) {
-      console.error('Failed to load section2 controls:', error);
-    }
+      console.error('Failed to load data:', error);
     } finally {
       setIsLoading(false);
     }
@@ -191,7 +172,7 @@ export default function RiskControlLibrary() {
   useEffect(() => {
     loadData();
     
-    // Refresh data when tab becomes visible
+    // Refresh data when tab becomes visible (user returns to the page)
     const handleVisibilityChange = () => {
       if (!document.hidden) {
         loadData();
@@ -200,16 +181,8 @@ export default function RiskControlLibrary() {
     
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
-    // Also refresh every 30 seconds if the page is visible
-    const intervalId = setInterval(() => {
-      if (!document.hidden) {
-        loadData();
-      }
-    }, 30000);
-    
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearInterval(intervalId);
     };
   }, []);
 
@@ -405,6 +378,15 @@ export default function RiskControlLibrary() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => loadData()} 
+            disabled={isLoading}
+            title="Refresh controls from Material Controls Workflow"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            {isLoading ? 'Loading...' : 'Refresh'}
+          </Button>
           <Dialog open={isGenerateOpen} onOpenChange={setIsGenerateOpen}>
             <DialogTrigger asChild>
               <Button>
