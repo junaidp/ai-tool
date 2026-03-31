@@ -654,6 +654,14 @@ export default function MaterialControlsWorkflow() {
       // Save all controls to the Risk-Control Library
       const allControls = [...gapAnalysis.existingControls, ...implementationPlan.phases.flatMap(p => p.controls)];
       
+      console.log('=== Material Controls Workflow - Completing Risk ===');
+      console.log('Risk ID:', selectedRisk.id);
+      console.log('Risk Title:', selectedRisk.riskTitle);
+      console.log('Total controls to save:', allControls.length);
+      console.log('Existing controls:', gapAnalysis.existingControls.length);
+      console.log('Implementation controls:', implementationPlan.phases.flatMap(p => p.controls).length);
+      console.log('Control titles:', allControls.map(c => c.title));
+      
       // Get existing controls to check for duplicates
       const existingControls = await apiService.getControls();
       const existingControlNames = new Set(existingControls.map((c: any) => c.name.toLowerCase().trim()));
@@ -666,6 +674,12 @@ export default function MaterialControlsWorkflow() {
         // Risk might not have controls yet
       }
       const existingSection2Titles = new Set(existingSection2Controls.map((c: any) => c.title.toLowerCase().trim()));
+      
+      console.log('Existing Section2 controls for this risk:', existingSection2Controls.length);
+      console.log('Existing Section2 titles:', Array.from(existingSection2Titles));
+      
+      let savedCount = 0;
+      let skippedCount = 0;
       
       for (const control of allControls) {
         const controlNameLower = control.title.toLowerCase().trim();
@@ -708,10 +722,18 @@ export default function MaterialControlsWorkflow() {
           if (control.implementationEffort) section2Data.implementationEffort = control.implementationEffort;
           if (control.implementationTimeline) section2Data.implementationTimeline = control.implementationTimeline;
 
+          console.log('Saving Section2Control:', control.title);
           await apiService.saveSection2Control(section2Data);
           existingSection2Titles.add(controlNameLower); // Add to set to prevent duplicates in this batch
+          savedCount++;
+        } else {
+          console.log('Skipping duplicate Section2Control:', control.title);
+          skippedCount++;
         }
       }
+      
+      console.log('Controls saved:', savedCount);
+      console.log('Controls skipped (duplicates):', skippedCount);
 
       // Save completion status to database
       const completionData = {

@@ -161,6 +161,13 @@ export default function RiskControlLibrary() {
         riskTitle: riskTitleMap.get(c.riskId) || 'Unknown Risk',
       }));
       
+      console.log('=== Risk Control Library Debug ===');
+      console.log('Total Section2Controls loaded:', allSection2ControlsData.length);
+      console.log('Risk title map size:', riskTitleMap.size);
+      console.log('Controls with titles:', controlsWithTitles.length);
+      console.log('Sample controls:', controlsWithTitles.slice(0, 3));
+      console.log('Unique risk IDs:', [...new Set(controlsWithTitles.map((c: any) => c.riskId))]);
+      
       setSection2Controls(controlsWithTitles);
     } catch (error) {
       console.error('Failed to load data:', error);
