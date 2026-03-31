@@ -250,6 +250,7 @@ export default function MaterialControlsWorkflow() {
   const loadCompletedRiskControls = async (riskId: string) => {
     try {
       const controls = await apiService.getSection2Controls(riskId);
+      console.log(`Loaded ${controls.length} controls for risk ${riskId}`);
       return controls;
     } catch (error) {
       console.error('Failed to load completed risk controls:', error);
@@ -684,23 +685,30 @@ export default function MaterialControlsWorkflow() {
       for (const control of allControls) {
         const controlNameLower = control.title.toLowerCase().trim();
         
-        // Only create control in Control table if it doesn't already exist
-        if (!existingControlNames.has(controlNameLower)) {
-          await apiService.createControl({
-            name: control.title,
-            description: control.description || '',
-            type: control.type === 'preventive' ? 'preventive' : control.type === 'detective' ? 'detective' : 'corrective',
-            automation: 'manual',
-            frequency: control.frequency || 'monthly',
-            owner: control.owner || 'To be assigned',
-            linkedRisks: [selectedRisk.riskTitle],
-            effectiveness: 'effective',
-            evidenceSource: control.evidence || 'To be documented',
-          });
-          existingControlNames.add(controlNameLower); // Add to set to prevent duplicates in this batch
+        // Try to create control in Control table (global library)
+        // This may fail if duplicate exists globally, but that's okay
+        try {
+          if (!existingControlNames.has(controlNameLower)) {
+            await apiService.createControl({
+              name: control.title,
+              description: control.description || '',
+              type: control.type === 'preventive' ? 'preventive' : control.type === 'detective' ? 'detective' : 'corrective',
+              automation: 'manual',
+              frequency: control.frequency || 'monthly',
+              owner: control.owner || 'To be assigned',
+              linkedRisks: [selectedRisk.riskTitle],
+              effectiveness: 'effective',
+              evidenceSource: control.evidence || 'To be documented',
+            });
+            existingControlNames.add(controlNameLower);
+          }
+        } catch (error) {
+          // Control might already exist globally - that's fine, continue
+          console.log('Control already exists in global library:', control.title);
         }
 
-        // Only save to Section2Control table if it doesn't already exist for this risk
+        // ALWAYS save to Section2Control table for this specific risk
+        // Only skip if it already exists for THIS specific risk
         if (!existingSection2Titles.has(controlNameLower)) {
           const section2Data: any = {
             riskId: selectedRisk.id,
@@ -723,11 +731,15 @@ export default function MaterialControlsWorkflow() {
           if (control.implementationTimeline) section2Data.implementationTimeline = control.implementationTimeline;
 
           console.log('Saving Section2Control:', control.title);
-          await apiService.saveSection2Control(section2Data);
-          existingSection2Titles.add(controlNameLower); // Add to set to prevent duplicates in this batch
-          savedCount++;
+          try {
+            await apiService.saveSection2Control(section2Data);
+            existingSection2Titles.add(controlNameLower);
+            savedCount++;
+          } catch (error) {
+            console.error('Failed to save Section2Control:', control.title, error);
+          }
         } else {
-          console.log('Skipping duplicate Section2Control:', control.title);
+          console.log('Skipping duplicate Section2Control for this risk:', control.title);
           skippedCount++;
         }
       }
@@ -845,7 +857,7 @@ export default function MaterialControlsWorkflow() {
                     key={cr.riskId} 
                     className="flex items-center justify-between text-sm border rounded px-3 py-2 hover:bg-accent cursor-pointer transition-colors"
                     onClick={() => {
-                      const risk = principalRisks.find(r => r.id === cr.riskId);
+                      const risk = allRisks.find(r => r.id === cr.riskId);
                       if (risk) handleSelectRisk(risk);
                     }}
                   >
