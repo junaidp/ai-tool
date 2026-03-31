@@ -190,6 +190,27 @@ export default function RiskControlLibrary() {
 
   useEffect(() => {
     loadData();
+    
+    // Refresh data when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadData();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Also refresh every 30 seconds if the page is visible
+    const intervalId = setInterval(() => {
+      if (!document.hidden) {
+        loadData();
+      }
+    }, 30000);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(intervalId);
+    };
   }, []);
 
   const handleAddCustomEntry = () => {

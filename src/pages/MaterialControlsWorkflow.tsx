@@ -475,12 +475,25 @@ export default function MaterialControlsWorkflow() {
         .map((dc, idx) => {
           // Check AI-generated controls first, then fall back to templates
           const aiControls = aiGeneratedControls[selectedCurrentLevel!]?.specificControls || [];
-          const template = aiControls.find((t: any) => t.id === dc.templateId || dc.templateId.startsWith('ai-')) 
-            || currentLevelPackage?.controlTemplates.find(t => t.id === dc.templateId);
+          // Find the exact template by matching templateId
+          let template = null;
+          if (dc.templateId.startsWith('ai-')) {
+            // For AI-generated controls, find by index or use the first available
+            template = aiControls[idx] || aiControls.find((t: any) => t.id === dc.templateId);
+          } else {
+            // For regular templates, find by exact ID match
+            template = currentLevelPackage?.controlTemplates.find(t => t.id === dc.templateId);
+          }
+          
+          // Use controlName if provided, otherwise use template title
+          const controlTitle = dc.controlName && dc.controlName.trim() !== '' 
+            ? dc.controlName 
+            : (template?.title || `Control ${idx + 1}`);
+          
           return {
             id: `CTRL-${String(idx + 1).padStart(3, '0')}`,
             riskId: selectedRisk!.id,
-            title: dc.controlName || template?.title || '',
+            title: controlTitle,
             description: template?.description || '',
             type: template?.type || 'detective',
             objectives: (template?.objectives || ['operations']) as ControlObjective[],
