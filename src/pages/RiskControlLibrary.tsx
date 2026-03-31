@@ -571,6 +571,13 @@ export default function RiskControlLibrary() {
                   const implementationControls = riskControls.filter(c => c.status === 'planned' || (c.implementationPhase && c.status !== 'existing'));
                   const riskTitle = riskControls[0]?.riskTitle || 'Unknown Risk';
                   
+                  // Debug logging for each risk
+                  console.log(`\n=== Risk: ${riskTitle} ===`);
+                  console.log('Total controls for this risk:', riskControls.length);
+                  console.log('Control statuses:', riskControls.map(c => ({ title: c.title, status: c.status, implementationPhase: c.implementationPhase })));
+                  console.log('Operational controls:', operationalControls.length);
+                  console.log('Implementation controls:', implementationControls.length);
+                  
                   return (
                     <div key={riskId} className="border-2 rounded-lg p-5 bg-gray-50">
                       <div className="flex items-start gap-3 mb-4">
