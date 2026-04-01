@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { apiService } from '@/services/api';
-import { Pencil, Save, Download, FileDown, RefreshCw } from 'lucide-react';
+import { Pencil, Save, Download, FileDown, RefreshCw, Users } from 'lucide-react';
 import { comprehensiveFrameworkSections } from '@/data/frameworkContent';
 import type { EffectivenessCriteriaConfig } from '@/types/effectiveness';
+import { HumanInLoopDialog, type ConsultationRequest } from '@/components/HumanInLoopDialog';
 
 const API_BASE_RAW = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3001';
 const API_BASE = API_BASE_RAW.replace(/\/$/, '');
@@ -38,6 +39,8 @@ export default function FrameworkBuilder() {
   const [editContent, setEditContent] = useState('');
   const [isLoadingFramework, setIsLoadingFramework] = useState(false);
   const [effectivenessCriteria, setEffectivenessCriteria] = useState<EffectivenessCriteriaConfig | null>(null);
+  const [isHumanInLoopOpen, setIsHumanInLoopOpen] = useState(false);
+  const [humanInLoopContext, setHumanInLoopContext] = useState('');
 
   useEffect(() => {
     loadEffectivenessCriteria();
@@ -87,6 +90,16 @@ export default function FrameworkBuilder() {
     link.download = `framework-${new Date().toISOString().split('T')[0]}.doc`;
     link.click();
     alert('✅ Framework exported to Word!');
+  };
+
+  const handleConsultationRequest = async (data: ConsultationRequest) => {
+    try {
+      console.log('Consultation Request Submitted:', data);
+      alert(`✅ Consultation request submitted successfully! Our expert will contact you at ${data.email} within 24 hours.`);
+    } catch (error) {
+      console.error('Failed to submit consultation request:', error);
+      throw error;
+    }
   };
 
   const handleExportPDF = () => {
@@ -175,6 +188,15 @@ ${section.content.split('\n').map(line => {
       <div className="framework-container">
         {/* Export Buttons */}
         <div className="btn-group">
+          <button 
+            className="btn btn-outline" 
+            onClick={() => {
+              setHumanInLoopContext('Need assistance with Framework Builder.');
+              setIsHumanInLoopOpen(true);
+            }}
+          >
+            <Users size={16} /> Request Expert Help
+          </button>
           <button className="btn btn-outline" onClick={handleExportWord}>
             <FileDown size={16} /> Export Word
           </button>
@@ -260,6 +282,14 @@ ${section.content.split('\n').map(line => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <HumanInLoopDialog
+        isOpen={isHumanInLoopOpen}
+        onClose={() => setIsHumanInLoopOpen(false)}
+        moduleName="Framework Builder"
+        moduleContext={humanInLoopContext}
+        onSubmit={handleConsultationRequest}
+      />
     </div>
   );
 }

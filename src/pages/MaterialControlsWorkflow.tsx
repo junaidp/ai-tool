@@ -1971,6 +1971,46 @@ export default function MaterialControlsWorkflow() {
               <p className="text-sm">{template.description}</p>
             </div>
 
+            <div className="border rounded-lg p-3 bg-blue-50">
+              <h5 className="text-sm font-medium mb-2 text-blue-900">How to Implement:</h5>
+              <ul className="space-y-1 text-sm text-blue-800">
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">•</span>
+                  <span>Assign {sc.customizations?.owner || template.defaultOwner} as the control owner</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">•</span>
+                  <span>Perform this control {sc.customizations?.frequency || template.defaultFrequency}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">•</span>
+                  <span>Document findings and maintain {template.defaultEvidence}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">•</span>
+                  <span>Review results with relevant stakeholders and escalate exceptions</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="border rounded-lg p-3 bg-green-50">
+              <h5 className="text-sm font-medium mb-2 text-green-900">Required Evidence:</h5>
+              <ul className="space-y-1 text-sm text-green-800">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-0.5">•</span>
+                  <span><strong>Primary:</strong> {template.defaultEvidence}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-0.5">•</span>
+                  <span><strong>Supporting:</strong> Email confirmations, meeting minutes, or system logs</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-0.5">•</span>
+                  <span><strong>Retention:</strong> Maintain evidence for audit trail and compliance review</span>
+                </li>
+              </ul>
+            </div>
+
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
                 <span className="text-muted-foreground">Owner:</span>
@@ -2019,6 +2059,23 @@ export default function MaterialControlsWorkflow() {
             {customizingControl === sc.templateId && (
               <div className="border rounded-lg p-4 bg-gray-50 space-y-3">
                 <h5 className="font-medium">Customize Control</h5>
+                <div>
+                  <Label>Control Description</Label>
+                  <Textarea
+                    className="mt-1"
+                    placeholder="Edit the control description to match your organization's terminology..."
+                    value={sc.customizations?.description || template.description}
+                    onChange={e => {
+                      const updated = [...suggestedControls];
+                      updated[currentSuggestionIdx] = {
+                        ...sc,
+                        customizations: { ...sc.customizations, description: e.target.value },
+                      };
+                      setSuggestedControls(updated);
+                    }}
+                    rows={3}
+                  />
+                </div>
                 <div>
                   <Label>Owner</Label>
                   <Select

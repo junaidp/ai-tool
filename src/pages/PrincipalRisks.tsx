@@ -9,12 +9,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { apiService } from '@/services/api';
 import type { PrincipalRisk, AIRiskCandidate, FinancialReportingRisk, FraudRisk, CyberSecurityRisk } from '@/types';
-import { Plus, AlertTriangle, Pencil, Trash2, TrendingDown, DollarSign, Target, Building2, Sparkles, FileText, ShieldAlert, Lock } from 'lucide-react';
+import { Plus, AlertTriangle, Pencil, Trash2, TrendingDown, DollarSign, Target, Building2, Sparkles, FileText, ShieldAlert, Lock, Users } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import AIRiskWizard from '@/components/AIRiskWizard';
 import FinancialReportingRiskModule from '@/components/FinancialReportingRiskModule';
 import FraudRiskModule from '@/components/FraudRiskModule';
 import CyberSecurityRiskModule from '@/components/CyberSecurityRiskModule';
+import { HumanInLoopDialog, type ConsultationRequest } from '@/components/HumanInLoopDialog';
 
 export default function RiskIdentificationPage() {
   const [activeTab, setActiveTab] = useState('principal');
@@ -27,6 +28,8 @@ export default function RiskIdentificationPage() {
   const [showAIWizard, setShowAIWizard] = useState(false);
   const [isSavingAIRisks, setIsSavingAIRisks] = useState(false);
   const [showReconfigureDialog, setShowReconfigureDialog] = useState(false);
+  const [isHumanInLoopOpen, setIsHumanInLoopOpen] = useState(false);
+  const [humanInLoopContext, setHumanInLoopContext] = useState('');
   
   const [formData, setFormData] = useState({
     riskTitle: '',
@@ -39,6 +42,16 @@ export default function RiskIdentificationPage() {
   const loadRisks = async () => {
     const data = await apiService.getPrincipalRisks();
     setRisks(data);
+  };
+
+  const handleConsultationRequest = async (data: ConsultationRequest) => {
+    try {
+      console.log('Consultation Request Submitted:', data);
+      alert(`✅ Consultation request submitted successfully! Our expert will contact you at ${data.email} within 24 hours.`);
+    } catch (error) {
+      console.error('Failed to submit consultation request:', error);
+      throw error;
+    }
   };
 
   useEffect(() => {
@@ -167,6 +180,16 @@ export default function RiskIdentificationPage() {
             Identify and assess principal, financial reporting, fraud, and cyber security risks
           </p>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setHumanInLoopContext(`Need assistance with Risk Identification${activeTab ? ` - ${activeTab} risks` : ''}.`);
+            setIsHumanInLoopOpen(true);
+          }}
+        >
+          <Users className="h-4 w-4 mr-2" />
+          Request Expert Help
+        </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -508,6 +531,14 @@ export default function RiskIdentificationPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <HumanInLoopDialog
+        isOpen={isHumanInLoopOpen}
+        onClose={() => setIsHumanInLoopOpen(false)}
+        moduleName="Risk Identification"
+        moduleContext={humanInLoopContext}
+        onSubmit={handleConsultationRequest}
+      />
     </div>
   );
 }
