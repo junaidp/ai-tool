@@ -1968,47 +1968,28 @@ export default function MaterialControlsWorkflow() {
 
             <div>
               <h5 className="text-sm font-medium mb-1">Description:</h5>
-              <p className="text-sm">{template.description}</p>
-            </div>
+              <div className="text-sm space-y-3">
+                <p>{template.description}</p>
+                
+                <div>
+                  <p className="font-medium text-blue-900 mb-1">How to Implement:</p>
+                  <ul className="list-disc list-inside space-y-0.5 text-muted-foreground ml-2">
+                    <li>Assign {sc.customizations?.owner || template.defaultOwner} as the control owner</li>
+                    <li>Perform this control {sc.customizations?.frequency || template.defaultFrequency}</li>
+                    <li>Document findings and maintain {template.defaultEvidence}</li>
+                    <li>Review results with relevant stakeholders and escalate exceptions</li>
+                  </ul>
+                </div>
 
-            <div className="border rounded-lg p-3 bg-blue-50">
-              <h5 className="text-sm font-medium mb-2 text-blue-900">How to Implement:</h5>
-              <ul className="space-y-1 text-sm text-blue-800">
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-600 mt-0.5">•</span>
-                  <span>Assign {sc.customizations?.owner || template.defaultOwner} as the control owner</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-600 mt-0.5">•</span>
-                  <span>Perform this control {sc.customizations?.frequency || template.defaultFrequency}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-600 mt-0.5">•</span>
-                  <span>Document findings and maintain {template.defaultEvidence}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-600 mt-0.5">•</span>
-                  <span>Review results with relevant stakeholders and escalate exceptions</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="border rounded-lg p-3 bg-green-50">
-              <h5 className="text-sm font-medium mb-2 text-green-900">Required Evidence:</h5>
-              <ul className="space-y-1 text-sm text-green-800">
-                <li className="flex items-start gap-2">
-                  <span className="text-green-600 mt-0.5">•</span>
-                  <span><strong>Primary:</strong> {template.defaultEvidence}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-600 mt-0.5">•</span>
-                  <span><strong>Supporting:</strong> Email confirmations, meeting minutes, or system logs</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-600 mt-0.5">•</span>
-                  <span><strong>Retention:</strong> Maintain evidence for audit trail and compliance review</span>
-                </li>
-              </ul>
+                <div>
+                  <p className="font-medium text-green-900 mb-1">Required Evidence:</p>
+                  <ul className="list-disc list-inside space-y-0.5 text-muted-foreground ml-2">
+                    <li><strong>Primary:</strong> {template.defaultEvidence}</li>
+                    <li><strong>Supporting:</strong> Email confirmations, meeting minutes, or system logs</li>
+                    <li><strong>Retention:</strong> Maintain evidence for audit trail and compliance review</li>
+                  </ul>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4 text-sm">
