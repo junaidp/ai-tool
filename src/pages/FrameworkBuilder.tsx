@@ -38,9 +38,11 @@ export default function FrameworkBuilder() {
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [isLoadingFramework, setIsLoadingFramework] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [effectivenessCriteria, setEffectivenessCriteria] = useState<EffectivenessCriteriaConfig | null>(null);
   const [isHumanInLoopOpen, setIsHumanInLoopOpen] = useState(false);
   const [humanInLoopContext, setHumanInLoopContext] = useState('');
+  const [isAIGenerated, setIsAIGenerated] = useState(false);
 
   useEffect(() => {
     loadEffectivenessCriteria();
@@ -90,6 +92,87 @@ export default function FrameworkBuilder() {
     link.download = `framework-${new Date().toISOString().split('T')[0]}.doc`;
     link.click();
     alert('✅ Framework exported to Word!');
+  };
+
+  const handleGenerateFramework = async () => {
+    if (!effectivenessCriteria) {
+      alert('⚠️ Please complete the Effectiveness Criteria configuration first.');
+      return;
+    }
+
+    if (!confirm('Generate a customized framework based on your effectiveness criteria and company profile? This will replace the current content.')) {
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const response = await fetchJson<any>(`${API_ROOT}/effectiveness-criteria-v2/generate-custom-framework`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ configId: effectivenessCriteria.id })
+      });
+
+      // Convert AI-generated framework to sections format
+      const aiSections: FrameworkSection[] = [
+        {
+          id: 'foreword',
+          title: 'Foreword',
+          content: response.executiveSummary,
+          editable: true
+        },
+        {
+          id: 'risk-identification',
+          title: response.elements.riskIdentification.title,
+          content: response.elements.riskIdentification.content,
+          editable: true
+        },
+        {
+          id: 'control-design',
+          title: response.elements.controlDesign.title,
+          content: response.elements.controlDesign.content,
+          editable: true
+        },
+        {
+          id: 'effectiveness-assessment',
+          title: response.elements.effectivenessAssessment.title,
+          content: response.elements.effectivenessAssessment.content,
+          editable: true
+        },
+        {
+          id: 'governance',
+          title: response.elements.governance.title,
+          content: response.elements.governance.content,
+          editable: true
+        },
+        {
+          id: 'continuous-improvement',
+          title: response.elements.continuousImprovement.title,
+          content: response.elements.continuousImprovement.content,
+          editable: true
+        },
+        {
+          id: 'current-state',
+          title: 'Current State Assessment',
+          content: `**Current Risk Profile**\n\n${response.currentRiskProfile}\n\n**Current Control Profile**\n\n${response.currentControlProfile}`,
+          editable: true
+        },
+        {
+          id: 'maturity-journey',
+          title: 'Maturity Journey & Roadmap',
+          content: response.maturityJourney,
+          editable: true
+        }
+      ];
+
+      setSections(aiSections);
+      setIsAIGenerated(true);
+      alert('✅ Framework generated successfully! Review and edit as needed.');
+    } catch (error) {
+      console.error('Failed to generate framework:', error);
+      alert('❌ Failed to generate framework. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleConsultationRequest = async (data: ConsultationRequest) => {
@@ -183,10 +266,13 @@ ${section.content.split('\n').map(line => {
         .btn-primary { background: #0F2240; color: white; }
         .btn-outline { background: white; color: #0F2240; border: 1px solid #0F2240; }
         .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
       `}</style>
 
       <div className="framework-container">
-        {/* Export Buttons */}
+        {/* Action Buttons */}
         <div className="btn-group">
           <button 
             className="btn btn-outline" 
@@ -197,10 +283,19 @@ ${section.content.split('\n').map(line => {
           >
             <Users size={16} /> Request Expert Help
           </button>
+          <button 
+            className="btn btn-primary" 
+            onClick={handleGenerateFramework}
+            disabled={isGenerating || !effectivenessCriteria}
+            style={{ opacity: isGenerating ? 0.6 : 1 }}
+          >
+            <RefreshCw size={16} className={isGenerating ? 'animate-spin' : ''} /> 
+            {isGenerating ? 'Generating...' : isAIGenerated ? 'Regenerate Framework' : 'Generate Framework'}
+          </button>
           <button className="btn btn-outline" onClick={handleExportWord}>
             <FileDown size={16} /> Export Word
           </button>
-          <button className="btn btn-primary" onClick={handleExportPDF}>
+          <button className="btn btn-outline" onClick={handleExportPDF}>
             <Download size={16} /> Export PDF
           </button>
         </div>
@@ -209,7 +304,9 @@ ${section.content.split('\n').map(line => {
         <div className="hero">
           <div className="hero-eyebrow">UK Corporate Governance Code · Provision 29</div>
           <div className="hero-title">Internal Control<br /><span>Effectiveness Framework</span></div>
-          <div className="hero-sub">A Guidance Document for Implementation</div>
+          <div className="hero-sub">
+            {isAIGenerated ? 'AI-Generated Framework Customized for Your Organization' : 'A Guidance Document for Implementation'}
+          </div>
           <div>
             {effectivenessCriteria ? (
               <>
