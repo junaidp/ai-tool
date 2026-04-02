@@ -77,6 +77,24 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
   ];
 
   const handleAreaSelect = (area: FinancialReportingArea) => {
+    // If area is already completed, show a summary instead of re-running the wizard
+    if (completedAreas.has(area)) {
+      const areaRisks = identifiedRisks.filter(r => r.area === area);
+      if (areaRisks.length > 0) {
+        // User is clicking on a completed area - they can review or re-assess
+        if (!confirm(`This area has already been assessed with ${areaRisks.length} risk(s) identified. Do you want to re-assess it?`)) {
+          return;
+        }
+        // Remove existing risks for this area if re-assessing
+        setIdentifiedRisks(prev => prev.filter(r => r.area !== area));
+        setCompletedAreas(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(area);
+          return newSet;
+        });
+      }
+    }
+    
     setCurrentArea(area);
     setCurrentQuestionIndex(0);
     const savedAnswers = areaAnswers[area] || {};
@@ -374,7 +392,7 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
           </Button>
           <Button
             onClick={handleNext}
-            disabled={!answers[currentQuestion.id]}
+            disabled={!answers[currentQuestion.id] || answers[currentQuestion.id] === ''}
           >
             {currentQuestionIndex < visibleQuestions.length - 1 ? 'Next' : 'Complete Area'}
             <ChevronRight className="h-4 w-4 ml-2" />

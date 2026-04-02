@@ -23,13 +23,6 @@ export const financialReportingFlows: FinancialReportingQuestionFlow[] = [
         riskIndicator: 'high',
       },
       {
-        id: 'rev_003',
-        text: 'What is the annual revenue volume?',
-        type: 'multiple_choice',
-        options: ['< $1M', '$1M - $10M', '$10M - $50M', '> $50M'],
-        riskIndicator: 'medium',
-      },
-      {
         id: 'rev_004',
         text: 'Do you have significant customer concentrations (>10% revenue from single customer)?',
         type: 'yes_no',
@@ -77,10 +70,9 @@ export const financialReportingFlows: FinancialReportingQuestionFlow[] = [
       {
         conditions: [
           { questionId: 'rev_008', answer: ['Multiple standalone systems', 'Manual spreadsheets'] },
-          { questionId: 'rev_003', answer: ['$10M - $50M', '> $50M'] },
         ],
         riskTitle: 'Revenue System Integration Risk',
-        riskDescription: 'Risk of errors due to high revenue volume processed through non-integrated systems',
+        riskDescription: 'Risk of errors due to non-integrated systems for revenue processing',
         materialityLevel: 'high',
         suggestedControls: ['System integration', 'Automated revenue recognition', 'Data validation controls', 'Reconciliation procedures'],
       },
