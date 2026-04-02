@@ -103,8 +103,6 @@ principalRisksRouter.delete('/:id', async (req, res) => {
       prisma.riskControlLink.deleteMany({ where: { riskId: id } }),
       // Delete related Section2Controls (Material Controls Workflow data)
       prisma.section2Control.deleteMany({ where: { riskId: id } }),
-      // Delete related RiskWorkflowProgress
-      prisma.riskWorkflowProgress.deleteMany({ where: { riskId: id } }),
       // Finally delete the principal risk itself
       prisma.principalRisk.delete({ where: { id } })
     ]);
