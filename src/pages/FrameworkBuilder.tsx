@@ -106,12 +106,30 @@ export default function FrameworkBuilder() {
 
     setIsGenerating(true);
     try {
+      // Transform the criteria structure to match API expectations
+      const criteriaConfig = typeof effectivenessCriteria.criteriaConfig === 'string' 
+        ? JSON.parse(effectivenessCriteria.criteriaConfig) 
+        : effectivenessCriteria.criteriaConfig;
+
+      const transformedCriteria = {
+        weights: {
+          riskIdentification: criteriaConfig.riskIdentification?.weight || 15,
+          frameworkDesign: criteriaConfig.frameworkDesign?.weight || 15,
+          controlOperating: criteriaConfig.controlOperating?.weight || 20,
+          issueResponsiveness: criteriaConfig.issueResponsiveness?.weight || 20,
+          riskOutcome: criteriaConfig.riskOutcome?.weight || 15,
+          governance: criteriaConfig.governance?.weight || 10,
+          continuousImprovement: criteriaConfig.continuousImprovement?.weight || 5
+        },
+        overallTarget: effectivenessCriteria.overallTarget || 85
+      };
+
       const response = await fetchJson<any>(`${API_ROOT}/effectiveness-criteria-v2/generate-custom-framework`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           companyProfile: effectivenessCriteria.companyProfile,
-          effectivenessCriteria: effectivenessCriteria.criteriaConfig,
+          effectivenessCriteria: transformedCriteria,
           companyName: effectivenessCriteria.companyProfile.companyName || 'Your Company'
         })
       });
