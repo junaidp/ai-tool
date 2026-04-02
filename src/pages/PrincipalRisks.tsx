@@ -92,11 +92,15 @@ export default function RiskIdentificationPage() {
       return;
     }
     try {
-      await apiService.deletePrincipalRisk(id);
+      console.log('Attempting to delete risk with ID:', id);
+      const result = await apiService.deletePrincipalRisk(id);
+      console.log('Delete API response:', result);
       await loadRisks();
+      console.log('Risks reloaded after deletion');
     } catch (error) {
       console.error('Failed to delete risk:', error);
-      alert('Failed to delete principal risk. Please try again.');
+      console.error('Error details:', error instanceof Error ? error.message : String(error));
+      alert(`Failed to delete principal risk: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`);
     }
   };
 

@@ -92,7 +92,23 @@ principalRisksRouter.patch('/:id', async (req, res) => {
 principalRisksRouter.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.principalRisk.delete({ where: { id } });
+    
+    // Delete related records first to avoid foreign key constraint errors
+    await prisma.$transaction([
+      // Delete related risk process links
+      prisma.riskProcessLink.deleteMany({ where: { riskId: id } }),
+      // Delete related gaps
+      prisma.gap.deleteMany({ where: { riskId: id } }),
+      // Delete related risk control links
+      prisma.riskControlLink.deleteMany({ where: { riskId: id } }),
+      // Delete related Section2Controls (Material Controls Workflow data)
+      prisma.section2Control.deleteMany({ where: { riskId: id } }),
+      // Delete related RiskWorkflowProgress
+      prisma.riskWorkflowProgress.deleteMany({ where: { riskId: id } }),
+      // Finally delete the principal risk itself
+      prisma.principalRisk.delete({ where: { id } })
+    ]);
+    
     res.json({ success: true });
   } catch (error) {
     console.error('Failed to delete principal risk:', error);

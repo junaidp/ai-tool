@@ -11,6 +11,7 @@ import { apiService } from '@/services/api';
 import type { DashboardData } from '@/types';
 import { FileText, Download, Eye, Edit, TrendingUp, AlertTriangle, CheckCircle, Shield } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import EffectivenessAssessment from './EffectivenessAssessment';
 
 const COLORS = ['#22c55e', '#f59e0b', '#ef4444'];
 
@@ -233,94 +234,7 @@ export default function BoardReporting() {
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Effectiveness Criteria Status</CardTitle>
-                <CardDescription>Board-approved dimensions - overall assessment</CardDescription>
-              </CardHeader>
-              <CardContent className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={effectivenessData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {effectivenessData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Effectiveness Summary</CardTitle>
-                <CardDescription>Status across all dimensions</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="text-sm font-medium">Design</span>
-                    </div>
-                    <Badge variant="success">Met</Badge>
-                  </div>
-                  <Progress value={100} className="h-2" />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="text-sm font-medium">Implementation</span>
-                    </div>
-                    <Badge variant="success">Met</Badge>
-                  </div>
-                  <Progress value={95} className="h-2" />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="text-sm font-medium">Operation</span>
-                    </div>
-                    <Badge variant="success">Met</Badge>
-                  </div>
-                  <Progress value={92} className="h-2" />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                      <span className="text-sm font-medium">Decision-Use</span>
-                    </div>
-                    <Badge variant="warning">Partially Met</Badge>
-                  </div>
-                  <Progress value={75} className="h-2" />
-                </div>
-
-                <div className="pt-4 border-t">
-                  <p className="text-sm text-muted-foreground">
-                    <strong>Board Conclusion:</strong> The framework is operating effectively with minor
-                    improvements required in decision-use evidence collection.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <EffectivenessAssessment />
 
           <Card>
             <CardHeader>
