@@ -47,13 +47,12 @@ export interface EffectivenessCriteriaConfig {
   // Company Profile
   companyProfile: CompanyProfile;
   
-  // The 7 Criteria (Always Present)
+  // The 6 Criteria (Always Present)
   criteria: {
     riskIdentification: CriterionConfig;
-    frameworkDesign: CriterionConfig;
+    controlDesign: CriterionConfig;
     controlOperating: CriterionConfig;
     issueResponsiveness: CriterionConfig;
-    riskOutcome: CriterionConfig;
     governance: CriterionConfig;
     continuousImprovement: CriterionConfig;
   };
@@ -108,35 +107,32 @@ export interface ContextAnswers {
 export interface WeightingRecommendation {
   weights: {
     riskIdentification: number;
-    frameworkDesign: number;
+    controlDesign: number;
     controlOperating: number;
     issueResponsiveness: number;
-    riskOutcome: number;
     governance: number;
     continuousImprovement: number;
   };
   criteriaConfigs: {
     riskIdentification: CriterionConfig;
-    frameworkDesign: CriterionConfig;
+    controlDesign: CriterionConfig;
     controlOperating: CriterionConfig;
     issueResponsiveness: CriterionConfig;
-    riskOutcome: CriterionConfig;
     governance: CriterionConfig;
     continuousImprovement: CriterionConfig;
   };
   overallTarget: number;
   reasoning: {
     riskIdentification: string;
-    frameworkDesign: string;
+    controlDesign: string;
     controlOperating: string;
     issueResponsiveness: string;
-    riskOutcome: string;
     governance: string;
     continuousImprovement: string;
   };
 }
 
-// The 7 Hardcoded Criteria Metadata
+// The 6 Hardcoded Criteria Metadata
 export interface CriterionMetadata {
   id: string;
   name: string;
@@ -148,78 +144,71 @@ export interface CriterionMetadata {
   defaultSubCriteria: string[];
 }
 
-export const SEVEN_CRITERIA: CriterionMetadata[] = [
+export const SIX_CRITERIA: CriterionMetadata[] = [
   {
     id: 'riskIdentification',
-    name: 'Risk Identification Effectiveness',
+    name: 'C1 - Risk Identification',
     shortName: 'Risk Identification',
-    question: 'Did we identify the RIGHT risks?',
-    description: 'Measures the completeness, accuracy, and forward-looking nature of risk identification',
+    question: 'Are all material risks — including principal, financial reporting, fraud and cyber risks — systematically identified, assessed and kept current?',
+    description: 'Are all material risks — including principal, financial reporting, fraud and cyber risks — systematically identified, assessed and kept current?',
     defaultWeight: 15,
     defaultTarget: 85,
-    defaultSubCriteria: ['Completeness', 'Accuracy', 'Forward-looking', 'Stakeholder input']
+    defaultSubCriteria: ['Completeness (no surprises)', 'Accuracy', 'Forward-looking (emerging risks)', 'Stakeholder input']
   },
   {
-    id: 'frameworkDesign',
-    name: 'Framework Design Effectiveness',
-    shortName: 'Framework Design',
-    question: 'Did we design the RIGHT controls?',
-    description: 'Measures the quality of control design, coverage, and alignment to risks',
-    defaultWeight: 15,
+    id: 'controlDesign',
+    name: 'C2 - Control Design',
+    shortName: 'Control Design',
+    question: 'Is each material control designed to address its risk with sufficient precision, rigour and proportionality?',
+    description: 'Is each material control designed to address its risk with sufficient precision, rigour and proportionality?',
+    defaultWeight: 20,
     defaultTarget: 85,
-    defaultSubCriteria: ['Control type balance', 'Coverage of risk causes', 'Ownership clarity', 'Design quality']
+    defaultSubCriteria: ['Control type balance (preventive focus)', 'Coverage of risk causes', 'Ownership clarity', 'Design quality']
   },
   {
     id: 'controlOperating',
-    name: 'Control Operating Effectiveness',
+    name: 'C3 - Control Operational Effectiveness',
     shortName: 'Control Operating',
-    question: 'Did controls OPERATE as designed?',
-    description: 'Measures the reliability and consistency of control execution',
-    defaultWeight: 20,
+    question: 'Are controls operating as designed, consistently, by competent people, with evidence — supported by continuous monitoring and AI-based testing?',
+    description: 'Are controls operating as designed, consistently, by competent people, with evidence — supported by continuous monitoring and AI-based testing?',
+    defaultWeight: 25,
     defaultTarget: 90,
     defaultSubCriteria: ['Operating rate', 'Evidence quality', 'Timeliness', 'Exception handling']
   },
   {
     id: 'issueResponsiveness',
-    name: 'Issue Responsiveness Effectiveness',
+    name: 'C4 - Issue Responsiveness',
     shortName: 'Issue Responsiveness',
-    question: 'Did we RESPOND to issues appropriately and timely?',
-    description: 'Measures the speed and quality of issue detection and remediation',
+    question: 'When control failures or deficiencies are identified, does the organisation respond with appropriate speed, rigour and escalation?',
+    description: 'When control failures or deficiencies are identified, does the organisation respond with appropriate speed, rigour and escalation?',
     defaultWeight: 20,
     defaultTarget: 90,
     defaultSubCriteria: ['Detection speed', 'Response timeliness', 'Remediation quality', 'Escalation process']
   },
   {
-    id: 'riskOutcome',
-    name: 'Risk Outcome Achievement',
-    shortName: 'Risk Outcome',
-    question: 'Are risks actually being MITIGATED?',
-    description: 'Measures actual risk reduction and achievement of risk objectives',
-    defaultWeight: 15,
-    defaultTarget: 80,
-    defaultSubCriteria: ['Objective achievement', 'Incident prevention', 'Leading indicators', 'Risk trend']
-  },
-  {
     id: 'governance',
-    name: 'Governance & Oversight Effectiveness',
+    name: 'C5 - Governance and Oversight',
     shortName: 'Governance',
-    question: 'Is there effective BOARD OVERSIGHT?',
-    description: 'Measures the quality and effectiveness of board and management oversight',
-    defaultWeight: 10,
+    question: 'Does the Board and Audit Committee exercise effective, evidence-based oversight of the entire internal control system?',
+    description: 'Does the Board and Audit Committee exercise effective, evidence-based oversight of the entire internal control system?',
+    defaultWeight: 15,
     defaultTarget: 85,
     defaultSubCriteria: ['Board engagement', 'Review frequency', 'Challenge quality', 'Decision making']
   },
   {
     id: 'continuousImprovement',
-    name: 'Continuous Improvement Effectiveness',
+    name: 'C6 - Continuous Improvement',
     shortName: 'Continuous Improvement',
-    question: 'Is the framework IMPROVING over time?',
-    description: 'Measures the maturity progression and learning from experience',
+    question: 'Does the organisation systematically learn from experience and strengthen the control system over time?',
+    description: 'Does the organisation systematically learn from experience and strengthen the control system over time?',
     defaultWeight: 5,
     defaultTarget: 75,
     defaultSubCriteria: ['Maturity progression', 'Lessons learned', 'Innovation adoption', 'Efficiency gains']
   }
 ];
+
+// Backward compatibility alias
+export const SEVEN_CRITERIA = SIX_CRITERIA;
 
 // Strategic Priority Options
 export const STRATEGIC_PRIORITIES = [

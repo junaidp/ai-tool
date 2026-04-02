@@ -10,15 +10,14 @@ const openai = new OpenAI({
 
 // AI Weighting Recommendation Engine
 function generateWeightingRecommendation(profile: any): any {
-  // Start with baseline (equal weights)
+  // Start with baseline (equal weights for 6 criteria)
   let weights = {
-    riskIdentification: 14,
-    frameworkDesign: 14,
-    controlOperating: 14,
-    issueResponsiveness: 15,
-    riskOutcome: 14,
-    governance: 14,
-    continuousImprovement: 15
+    riskIdentification: 15,
+    controlDesign: 20,
+    controlOperating: 25,
+    issueResponsiveness: 20,
+    governance: 15,
+    continuousImprovement: 5
   };
 
   // Adjust based on stage
@@ -36,7 +35,7 @@ function generateWeightingRecommendation(profile: any): any {
     weights.continuousImprovement -= 3;
   } else if (profile.stage === 'mature') {
     weights.controlOperating += 10;
-    weights.frameworkDesign += 8;
+    weights.controlDesign += 8;
     weights.issueResponsiveness -= 5;
     weights.riskIdentification -= 5;
     weights.continuousImprovement -= 3;
@@ -50,12 +49,11 @@ function generateWeightingRecommendation(profile: any): any {
   // Adjust based on ownership
   if (profile.ownership === 'pe') {
     weights.issueResponsiveness += 8;
-    weights.riskOutcome += 5;
-    weights.governance -= 5;
+    weights.governance -= 3;
   } else if (profile.ownership === 'public') {
     weights.controlOperating += 10;
     weights.governance += 5;
-    weights.frameworkDesign += 5;
+    weights.controlDesign += 5;
     weights.issueResponsiveness -= 8;
   } else if (profile.ownership === 'vc') {
     weights.riskIdentification += 5;
@@ -66,7 +64,7 @@ function generateWeightingRecommendation(profile: any): any {
   // Adjust based on regulatory
   if (profile.regulatory === 'heavy') {
     weights.controlOperating += 10;
-    weights.frameworkDesign += 8;
+    weights.controlDesign += 8;
     weights.issueResponsiveness -= 5;
     weights.continuousImprovement -= 3;
   } else if (profile.regulatory === 'light') {
@@ -89,7 +87,7 @@ function generateWeightingRecommendation(profile: any): any {
     weights.issueResponsiveness += 5;
   }
   if (profile.priorities?.includes('Exit Preparation (IPO / Sale)')) {
-    weights.frameworkDesign += 8;
+    weights.controlDesign += 8;
     weights.controlOperating += 8;
     weights.governance += 5;
   }
@@ -100,19 +98,19 @@ function generateWeightingRecommendation(profile: any): any {
 
   // Adjust based on maturity
   if (profile.maturity === 1) {
-    weights.frameworkDesign += 8;
+    weights.controlDesign += 8;
     weights.controlOperating -= 5;
     weights.continuousImprovement -= 5;
   } else if (profile.maturity >= 3) {
     weights.controlOperating += 5;
     weights.continuousImprovement += 5;
-    weights.frameworkDesign -= 5;
+    weights.controlDesign -= 5;
   }
 
   // Adjust based on risk appetite
   if (profile.riskAppetite === 'low') {
     weights.controlOperating += 8;
-    weights.frameworkDesign += 5;
+    weights.controlDesign += 5;
     weights.governance += 3;
   } else if (profile.riskAppetite === 'high') {
     weights.issueResponsiveness += 5;
@@ -123,7 +121,7 @@ function generateWeightingRecommendation(profile: any): any {
   if (profile.size?.complexity === 'complex' || profile.size?.geographic === 'global') {
     weights.controlOperating += 5;
     weights.governance += 3;
-    weights.frameworkDesign += 3;
+    weights.controlDesign += 3;
   }
 
   // Normalize to 100%
@@ -159,9 +157,9 @@ function generateCriteriaConfigs(weights: any, profile: any): any {
       : 'Mature operations require comprehensive risk identification'
   };
 
-  // Framework Design
-  configs.frameworkDesign = {
-    weight: weights.frameworkDesign,
+  // Control Design
+  configs.controlDesign = {
+    weight: weights.controlDesign,
     subCriteria: ['Control type balance (preventive focus)', 'Coverage of risk causes', 'Ownership at right level'],
     target: profile.maturity === 1 || profile.maturity === 2 ? 85 : 90,
     methods: [
@@ -199,20 +197,6 @@ function generateCriteriaConfigs(weights: any, profile: any): any {
     rationale: profile.ownership === 'pe' 
       ? 'PE ownership demands quarterly performance - fast issue resolution is critical'
       : 'Timely issue response is essential for effective risk management'
-  };
-
-  // Risk Outcome
-  configs.riskOutcome = {
-    weight: weights.riskOutcome,
-    subCriteria: ['70% of strategic objectives achieved', 'No incidents from TOP 5 risks', 'Leading indicators trending right'],
-    target: profile.stage === 'early' || profile.maturity <= 2 ? 75 : 85,
-    methods: [
-      { type: 'Objective tracking', description: 'Quarterly review of strategic objective achievement' },
-      { type: 'Incident analysis', description: 'Continuous monitoring of risk incidents' }
-    ],
-    rationale: profile.stage === 'early' || profile.maturity <= 2 
-      ? 'Realistic target for early stage or developing maturity'
-      : 'Higher target for mature risk management'
   };
 
   // Governance
@@ -254,7 +238,7 @@ function generateReasoning(profile: any): any {
     ? `You selected "${profile.stage}" stage. High growth creates new, emerging risks that must be identified quickly.`
     : `Mature operations require comprehensive risk identification to maintain stability.`;
 
-  reasoning.frameworkDesign = profile.maturity <= 2
+  reasoning.controlDesign = profile.maturity <= 2
     ? `You're at maturity level ${profile.maturity}. Building framework correctly now is critical.`
     : `Mature framework requires high design quality and consistency.`;
 
@@ -265,10 +249,6 @@ function generateReasoning(profile: any): any {
   reasoning.issueResponsiveness = profile.ownership === 'pe'
     ? `PE ownership demands quarterly performance. Fast issue detection and resolution is critical for value creation.`
     : `Timely issue response is essential for effective risk management.`;
-
-  reasoning.riskOutcome = profile.stage === 'early' || profile.maturity <= 2
-    ? `Early stage/developing maturity - focus on building framework, outcomes will improve over time.`
-    : `Mature framework should demonstrate clear risk reduction outcomes.`;
 
   reasoning.governance = profile.ownership === 'public'
     ? `Public company status requires strong board oversight and governance.`
@@ -446,13 +426,12 @@ COMPANY PROFILE:
 - Complexity: ${companyProfile.size.complexity}
 
 EFFECTIVENESS CRITERIA (User's Custom Weightings):
-- Risk Identification: ${effectivenessCriteria.weights.riskIdentification}%
-- Framework Design: ${effectivenessCriteria.weights.frameworkDesign}%
-- Control Operating: ${effectivenessCriteria.weights.controlOperating}%
-- Issue Responsiveness: ${effectivenessCriteria.weights.issueResponsiveness}% ${effectivenessCriteria.weights.issueResponsiveness >= 20 ? '(HIGH PRIORITY)' : ''}
-- Risk Outcome: ${effectivenessCriteria.weights.riskOutcome}%
-- Governance: ${effectivenessCriteria.weights.governance}%
-- Continuous Improvement: ${effectivenessCriteria.weights.continuousImprovement}%
+- C1 - Risk Identification: ${effectivenessCriteria.weights.riskIdentification}%
+- C2 - Control Design: ${effectivenessCriteria.weights.controlDesign}%
+- C3 - Control Operating: ${effectivenessCriteria.weights.controlOperating}%
+- C4 - Issue Responsiveness: ${effectivenessCriteria.weights.issueResponsiveness}% ${effectivenessCriteria.weights.issueResponsiveness >= 20 ? '(HIGH PRIORITY)' : ''}
+- C5 - Governance: ${effectivenessCriteria.weights.governance}%
+- C6 - Continuous Improvement: ${effectivenessCriteria.weights.continuousImprovement}%
 Overall Target: ${effectivenessCriteria.overallTarget}%
 
 Generate a complete custom framework with these 5 CORE ELEMENTS. Each element should be 3-5 paragraphs of DETAILED, COMPREHENSIVE content with:
@@ -492,13 +471,12 @@ Make the content MUCH MORE DETAILED than a typical template:
    - Testing methodology that varies by risk priority: HIGH priority risks (quarterly testing, larger samples), MEDIUM priority (semi-annual), LOWER priority (annual)
    - Specific responsibilities: First line testing (process owners), second line review (risk/compliance), third line assurance (internal audit)
    - Detailed metrics for each criterion with measurement approach:
-     * Risk Identification (${effectivenessCriteria.weights.riskIdentification}%): completeness metrics, forward-looking indicators
-     * Framework Design (${effectivenessCriteria.weights.frameworkDesign}%): control coverage %, design quality scores
-     * Control Operating (${effectivenessCriteria.weights.controlOperating}%): operating rate %, exception frequency
-     * Issue Responsiveness (${effectivenessCriteria.weights.issueResponsiveness}%): detection time, remediation speed
-     * Risk Outcome (${effectivenessCriteria.weights.riskOutcome}%): objectives achieved %, incidents prevented
-     * Governance (${effectivenessCriteria.weights.governance}%): board engagement metrics, challenge quality
-     * Continuous Improvement (${effectivenessCriteria.weights.continuousImprovement}%): improvements implemented, maturity progression
+     * C1 - Risk Identification (${effectivenessCriteria.weights.riskIdentification}%): completeness metrics, forward-looking indicators
+     * C2 - Control Design (${effectivenessCriteria.weights.controlDesign}%): control coverage %, design quality scores
+     * C3 - Control Operating (${effectivenessCriteria.weights.controlOperating}%): operating rate %, exception frequency
+     * C4 - Issue Responsiveness (${effectivenessCriteria.weights.issueResponsiveness}%): detection time, remediation speed
+     * C5 - Governance (${effectivenessCriteria.weights.governance}%): board engagement metrics, challenge quality
+     * C6 - Continuous Improvement (${effectivenessCriteria.weights.continuousImprovement}%): improvements implemented, maturity progression
    - Assessment frequency and reporting cycles
    - Aggregation methodology to calculate overall effectiveness score
 
@@ -673,13 +651,12 @@ Company Profile:
 - Priorities: ${profile.priorities?.join(', ')}
 
 Effectiveness Criteria Weightings:
-- Risk Identification: ${criteria.riskIdentification.weight}%
-- Framework Design: ${criteria.frameworkDesign.weight}%
-- Control Operating: ${criteria.controlOperating.weight}%
-- Issue Responsiveness: ${criteria.issueResponsiveness.weight}%
-- Risk Outcome: ${criteria.riskOutcome.weight}%
-- Governance: ${criteria.governance.weight}%
-- Continuous Improvement: ${criteria.continuousImprovement.weight}%
+- C1 - Risk Identification: ${criteria.riskIdentification.weight}%
+- C2 - Control Design: ${criteria.controlDesign.weight}%
+- C3 - Control Operating: ${criteria.controlOperating.weight}%
+- C4 - Issue Responsiveness: ${criteria.issueResponsiveness.weight}%
+- C5 - Governance: ${criteria.governance.weight}%
+- C6 - Continuous Improvement: ${criteria.continuousImprovement.weight}%
 
 Overall Target: ${config.overallTarget}%
 

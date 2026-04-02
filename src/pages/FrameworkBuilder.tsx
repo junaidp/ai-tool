@@ -114,11 +114,10 @@ export default function FrameworkBuilder() {
       const transformedCriteria = {
         weights: {
           riskIdentification: criteriaConfig.riskIdentification?.weight || 15,
-          frameworkDesign: criteriaConfig.frameworkDesign?.weight || 15,
-          controlOperating: criteriaConfig.controlOperating?.weight || 20,
+          controlDesign: criteriaConfig.controlDesign?.weight || 20,
+          controlOperating: criteriaConfig.controlOperating?.weight || 25,
           issueResponsiveness: criteriaConfig.issueResponsiveness?.weight || 20,
-          riskOutcome: criteriaConfig.riskOutcome?.weight || 15,
-          governance: criteriaConfig.governance?.weight || 10,
+          governance: criteriaConfig.governance?.weight || 15,
           continuousImprovement: criteriaConfig.continuousImprovement?.weight || 5
         },
         overallTarget: effectivenessCriteria.overallTarget || 85

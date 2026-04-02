@@ -11,7 +11,7 @@ import { Slider } from '@/components/ui/slider';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowRight, ArrowLeft, CheckCircle, Sparkles, FileText, Download, Star, Edit } from 'lucide-react';
-import { SEVEN_CRITERIA, STRATEGIC_PRIORITIES, type CompanyProfile, type ContextAnswers, type EffectivenessCriteriaConfig, type WeightingRecommendation, type CustomFramework } from '@/types/effectiveness';
+import { SIX_CRITERIA, STRATEGIC_PRIORITIES, type CompanyProfile, type ContextAnswers, type EffectivenessCriteriaConfig, type WeightingRecommendation, type CustomFramework } from '@/types/effectiveness';
 const API_BASE_RAW = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3001';
 const API_BASE = API_BASE_RAW.replace(/\/$/, '');
 const API_ROOT = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
@@ -792,13 +792,12 @@ export default function EffectivenessCriteriaV2Page() {
     if (!recommendation) return null;
 
     const criteriaArray = [
-      { id: 'riskIdentification', ...SEVEN_CRITERIA[0] },
-      { id: 'frameworkDesign', ...SEVEN_CRITERIA[1] },
-      { id: 'controlOperating', ...SEVEN_CRITERIA[2] },
-      { id: 'issueResponsiveness', ...SEVEN_CRITERIA[3] },
-      { id: 'riskOutcome', ...SEVEN_CRITERIA[4] },
-      { id: 'governance', ...SEVEN_CRITERIA[5] },
-      { id: 'continuousImprovement', ...SEVEN_CRITERIA[6] }
+      { id: 'riskIdentification', ...SIX_CRITERIA[0] },
+      { id: 'controlDesign', ...SIX_CRITERIA[1] },
+      { id: 'controlOperating', ...SIX_CRITERIA[2] },
+      { id: 'issueResponsiveness', ...SIX_CRITERIA[3] },
+      { id: 'governance', ...SIX_CRITERIA[4] },
+      { id: 'continuousImprovement', ...SIX_CRITERIA[5] }
     ];
 
     const highestWeight = Math.max(...Object.values(recommendation.weights));
@@ -993,10 +992,9 @@ export default function EffectivenessCriteriaV2Page() {
     const criteria = savedConfig.criteriaConfig;
     setEditedWeights({
       riskIdentification: criteria.riskIdentification.weight,
-      frameworkDesign: criteria.frameworkDesign.weight,
+      controlDesign: criteria.controlDesign.weight,
       controlOperating: criteria.controlOperating.weight,
       issueResponsiveness: criteria.issueResponsiveness.weight,
-      riskOutcome: criteria.riskOutcome.weight,
       governance: criteria.governance.weight,
       continuousImprovement: criteria.continuousImprovement.weight
     });
@@ -1023,10 +1021,9 @@ export default function EffectivenessCriteriaV2Page() {
     try {
       const updatedCriteria = {
         riskIdentification: { ...savedConfig.criteriaConfig.riskIdentification, weight: editedWeights.riskIdentification },
-        frameworkDesign: { ...savedConfig.criteriaConfig.frameworkDesign, weight: editedWeights.frameworkDesign },
+        controlDesign: { ...savedConfig.criteriaConfig.controlDesign, weight: editedWeights.controlDesign },
         controlOperating: { ...savedConfig.criteriaConfig.controlOperating, weight: editedWeights.controlOperating },
         issueResponsiveness: { ...savedConfig.criteriaConfig.issueResponsiveness, weight: editedWeights.issueResponsiveness },
-        riskOutcome: { ...savedConfig.criteriaConfig.riskOutcome, weight: editedWeights.riskOutcome },
         governance: { ...savedConfig.criteriaConfig.governance, weight: editedWeights.governance },
         continuousImprovement: { ...savedConfig.criteriaConfig.continuousImprovement, weight: editedWeights.continuousImprovement }
       };
@@ -1069,13 +1066,12 @@ export default function EffectivenessCriteriaV2Page() {
     const profile = savedConfig.companyProfile;
 
     const criteriaArray = [
-      { id: 'riskIdentification', ...SEVEN_CRITERIA[0], config: criteria.riskIdentification },
-      { id: 'frameworkDesign', ...SEVEN_CRITERIA[1], config: criteria.frameworkDesign },
-      { id: 'controlOperating', ...SEVEN_CRITERIA[2], config: criteria.controlOperating },
-      { id: 'issueResponsiveness', ...SEVEN_CRITERIA[3], config: criteria.issueResponsiveness },
-      { id: 'riskOutcome', ...SEVEN_CRITERIA[4], config: criteria.riskOutcome },
-      { id: 'governance', ...SEVEN_CRITERIA[5], config: criteria.governance },
-      { id: 'continuousImprovement', ...SEVEN_CRITERIA[6], config: criteria.continuousImprovement }
+      { id: 'riskIdentification', ...SIX_CRITERIA[0], config: criteria.riskIdentification },
+      { id: 'controlDesign', ...SIX_CRITERIA[1], config: criteria.controlDesign },
+      { id: 'controlOperating', ...SIX_CRITERIA[2], config: criteria.controlOperating },
+      { id: 'issueResponsiveness', ...SIX_CRITERIA[3], config: criteria.issueResponsiveness },
+      { id: 'governance', ...SIX_CRITERIA[4], config: criteria.governance },
+      { id: 'continuousImprovement', ...SIX_CRITERIA[5], config: criteria.continuousImprovement }
     ];
 
     return (
