@@ -109,7 +109,11 @@ export default function FrameworkBuilder() {
       const response = await fetchJson<any>(`${API_ROOT}/effectiveness-criteria-v2/generate-custom-framework`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ configId: effectivenessCriteria.id })
+        body: JSON.stringify({ 
+          companyProfile: effectivenessCriteria.companyProfile,
+          effectivenessCriteria: effectivenessCriteria.criteriaConfig,
+          companyName: effectivenessCriteria.companyProfile.companyName || 'Your Company'
+        })
       });
 
       // Convert AI-generated framework to sections format
