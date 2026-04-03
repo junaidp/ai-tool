@@ -340,10 +340,33 @@ router.get('/config', async (req, res) => {
     }
 
     // Parse JSON fields
+    const companyProfile = JSON.parse(config.companyProfile);
+    const criteriaConfig = JSON.parse(config.criteriaConfig);
+
+    // Migrate old 7-criteria structure to new 6-criteria structure
+    let migratedCriteriaConfig = criteriaConfig;
+    if (criteriaConfig.frameworkDesign || criteriaConfig.riskOutcome) {
+      // Old structure detected, migrate to new structure
+      migratedCriteriaConfig = {
+        riskIdentification: criteriaConfig.riskIdentification,
+        controlDesign: criteriaConfig.frameworkDesign || criteriaConfig.controlDesign || {
+          weight: 20,
+          subCriteria: ['Control type balance (preventive focus)', 'Coverage of risk causes', 'Ownership at right level'],
+          target: 85,
+          methods: []
+        },
+        controlOperating: criteriaConfig.controlOperating,
+        issueResponsiveness: criteriaConfig.issueResponsiveness,
+        governance: criteriaConfig.governance,
+        continuousImprovement: criteriaConfig.continuousImprovement
+      };
+      // Remove riskOutcome if it exists - its weight is distributed to other criteria
+    }
+
     const parsed = {
       ...config,
-      companyProfile: JSON.parse(config.companyProfile),
-      criteriaConfig: JSON.parse(config.criteriaConfig)
+      companyProfile,
+      criteriaConfig: migratedCriteriaConfig
     };
 
     res.json(parsed);
