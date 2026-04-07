@@ -424,7 +424,7 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
           </Button>
           <Button
             onClick={handleNext}
-            disabled={!answers[currentQuestion.id]}
+            disabled={answers[currentQuestion.id] === undefined || answers[currentQuestion.id] === null || (typeof answers[currentQuestion.id] === 'string' && answers[currentQuestion.id] === '')}
           >
             {currentQuestionIndex < visibleQuestions.length - 1 ? 'Next' : 'Complete Category'}
             <ChevronRight className="h-4 w-4 ml-2" />

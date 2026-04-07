@@ -74,6 +74,8 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
     { value: 'payroll', label: 'Payroll', description: 'Compensation, benefits, accruals' },
     { value: 'treasury', label: 'Treasury', description: 'Cash, investments, debt' },
     { value: 'financial_close', label: 'Financial Close', description: 'Period-end processes, reconciliations' },
+    { value: 'related_party_transactions', label: 'Related Party Transactions', description: 'RPT identification, approval, disclosure' },
+    { value: 'provisions_contingencies', label: 'Provisions & Contingencies', description: 'Litigation, warranties, estimates' },
   ];
 
   const handleAreaSelect = (area: FinancialReportingArea) => {
@@ -392,7 +394,7 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
           </Button>
           <Button
             onClick={handleNext}
-            disabled={!answers[currentQuestion.id] || answers[currentQuestion.id] === ''}
+            disabled={!answers[currentQuestion.id] || (typeof answers[currentQuestion.id] === 'string' && answers[currentQuestion.id] === '')}
           >
             {currentQuestionIndex < visibleQuestions.length - 1 ? 'Next' : 'Complete Area'}
             <ChevronRight className="h-4 w-4 ml-2" />

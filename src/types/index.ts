@@ -527,7 +527,9 @@ export type FinancialReportingArea =
   | 'fixed_assets'
   | 'payroll'
   | 'treasury'
-  | 'financial_close';
+  | 'financial_close'
+  | 'related_party_transactions'
+  | 'provisions_contingencies';
 
 export interface FinancialReportingRisk {
   id: string;
