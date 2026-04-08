@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { financialReportingFlows } from '@/data/riskIdentificationFlows';
 import type { FinancialReportingRisk, FinancialReportingArea } from '@/types';
-import { FileText, ChevronRight, ChevronLeft, Sparkles, AlertCircle } from 'lucide-react';
+import { FileText, ChevronRight, ChevronLeft, Sparkles, AlertCircle, Trash2 } from 'lucide-react';
 
 interface FinancialReportingRiskModuleProps {
   onRisksIdentified: (risks: FinancialReportingRisk[]) => void;
@@ -93,6 +93,8 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
   ];
 
   const handleAreaSelect = (area: FinancialReportingArea) => {
+    let shouldLoadAnswers = false;
+    
     // If area is already completed, show a summary instead of re-running the wizard
     if (completedAreas.has(area)) {
       const areaRisks = identifiedRisks.filter(r => r.area === area);
@@ -108,12 +110,22 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
           newSet.delete(area);
           return newSet;
         });
+        // Clear saved answers when re-assessing
+        setAreaAnswers(prev => {
+          const newAnswers = { ...prev };
+          delete newAnswers[area];
+          return newAnswers;
+        });
+      } else {
+        // Area is marked complete but has no risks - load saved answers
+        shouldLoadAnswers = true;
       }
     }
     
     setCurrentArea(area);
     setCurrentQuestionIndex(0);
-    const savedAnswers = areaAnswers[area] || {};
+    // Only load saved answers if explicitly allowed, otherwise start fresh
+    const savedAnswers = shouldLoadAnswers ? (areaAnswers[area] || {}) : {};
     setAnswers(savedAnswers);
   };
 
@@ -209,6 +221,12 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
     // Keep localStorage data so risks persist when returning to this page
   };
 
+  const handleDeleteRisk = (riskId: string) => {
+    if (confirm('Are you sure you want to delete this risk?')) {
+      setIdentifiedRisks(prev => prev.filter(r => r.id !== riskId));
+    }
+  };
+
   if (isComplete) {
     return (
       <Card>
@@ -244,6 +262,14 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
                       </ul>
                     </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteRisk(risk.id)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             ))}

@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { fraudRiskFlows } from '@/data/riskIdentificationFlows';
 import type { FraudRisk, FraudCategory } from '@/types';
-import { ShieldAlert, ChevronRight, ChevronLeft, Sparkles, AlertTriangle, Lock } from 'lucide-react';
+import { ShieldAlert, ChevronRight, ChevronLeft, Sparkles, AlertTriangle, Lock, Trash2 } from 'lucide-react';
 
 interface FraudRiskModuleProps {
   onRisksIdentified: (risks: FraudRisk[]) => void;
@@ -93,7 +93,8 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
   const handleCategorySelect = (category: FraudCategory) => {
     setCurrentCategory(category);
     setCurrentQuestionIndex(0);
-    const savedAnswers = categoryAnswers[category] || {};
+    // Only load saved answers if the category is already completed
+    const savedAnswers = completedCategories.has(category) ? (categoryAnswers[category] || {}) : {};
     setAnswers(savedAnswers);
   };
 
@@ -194,6 +195,12 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
     // Keep localStorage data so risks persist when returning to this page
   };
 
+  const handleDeleteRisk = (riskId: string) => {
+    if (confirm('Are you sure you want to delete this risk?')) {
+      setIdentifiedRisks(prev => prev.filter(r => r.id !== riskId));
+    }
+  };
+
   const getRiskColor = (score: number) => {
     if (score >= 15) return 'destructive';
     if (score >= 9) return 'default';
@@ -229,6 +236,14 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
                     </Badge>
                     <Badge variant="outline">{risk.category.replace('_', ' ')}</Badge>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteRisk(risk.id)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
                 <h4 className="font-semibold mb-2">{risk.riskTitle}</h4>
                 <p className="text-sm text-muted-foreground mb-3">{risk.riskDescription}</p>
