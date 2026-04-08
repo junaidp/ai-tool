@@ -177,9 +177,7 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
   const handleComplete = () => {
     setIsComplete(true);
     onRisksIdentified(identifiedRisks);
-    localStorage.removeItem('fraudRisks');
-    localStorage.removeItem('fraudCompletedCategories');
-    localStorage.removeItem('fraudCategoryAnswers');
+    // Keep localStorage data so risks persist when returning to this page
   };
 
   const getRiskColor = (score: number) => {

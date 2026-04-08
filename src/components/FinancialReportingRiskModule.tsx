@@ -192,9 +192,7 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
   const handleComplete = () => {
     setIsComplete(true);
     onRisksIdentified(identifiedRisks);
-    localStorage.removeItem('financialReportingRisks');
-    localStorage.removeItem('financialReportingCompletedAreas');
-    localStorage.removeItem('financialReportingAreaAnswers');
+    // Keep localStorage data so risks persist when returning to this page
   };
 
   if (isComplete) {

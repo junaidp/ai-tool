@@ -177,9 +177,7 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
   const handleComplete = () => {
     setIsComplete(true);
     onRisksIdentified(identifiedRisks);
-    localStorage.removeItem('cyberSecurityRisks');
-    localStorage.removeItem('cyberCompletedDomains');
-    localStorage.removeItem('cyberDomainAnswers');
+    // Keep localStorage data so risks persist when returning to this page
   };
 
   const getRiskColor = (score: number) => {
