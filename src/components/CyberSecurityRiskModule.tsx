@@ -26,6 +26,7 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
     const savedRisks = localStorage.getItem('cyberSecurityRisks');
     const savedCompletedDomains = localStorage.getItem('cyberCompletedDomains');
     const savedDomainAnswers = localStorage.getItem('cyberDomainAnswers');
+    const savedIsComplete = localStorage.getItem('cyberIsComplete');
     
     if (savedRisks) {
       try {
@@ -53,6 +54,15 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
         console.error('Failed to parse saved domain answers:', e);
       }
     }
+    
+    if (savedIsComplete) {
+      try {
+        const isComplete = JSON.parse(savedIsComplete);
+        setIsComplete(isComplete);
+      } catch (e) {
+        console.error('Failed to parse saved isComplete:', e);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -66,6 +76,10 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
   useEffect(() => {
     localStorage.setItem('cyberDomainAnswers', JSON.stringify(domainAnswers));
   }, [domainAnswers]);
+
+  useEffect(() => {
+    localStorage.setItem('cyberIsComplete', JSON.stringify(isComplete));
+  }, [isComplete]);
 
   const domains: { value: CyberSecurityDomain; label: string; description: string }[] = [
     { value: 'ransomware', label: 'Ransomware Protection', description: 'Backup, recovery, endpoint security' },
@@ -177,7 +191,7 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
   const handleComplete = () => {
     setIsComplete(true);
     onRisksIdentified(identifiedRisks);
-    // Keep localStorage data so risks persist when returning to this page
+     // Keep localStorage data so risks persist when returning to this page
   };
 
   const getRiskColor = (score: number) => {

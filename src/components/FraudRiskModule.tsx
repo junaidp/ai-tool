@@ -26,6 +26,7 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
     const savedRisks = localStorage.getItem('fraudRisks');
     const savedCompletedCategories = localStorage.getItem('fraudCompletedCategories');
     const savedCategoryAnswers = localStorage.getItem('fraudCategoryAnswers');
+    const savedIsComplete = localStorage.getItem('fraudIsComplete');
     
     if (savedRisks) {
       try {
@@ -53,6 +54,15 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
         console.error('Failed to parse saved category answers:', e);
       }
     }
+    
+    if (savedIsComplete) {
+      try {
+        const isComplete = JSON.parse(savedIsComplete);
+        setIsComplete(isComplete);
+      } catch (e) {
+        console.error('Failed to parse saved isComplete:', e);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -66,6 +76,10 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
   useEffect(() => {
     localStorage.setItem('fraudCategoryAnswers', JSON.stringify(categoryAnswers));
   }, [categoryAnswers]);
+
+  useEffect(() => {
+    localStorage.setItem('fraudIsComplete', JSON.stringify(isComplete));
+  }, [isComplete]);
 
   const categories: { value: FraudCategory; label: string; description: string }[] = [
     { value: 'asset_misappropriation', label: 'Asset Misappropriation', description: 'Theft of cash, inventory, or other assets' },

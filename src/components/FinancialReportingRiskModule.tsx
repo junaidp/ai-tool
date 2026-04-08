@@ -26,6 +26,7 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
     const savedRisks = localStorage.getItem('financialReportingRisks');
     const savedCompletedAreas = localStorage.getItem('financialReportingCompletedAreas');
     const savedAreaAnswers = localStorage.getItem('financialReportingAreaAnswers');
+    const savedIsComplete = localStorage.getItem('financialReportingIsComplete');
     
     if (savedRisks) {
       try {
@@ -53,6 +54,15 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
         console.error('Failed to parse saved area answers:', e);
       }
     }
+    
+    if (savedIsComplete) {
+      try {
+        const isComplete = JSON.parse(savedIsComplete);
+        setIsComplete(isComplete);
+      } catch (e) {
+        console.error('Failed to parse saved isComplete:', e);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -66,6 +76,10 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
   useEffect(() => {
     localStorage.setItem('financialReportingAreaAnswers', JSON.stringify(areaAnswers));
   }, [areaAnswers]);
+
+  useEffect(() => {
+    localStorage.setItem('financialReportingIsComplete', JSON.stringify(isComplete));
+  }, [isComplete]);
 
   const areas: { value: FinancialReportingArea; label: string; description: string }[] = [
     { value: 'revenue_recognition', label: 'Revenue Recognition', description: 'Sales, deferred revenue, contract accounting' },
