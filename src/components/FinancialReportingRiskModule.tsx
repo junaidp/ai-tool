@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { financialReportingFlows } from '@/data/riskIdentificationFlows';
 import type { FinancialReportingRisk, FinancialReportingArea } from '@/types';
-import { FileText, ChevronRight, ChevronLeft, Sparkles, AlertCircle, Trash2 } from 'lucide-react';
+import { FileText, ChevronRight, ChevronLeft, Sparkles, AlertCircle, Trash2, Pencil } from 'lucide-react';
 
 interface FinancialReportingRiskModuleProps {
   onRisksIdentified: (risks: FinancialReportingRisk[]) => void;
@@ -21,6 +21,7 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
   const [isComplete, setIsComplete] = useState(false);
   const [completedAreas, setCompletedAreas] = useState<Set<FinancialReportingArea>>(new Set());
   const [areaAnswers, setAreaAnswers] = useState<Record<FinancialReportingArea, Record<string, string | string[]>>>({});
+  const [editingRisk, setEditingRisk] = useState<FinancialReportingRisk | null>(null);
 
   useEffect(() => {
     const savedRisks = localStorage.getItem('financialReportingRisks');
@@ -227,6 +228,17 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
     }
   };
 
+  const handleEditRisk = (risk: FinancialReportingRisk) => {
+    setEditingRisk(risk);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingRisk) {
+      setIdentifiedRisks(prev => prev.map(r => r.id === editingRisk.id ? editingRisk : r));
+      setEditingRisk(null);
+    }
+  };
+
   if (isComplete) {
     return (
       <Card>
@@ -262,14 +274,23 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
                       </ul>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteRisk(risk.id)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditRisk(risk)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteRisk(risk.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -277,6 +298,39 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
           <Button onClick={() => setIsComplete(false)} variant="outline" className="mt-4">
             Assess More Areas
           </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (editingRisk) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Edit Risk</CardTitle>
+          <CardDescription>Modify the risk details</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Risk Title</Label>
+            <Textarea
+              value={editingRisk.riskTitle}
+              onChange={(e) => setEditingRisk({ ...editingRisk, riskTitle: e.target.value })}
+              rows={2}
+            />
+          </div>
+          <div>
+            <Label>Risk Description</Label>
+            <Textarea
+              value={editingRisk.riskDescription}
+              onChange={(e) => setEditingRisk({ ...editingRisk, riskDescription: e.target.value })}
+              rows={4}
+            />
+          </div>
+          <div className="flex gap-2 pt-4">
+            <Button onClick={handleSaveEdit}>Save Changes</Button>
+            <Button variant="outline" onClick={() => setEditingRisk(null)}>Cancel</Button>
+          </div>
         </CardContent>
       </Card>
     );

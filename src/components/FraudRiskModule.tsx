@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { fraudRiskFlows } from '@/data/riskIdentificationFlows';
 import type { FraudRisk, FraudCategory } from '@/types';
-import { ShieldAlert, ChevronRight, ChevronLeft, Sparkles, AlertTriangle, Lock, Trash2 } from 'lucide-react';
+import { ShieldAlert, ChevronRight, ChevronLeft, Sparkles, AlertTriangle, Lock, Trash2, Pencil } from 'lucide-react';
 
 interface FraudRiskModuleProps {
   onRisksIdentified: (risks: FraudRisk[]) => void;
@@ -21,6 +21,7 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
   const [isComplete, setIsComplete] = useState(false);
   const [completedCategories, setCompletedCategories] = useState<Set<FraudCategory>>(new Set());
   const [categoryAnswers, setCategoryAnswers] = useState<Record<FraudCategory, Record<string, string | string[] | number>>>({});
+  const [editingRisk, setEditingRisk] = useState<FraudRisk | null>(null);
 
   useEffect(() => {
     const savedRisks = localStorage.getItem('fraudRisks');
@@ -91,11 +92,33 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
   ];
 
   const handleCategorySelect = (category: FraudCategory) => {
+    // If category is already completed, ask if user wants to re-assess
+    if (completedCategories.has(category)) {
+      const categoryRisks = identifiedRisks.filter(r => r.category === category);
+      if (categoryRisks.length > 0) {
+        if (!confirm(`This category has already been assessed with ${categoryRisks.length} risk(s) identified. Do you want to re-assess it?`)) {
+          return;
+        }
+        // Remove existing risks for this category if re-assessing
+        setIdentifiedRisks(prev => prev.filter(r => r.category !== category));
+        setCompletedCategories(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(category);
+          return newSet;
+        });
+        // Clear saved answers when re-assessing
+        setCategoryAnswers(prev => {
+          const newAnswers = { ...prev };
+          delete newAnswers[category];
+          return newAnswers;
+        });
+      }
+    }
+    
     setCurrentCategory(category);
     setCurrentQuestionIndex(0);
-    // Only load saved answers if the category is already completed
-    const savedAnswers = completedCategories.has(category) ? (categoryAnswers[category] || {}) : {};
-    setAnswers(savedAnswers);
+    // Start fresh with no pre-selected answers
+    setAnswers({});
   };
 
   const getCurrentFlow = () => {
@@ -201,6 +224,17 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
     }
   };
 
+  const handleEditRisk = (risk: FraudRisk) => {
+    setEditingRisk(risk);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingRisk) {
+      setIdentifiedRisks(prev => prev.map(r => r.id === editingRisk.id ? editingRisk : r));
+      setEditingRisk(null);
+    }
+  };
+
   const getRiskColor = (score: number) => {
     if (score >= 15) return 'destructive';
     if (score >= 9) return 'default';
@@ -236,14 +270,23 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
                     </Badge>
                     <Badge variant="outline">{risk.category.replace('_', ' ')}</Badge>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteRisk(risk.id)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditRisk(risk)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteRisk(risk.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 <h4 className="font-semibold mb-2">{risk.riskTitle}</h4>
                 <p className="text-sm text-muted-foreground mb-3">{risk.riskDescription}</p>
@@ -275,6 +318,39 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
           <Button onClick={() => setIsComplete(false)} variant="outline" className="mt-4">
             Assess More Categories
           </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (editingRisk) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Edit Fraud Risk</CardTitle>
+          <CardDescription>Modify the risk details</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Risk Title</Label>
+            <Textarea
+              value={editingRisk.riskTitle}
+              onChange={(e) => setEditingRisk({ ...editingRisk, riskTitle: e.target.value })}
+              rows={2}
+            />
+          </div>
+          <div>
+            <Label>Risk Description</Label>
+            <Textarea
+              value={editingRisk.riskDescription}
+              onChange={(e) => setEditingRisk({ ...editingRisk, riskDescription: e.target.value })}
+              rows={4}
+            />
+          </div>
+          <div className="flex gap-2 pt-4">
+            <Button onClick={handleSaveEdit}>Save Changes</Button>
+            <Button variant="outline" onClick={() => setEditingRisk(null)}>Cancel</Button>
+          </div>
         </CardContent>
       </Card>
     );

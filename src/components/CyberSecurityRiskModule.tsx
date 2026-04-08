@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { cyberSecurityFlows } from '@/data/riskIdentificationFlows';
 import type { CyberSecurityRisk, CyberSecurityDomain } from '@/types';
-import { Lock, ChevronRight, ChevronLeft, Sparkles, AlertTriangle, Shield, Trash2 } from 'lucide-react';
+import { Lock, ChevronRight, ChevronLeft, Sparkles, AlertTriangle, Shield, Trash2, Pencil } from 'lucide-react';
 
 interface CyberSecurityRiskModuleProps {
   onRisksIdentified: (risks: CyberSecurityRisk[]) => void;
@@ -21,6 +21,7 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
   const [isComplete, setIsComplete] = useState(false);
   const [completedDomains, setCompletedDomains] = useState<Set<CyberSecurityDomain>>(new Set());
   const [domainAnswers, setDomainAnswers] = useState<Record<CyberSecurityDomain, Record<string, string | string[] | number>>>({});
+  const [editingRisk, setEditingRisk] = useState<CyberSecurityRisk | null>(null);
 
   useEffect(() => {
     const savedRisks = localStorage.getItem('cyberSecurityRisks');
@@ -92,11 +93,33 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
   ];
 
   const handleDomainSelect = (domain: CyberSecurityDomain) => {
+    // If domain is already completed, ask if user wants to re-assess
+    if (completedDomains.has(domain)) {
+      const domainRisks = identifiedRisks.filter(r => r.domain === domain);
+      if (domainRisks.length > 0) {
+        if (!confirm(`This domain has already been assessed with ${domainRisks.length} risk(s) identified. Do you want to re-assess it?`)) {
+          return;
+        }
+        // Remove existing risks for this domain if re-assessing
+        setIdentifiedRisks(prev => prev.filter(r => r.domain !== domain));
+        setCompletedDomains(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(domain);
+          return newSet;
+        });
+        // Clear saved answers when re-assessing
+        setDomainAnswers(prev => {
+          const newAnswers = { ...prev };
+          delete newAnswers[domain];
+          return newAnswers;
+        });
+      }
+    }
+    
     setCurrentDomain(domain);
     setCurrentQuestionIndex(0);
-    // Only load saved answers if the domain is already completed
-    const savedAnswers = completedDomains.has(domain) ? (domainAnswers[domain] || {}) : {};
-    setAnswers(savedAnswers);
+    // Start fresh with no pre-selected answers
+    setAnswers({});
   };
 
   const getCurrentFlow = () => {
@@ -201,6 +224,17 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
     }
   };
 
+  const handleEditRisk = (risk: CyberSecurityRisk) => {
+    setEditingRisk(risk);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingRisk) {
+      setIdentifiedRisks(prev => prev.map(r => r.id === editingRisk.id ? editingRisk : r));
+      setEditingRisk(null);
+    }
+  };
+
   const getRiskColor = (score: number) => {
     if (score >= 15) return 'destructive';
     if (score >= 9) return 'default';
@@ -230,14 +264,23 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
                     </Badge>
                     <Badge variant="outline">{risk.domain.replace('_', ' ')}</Badge>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteRisk(risk.id)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditRisk(risk)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteRisk(risk.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 <h4 className="font-semibold mb-2">{risk.riskTitle}</h4>
                 <p className="text-sm text-muted-foreground mb-3">{risk.riskDescription}</p>
@@ -275,6 +318,39 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
           <Button onClick={() => setIsComplete(false)} variant="outline" className="mt-4">
             Assess More Domains
           </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (editingRisk) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Edit Cyber Security Risk</CardTitle>
+          <CardDescription>Modify the risk details</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Risk Title</Label>
+            <Textarea
+              value={editingRisk.riskTitle}
+              onChange={(e) => setEditingRisk({ ...editingRisk, riskTitle: e.target.value })}
+              rows={2}
+            />
+          </div>
+          <div>
+            <Label>Risk Description</Label>
+            <Textarea
+              value={editingRisk.riskDescription}
+              onChange={(e) => setEditingRisk({ ...editingRisk, riskDescription: e.target.value })}
+              rows={4}
+            />
+          </div>
+          <div className="flex gap-2 pt-4">
+            <Button onClick={handleSaveEdit}>Save Changes</Button>
+            <Button variant="outline" onClick={() => setEditingRisk(null)}>Cancel</Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -440,7 +516,7 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
           </Button>
           <Button
             onClick={handleNext}
-            disabled={!answers[currentQuestion.id]}
+            disabled={answers[currentQuestion.id] === undefined || answers[currentQuestion.id] === null || (typeof answers[currentQuestion.id] === 'string' && answers[currentQuestion.id] === '')}
           >
             {currentQuestionIndex < visibleQuestions.length - 1 ? 'Next' : 'Complete Domain'}
             <ChevronRight className="h-4 w-4 ml-2" />
