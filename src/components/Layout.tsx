@@ -26,7 +26,7 @@ import { ROLE_DISPLAY_NAMES } from '@/types/roles';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Effectiveness Criteria', href: '/effectiveness-criteria', icon: Target },
+  { name: 'Effectiveness Criteria', href: '/effectiveness-criteria', icon: Target, hidden: true },
   { name: 'Framework Builder', href: '/framework-builder', icon: Building2 },
   { name: 'Risk Identification', href: '/principal-risks', icon: AlertTriangle },
   { name: 'Material Controls', href: '/material-controls', icon: Shield },
@@ -88,6 +88,11 @@ export default function Layout() {
               {navigation.map((item) => {
                 // Hide admin-only items from non-admin users
                 if (item.adminOnly && user?.role !== 'SYSTEM_ADMIN' && user?.role !== 'FRAMEWORK_OWNER') {
+                  return null;
+                }
+                
+                // Hide items marked as hidden
+                if (item.hidden) {
                   return null;
                 }
                 

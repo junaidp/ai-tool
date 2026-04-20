@@ -216,3 +216,28 @@ aiRouter.post('/generate-maturity-controls', async (req, res) => {
     });
   }
 });
+
+// Analyze company information for risk identification
+aiRouter.post('/analyze-company', async (req, res) => {
+  try {
+    const { companyName, businessContext } = req.body;
+
+    if (!companyName) {
+      return res.status(400).json({ error: 'Company name is required' });
+    }
+
+    const result = await aiService.analyzeCompanyForRiskIdentification(
+      companyName,
+      businessContext
+    );
+
+    res.json(result);
+  } catch (error: any) {
+    console.error('AI company analysis error:', error);
+    console.error('Error details:', error.message, error.response?.data);
+    res.status(500).json({ 
+      error: 'Failed to analyze company',
+      details: error.message 
+    });
+  }
+});

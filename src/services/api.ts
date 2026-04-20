@@ -561,6 +561,25 @@ class ApiService {
       body: JSON.stringify(data),
     });
   }
+
+  analyzeCompanyWithAI(data: {
+    companyName: string;
+    businessContext?: {
+      industry?: string;
+      annualRevenue?: string;
+      employeeCount?: string;
+    };
+  }) {
+    return this.request<{
+      summary: string;
+      keyPoints: string[];
+      industryInsights: string[];
+      riskConsiderations: string[];
+    }>('/ai/analyze-company', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export const apiService = new ApiService();

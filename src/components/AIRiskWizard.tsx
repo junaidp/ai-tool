@@ -438,6 +438,12 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
   const [companyName, setCompanyName] = useState('');
   const [useAIAnalysis, setUseAIAnalysis] = useState(false);
   const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
+  const [companyAnalysis, setCompanyAnalysis] = useState<{
+    summary: string;
+    keyPoints: string[];
+    industryInsights: string[];
+    riskConsiderations: string[];
+  } | null>(null);
   const [taskAssignments, setTaskAssignments] = useState<Record<ThreatCategory, string>>({
     business_model: '',
     performance: '',
@@ -522,7 +528,32 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
     }));
   };
 
-  const handleStartCategories = () => {
+  const handleAnalyzeCompany = async () => {
+    if (!companyName || !useAIAnalysis) return;
+    
+    setAiAnalysisLoading(true);
+    try {
+      const result = await apiService.analyzeCompanyWithAI({
+        companyName,
+        businessContext: {
+          industry: context.industry,
+          annualRevenue: context.annualRevenue,
+          employeeCount: context.employeeCount,
+        },
+      });
+      setCompanyAnalysis(result);
+    } catch (error) {
+      console.error('Failed to analyze company:', error);
+      alert('Failed to analyze company. Continuing without AI analysis.');
+    } finally {
+      setAiAnalysisLoading(false);
+    }
+  };
+
+  const handleStartCategories = async () => {
+    if (useAIAnalysis && companyName && !companyAnalysis) {
+      await handleAnalyzeCompany();
+    }
     setCurrentCategoryIndex(0);
     setPhase('category_questions');
   };
@@ -787,23 +818,6 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <span className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">3</span>
-            How is your business funded?
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select value={context.fundingType} onValueChange={(v) => setContext(prev => ({ ...prev, fundingType: v }))}>
-            <SelectTrigger><SelectValue placeholder="Select funding type" /></SelectTrigger>
-            <SelectContent>
-              {FUNDING_TYPES.map(ft => (<SelectItem key={ft} value={ft}>{ft}</SelectItem>))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <span className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">4</span>
             Which best describes your customer base?
           </CardTitle>
         </CardHeader>
@@ -831,7 +845,7 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <span className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">5</span>
+            <span className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">4</span>
             What are your top 3 priorities this year? (Select up to 3)
           </CardTitle>
         </CardHeader>
@@ -883,7 +897,10 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
           <div className="flex items-start gap-3 p-3 bg-white border border-purple-200 rounded-lg">
             <Checkbox
               checked={useAIAnalysis}
-              onCheckedChange={(checked) => setUseAIAnalysis(checked as boolean)}
+              onCheckedChange={(checked) => {
+                setUseAIAnalysis(checked as boolean);
+                if (!checked) setCompanyAnalysis(null);
+              }}
             />
             <div className="flex-1">
               <p className="text-sm font-medium">Enable AI Company Analysis</p>
@@ -892,6 +909,78 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
               </p>
             </div>
           </div>
+
+          {useAIAnalysis && companyName && (
+            <div className="space-y-3">
+              <Button 
+                onClick={handleAnalyzeCompany} 
+                disabled={aiAnalysisLoading || !!companyAnalysis}
+                className="w-full"
+                variant="outline"
+              >
+                {aiAnalysisLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Analyzing {companyName}...
+                  </>
+                ) : companyAnalysis ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Analysis Complete
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Analyze {companyName}
+                  </>
+                )}
+              </Button>
+
+              {companyAnalysis && (
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Info className="h-4 w-4 text-blue-600" />
+                      AI Analysis: {companyName}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-blue-900">Summary</p>
+                      <p className="text-muted-foreground mt-1">{companyAnalysis.summary}</p>
+                    </div>
+                    
+                    <div>
+                      <p className="font-medium text-blue-900">Key Business Characteristics</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        {companyAnalysis.keyPoints.map((point, idx) => (
+                          <li key={idx}>{point}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <p className="font-medium text-blue-900">Industry Insights</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        {companyAnalysis.industryInsights.map((insight, idx) => (
+                          <li key={idx}>{insight}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <p className="font-medium text-blue-900">Risk Considerations</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                        {companyAnalysis.riskConsiderations.map((risk, idx) => (
+                          <li key={idx}>{risk}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
 
           <div>
             <Label className="text-sm mb-2 block">Task Assignment (Optional)</Label>
@@ -917,8 +1006,17 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
 
       <div className="flex justify-between pt-4">
         <Button variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button onClick={handleStartCategories} disabled={!isContextValid}>
-          Begin Threat Assessment <ArrowRight className="h-4 w-4 ml-2" />
+        <Button onClick={handleStartCategories} disabled={!isContextValid || aiAnalysisLoading}>
+          {aiAnalysisLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Analyzing...
+            </>
+          ) : (
+            <>
+              Begin Threat Assessment <ArrowRight className="h-4 w-4 ml-2" />
+            </>
+          )}
         </Button>
       </div>
     </div>
@@ -1546,7 +1644,7 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
             <p className="text-sm text-muted-foreground">
               These {allSelectedRisks.length} principal risks were identified through a structured AI-assisted assessment
               aligned with FRC guidance on the four threat categories (Business Model, Performance, Solvency, Liquidity)
-              for a {context.industry} company with {context.annualRevenue} annual revenue and {context.employeeCount} employees.
+              for a {context.industry} company.
               Each category was assessed with targeted questions and AI-generated risk definitions.
               Risks are scored on a 1-5 Likelihood × Impact matrix (max score 25).
               Strategic priorities considered: {context.strategicPriorities.join(', ')}.

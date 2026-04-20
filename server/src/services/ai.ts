@@ -787,3 +787,58 @@ Make the controls realistic, specific to this risk, and appropriate for the matu
 
   return JSON.parse(response);
 }
+
+export async function analyzeCompanyForRiskIdentification(
+  companyName: string,
+  businessContext?: any
+): Promise<{
+  summary: string;
+  keyPoints: string[];
+  industryInsights: string[];
+  riskConsiderations: string[];
+}> {
+  const contextInfo = businessContext 
+    ? `\n\nAdditional context provided:\n- Industry: ${businessContext.industry || 'Not specified'}\n- Annual Revenue: ${businessContext.annualRevenue || 'Not specified'}\n- Employee Count: ${businessContext.employeeCount || 'Not specified'}`
+    : '';
+
+  const prompt = `You are an expert risk analyst. Analyze the company "${companyName}" based on publicly available information.${contextInfo}
+
+Provide a brief analysis that will help in identifying principal risks for this company. Focus on:
+1. A concise summary of the company (1-2 sentences)
+2. Key business characteristics that are relevant for risk identification (3-5 points)
+3. Industry-specific insights and trends (2-3 points)
+4. Initial risk considerations based on the company's profile (3-5 points)
+
+Be factual and focus on information that would be useful for a structured risk assessment aligned with FRC guidance on Business Model, Performance, Solvency, and Liquidity threats.
+
+Return as valid JSON with these exact fields:
+- summary: string (brief company description)
+- keyPoints: string[] (key business characteristics)
+- industryInsights: string[] (industry trends and context)
+- riskConsiderations: string[] (initial risk factors to consider)`;
+
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content: 'You are an expert risk analyst and business intelligence specialist. You provide concise, factual analysis of companies to support risk identification processes.',
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
+    response_format: { type: 'json_object' },
+    temperature: 0.7,
+  });
+
+  const response = completion.choices[0].message.content;
+  if (!response) {
+    throw new Error('No response from OpenAI');
+  }
+
+  console.log('AI Company Analysis Response:', response);
+
+  return JSON.parse(response);
+}
