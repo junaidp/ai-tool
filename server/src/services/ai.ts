@@ -315,7 +315,13 @@ const CATEGORY_DESCRIPTIONS: Record<ThreatCategory, string> = {
 function buildCategoryPrompt(
   threatCategory: ThreatCategory,
   context: BusinessContext,
-  categoryAnswers: CategoryAnswers
+  categoryAnswers: CategoryAnswers,
+  companyAnalysis?: {
+    summary: string;
+    keyPoints: string[];
+    industryInsights: string[];
+    riskConsiderations: string[];
+  }
 ): string {
   const label = CATEGORY_LABELS[threatCategory];
   const description = CATEGORY_DESCRIPTIONS[threatCategory];
@@ -326,6 +332,22 @@ function buildCategoryPrompt(
       return `- ${key}: ${value}`;
     })
     .join('\n');
+
+  const companyContext = companyAnalysis ? `
+
+AI COMPANY ANALYSIS:
+Summary: ${companyAnalysis.summary}
+
+Key Business Characteristics:
+${companyAnalysis.keyPoints.map(p => `- ${p}`).join('\n')}
+
+Industry Insights:
+${companyAnalysis.industryInsights.map(i => `- ${i}`).join('\n')}
+
+Risk Considerations:
+${companyAnalysis.riskConsiderations.map(r => `- ${r}`).join('\n')}
+
+IMPORTANT: Use the above company analysis to generate more specific and contextual risks that are tailored to this specific company's situation, industry position, and known risk factors.` : '';
 
   return `You are an expert in enterprise risk management, FRC guidance, and principal risk identification for UK companies.
 
@@ -341,7 +363,7 @@ BUSINESS CONTEXT:
 - Profitable: ${context.isProfitable}
 - Funding/Ownership: ${context.fundingType}
 - Customer Base: "${context.customerDescription}"
-- Strategic Priorities: ${context.strategicPriorities.join(', ')}
+- Strategic Priorities: ${context.strategicPriorities.join(', ')}${companyContext}
 
 USER'S ANSWERS TO ${label} THREAT QUESTIONS:
 ${answersText}
@@ -385,9 +407,15 @@ Return as JSON with a "risks" array containing objects with these exact fields:
 export async function generateRisksByCategory(
   context: BusinessContext,
   threatCategory: ThreatCategory,
-  categoryAnswers: CategoryAnswers
+  categoryAnswers: CategoryAnswers,
+  companyAnalysis?: {
+    summary: string;
+    keyPoints: string[];
+    industryInsights: string[];
+    riskConsiderations: string[];
+  }
 ): Promise<AIRiskCandidate[]> {
-  const prompt = buildCategoryPrompt(threatCategory, context, categoryAnswers);
+  const prompt = buildCategoryPrompt(threatCategory, context, categoryAnswers, companyAnalysis);
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',

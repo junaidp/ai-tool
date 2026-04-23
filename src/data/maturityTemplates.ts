@@ -490,7 +490,12 @@ export function performGapAnalysis(
   timelineEstimate: string;
 } {
   const packages = getMaturityPackages(riskType);
-  const targetPackages = packages.filter(p => p.level > currentLevel && p.level <= targetLevel);
+  
+  // Include current level if user has no controls, plus all levels up to target
+  // This ensures that if user selects "No" for all controls, we still suggest them
+  const targetPackages = packages.filter(p => 
+    (p.level >= currentLevel && p.level <= targetLevel)
+  );
 
   const allTargetTemplates: ControlTemplate[] = [];
   for (const pkg of targetPackages) {

@@ -98,7 +98,7 @@ aiRouter.post('/generate-controls', async (req, res) => {
 // Generate risks by threat category (structured FRC approach)
 aiRouter.post('/generate-risks-by-category', async (req, res) => {
   try {
-    const { businessContext, threatCategory, categoryAnswers } = req.body;
+    const { businessContext, threatCategory, categoryAnswers, companyAnalysis } = req.body;
 
     if (!businessContext || !threatCategory || !categoryAnswers) {
       return res.status(400).json({ error: 'Missing required fields: businessContext, threatCategory, categoryAnswers' });
@@ -112,7 +112,8 @@ aiRouter.post('/generate-risks-by-category', async (req, res) => {
     const risks = await aiService.generateRisksByCategory(
       businessContext,
       threatCategory,
-      categoryAnswers
+      categoryAnswers,
+      companyAnalysis
     );
 
     res.json({ risks });

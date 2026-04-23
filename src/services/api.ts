@@ -375,6 +375,12 @@ class ApiService {
     };
     threatCategory: string;
     categoryAnswers: Record<string, string | string[]>;
+    companyAnalysis?: {
+      summary: string;
+      keyPoints: string[];
+      industryInsights: string[];
+      riskConsiderations: string[];
+    };
   }) {
     return this.request<{ risks: any[] }>('/ai/generate-risks-by-category', {
       method: 'POST',

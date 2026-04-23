@@ -67,6 +67,7 @@ interface DocumentedControl {
   templateId: string;
   hasControl: 'yes' | 'no' | 'similar';
   controlName: string;
+  customDescription?: string;
   preparedBy: string;
   reviewedBy: string;
   frequency: ControlFrequency;
@@ -375,6 +376,7 @@ export default function MaterialControlsWorkflow() {
           templateId: t.id || `ai-${level}-${Math.random().toString(36).substr(2, 9)}`,
           hasControl: null as any,
           controlName: '',
+          customDescription: '',
           preparedBy: t.defaultOwner,
           reviewedBy: '',
           frequency: t.defaultFrequency,
@@ -403,6 +405,7 @@ export default function MaterialControlsWorkflow() {
           templateId: t.id || `ai-${selectedCurrentLevel}-${Math.random().toString(36).substr(2, 9)}`,
           hasControl: null as any,
           controlName: '',
+          customDescription: '',
           preparedBy: t.defaultOwner,
           reviewedBy: '',
           frequency: t.defaultFrequency,
@@ -1430,8 +1433,21 @@ export default function MaterialControlsWorkflow() {
                   />
                 </div>
 
+                {doc.hasControl === 'similar' && (
+                  <div>
+                    <Label>Q2: How is your control different? (Describe your version)</Label>
+                    <Textarea
+                      className="mt-1"
+                      placeholder="Describe how your control differs from the standard control..."
+                      value={doc.customDescription || ''}
+                      onChange={e => updateDoc({ customDescription: e.target.value })}
+                      rows={3}
+                    />
+                  </div>
+                )}
+
                 <div>
-                  <Label>Q2: Who prepares this?</Label>
+                  <Label>Q{doc.hasControl === 'similar' ? '3' : '2'}: Who prepares this?</Label>
                   <Select
                     value={doc.preparedBy}
                     onValueChange={v => updateDoc({ preparedBy: v })}
@@ -1448,7 +1464,7 @@ export default function MaterialControlsWorkflow() {
                 </div>
 
                 <div>
-                  <Label>Q3: Who reviews/uses this?</Label>
+                  <Label>Q{doc.hasControl === 'similar' ? '4' : '3'}: Who reviews/uses this?</Label>
                   <Select
                     value={doc.reviewedBy}
                     onValueChange={v => updateDoc({ reviewedBy: v })}
@@ -1465,7 +1481,7 @@ export default function MaterialControlsWorkflow() {
                 </div>
 
                 <div>
-                  <Label>Q4: How often is it prepared?</Label>
+                  <Label>Q{doc.hasControl === 'similar' ? '5' : '4'}: How often is it prepared?</Label>
                   <Select
                     value={doc.frequency}
                     onValueChange={v => updateDoc({ frequency: v as ControlFrequency })}

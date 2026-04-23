@@ -583,6 +583,7 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
         businessContext: context,
         threatCategory: currentCategoryKey,
         categoryAnswers: categoryAnswers[currentCategoryKey],
+        companyAnalysis: companyAnalysis || undefined,
       });
       const risksWithState = result.risks.map((r: AIRiskCandidate) => ({
         ...r,
