@@ -289,29 +289,7 @@ export default function FraudRiskModule({ onRisksIdentified }: FraudRiskModulePr
                   </div>
                 </div>
                 <h4 className="font-semibold mb-2">{risk.riskTitle}</h4>
-                <p className="text-sm text-muted-foreground mb-3">{risk.riskDescription}</p>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="font-medium">Fraud Scheme:</span>
-                    <p className="text-muted-foreground">{risk.fraudScheme}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium">Red Flags:</span>
-                    <ul className="list-disc list-inside text-muted-foreground">
-                      {risk.redFlags.map((flag, idx) => (
-                        <li key={idx}>{flag}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <span className="font-medium">Suggested Controls:</span>
-                    <ul className="list-disc list-inside text-muted-foreground">
-                      {risk.identifiedControls.map((control, idx) => (
-                        <li key={idx}>{control}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground">{risk.riskDescription}</p>
               </div>
             ))}
           </div>

@@ -283,35 +283,7 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
                   </div>
                 </div>
                 <h4 className="font-semibold mb-2">{risk.riskTitle}</h4>
-                <p className="text-sm text-muted-foreground mb-3">{risk.riskDescription}</p>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="font-medium">Threat Vectors:</span>
-                    <ul className="list-disc list-inside text-muted-foreground">
-                      {risk.threatVector.map((vector, idx) => (
-                        <li key={idx}>{vector}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  {risk.regulatoryRequirements.length > 0 && (
-                    <div>
-                      <span className="font-medium">Regulatory Requirements:</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {risk.regulatoryRequirements.map((req, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs">{req}</Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  <div>
-                    <span className="font-medium">Suggested Controls:</span>
-                    <ul className="list-disc list-inside text-muted-foreground">
-                      {risk.identifiedControls.map((control, idx) => (
-                        <li key={idx}>{control}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground">{risk.riskDescription}</p>
               </div>
             ))}
           </div>

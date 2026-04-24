@@ -264,15 +264,7 @@ export default function FinancialReportingRiskModule({ onRisksIdentified }: Fina
                       <Badge variant="outline">{risk.area.replace('_', ' ')}</Badge>
                     </div>
                     <h4 className="font-semibold mb-1">{risk.riskTitle}</h4>
-                    <p className="text-sm text-muted-foreground mb-3">{risk.riskDescription}</p>
-                    <div className="text-sm">
-                      <span className="font-medium">Suggested Controls:</span>
-                      <ul className="list-disc list-inside mt-1 text-muted-foreground">
-                        {risk.identifiedControls.map((control, idx) => (
-                          <li key={idx}>{control}</li>
-                        ))}
-                      </ul>
-                    </div>
+                    <p className="text-sm text-muted-foreground">{risk.riskDescription}</p>
                   </div>
                   <div className="flex gap-1">
                     <Button
