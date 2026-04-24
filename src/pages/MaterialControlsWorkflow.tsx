@@ -1379,15 +1379,36 @@ export default function MaterialControlsWorkflow() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="border rounded-lg p-4 bg-gray-50">
-              <p className="text-sm text-muted-foreground">{template.description}</p>
-              <div className="flex gap-2 mt-2">
-                <Badge variant="outline">{template.type}</Badge>
-                {template.objectives.map(o => (
-                  <Badge key={o} variant="secondary">{o}</Badge>
-                ))}
+            {doc.hasControl === 'similar' ? (
+              <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
+                <Label className="text-sm font-medium text-blue-900 mb-2 block">
+                  Edit Control Description (describe your similar control):
+                </Label>
+                <Textarea
+                  className="mt-1 bg-white"
+                  placeholder={template.description}
+                  value={doc.customDescription || template.description}
+                  onChange={e => updateDoc({ customDescription: e.target.value })}
+                  rows={4}
+                />
+                <div className="flex gap-2 mt-2">
+                  <Badge variant="outline">{template.type}</Badge>
+                  {template.objectives.map(o => (
+                    <Badge key={o} variant="secondary">{o}</Badge>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="border rounded-lg p-4 bg-gray-50">
+                <p className="text-sm text-muted-foreground">{template.description}</p>
+                <div className="flex gap-2 mt-2">
+                  <Badge variant="outline">{template.type}</Badge>
+                  {template.objectives.map(o => (
+                    <Badge key={o} variant="secondary">{o}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div>
               <Label className="text-sm font-medium">Do you have this control? <span className="text-red-500">*</span></Label>
@@ -1433,21 +1454,8 @@ export default function MaterialControlsWorkflow() {
                   />
                 </div>
 
-                {doc.hasControl === 'similar' && (
-                  <div>
-                    <Label>Q2: How is your control different? (Describe your version)</Label>
-                    <Textarea
-                      className="mt-1"
-                      placeholder="Describe how your control differs from the standard control..."
-                      value={doc.customDescription || ''}
-                      onChange={e => updateDoc({ customDescription: e.target.value })}
-                      rows={3}
-                    />
-                  </div>
-                )}
-
                 <div>
-                  <Label>Q{doc.hasControl === 'similar' ? '3' : '2'}: Who prepares this?</Label>
+                  <Label>Q2: Who prepares this?</Label>
                   <Select
                     value={doc.preparedBy}
                     onValueChange={v => updateDoc({ preparedBy: v })}
@@ -1464,7 +1472,7 @@ export default function MaterialControlsWorkflow() {
                 </div>
 
                 <div>
-                  <Label>Q{doc.hasControl === 'similar' ? '4' : '3'}: Who reviews/uses this?</Label>
+                  <Label>Q3: Who reviews/uses this?</Label>
                   <Select
                     value={doc.reviewedBy}
                     onValueChange={v => updateDoc({ reviewedBy: v })}
@@ -1481,7 +1489,7 @@ export default function MaterialControlsWorkflow() {
                 </div>
 
                 <div>
-                  <Label>Q{doc.hasControl === 'similar' ? '5' : '4'}: How often is it prepared?</Label>
+                  <Label>Q4: How often is it prepared?</Label>
                   <Select
                     value={doc.frequency}
                     onValueChange={v => updateDoc({ frequency: v as ControlFrequency })}
