@@ -31,6 +31,7 @@ import { notificationsRouter } from './routes/notifications';
 import { versionsRouter } from './routes/versions';
 import { auditRouter } from './routes/audit';
 import { controlTestingRouter } from './routes/control-testing';
+import p29FrameworkRouter from './routes/p29-framework';
 import { integrationManager } from './services/integrations/integration-manager';
 
 dotenv.config();
@@ -74,6 +75,7 @@ app.use('/api/gaps', gapsRouter);
 app.use('/api/to-be-controls', toBeControlsRouter);
 app.use('/api/section2', section2Router);
 app.use('/api/effectiveness-criteria-v2', effectivenessCriteriaV2Router);
+app.use('/api/p29-framework', p29FrameworkRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

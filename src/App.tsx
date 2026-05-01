@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
 import EffectivenessCriteria from './pages/EffectivenessCriteriaV2';
 import FrameworkBuilder from './pages/FrameworkBuilder';
+import P29FrameworkDevelopment from './pages/P29FrameworkDevelopment';
 import PrincipalRisks from './pages/PrincipalRisks';
 import MaterialControls from './pages/MaterialControlsWorkflow';
 import RiskControlLibrary from './pages/RiskControlLibrary';
@@ -55,6 +56,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="effectiveness-criteria" element={<EffectivenessCriteria />} />
           <Route path="framework-builder" element={<FrameworkBuilder />} />
+          <Route path="p29-framework" element={<P29FrameworkDevelopment />} />
           <Route path="principal-risks" element={<PrincipalRisks />} />
           <Route path="material-controls" element={<MaterialControls />} />
           <Route path="risk-control-library" element={<RiskControlLibrary />} />

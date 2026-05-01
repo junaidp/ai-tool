@@ -16,6 +16,7 @@ import {
   ClipboardCheck,
   UserCheck,
   Users,
+  FileCheck,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Effectiveness Criteria', href: '/effectiveness-criteria', icon: Target, hidden: true },
   { name: 'Framework Builder', href: '/framework-builder', icon: Building2 },
+  { name: 'Framework Development', href: '/p29-framework', icon: FileCheck },
   { name: 'Risk Identification', href: '/principal-risks', icon: AlertTriangle },
   { name: 'Material Controls', href: '/material-controls', icon: Shield },
   { name: 'Risk-Control Library', href: '/risk-control-library', icon: Library },
