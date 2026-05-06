@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileText, Download, Loader2, Eye } from 'lucide-react';
+import { FileText, Download, Loader2, Eye, BookOpen, FileDown } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { FrameworkRenderer } from '@/components/FrameworkRenderer';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const API_BASE_RAW = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3001';
 const API_BASE = API_BASE_RAW.replace(/\/$/, '');
@@ -447,37 +449,55 @@ export default function P29FrameworkDevelopment() {
 
               {(profile.edition === 'summary' || profile.edition === 'both') && generatedFrameworks.summary && (
                 <TabsContent value="summary" className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">Summary Edition</h3>
-                      <p className="text-sm text-muted-foreground">Board governance document - concise and board-readable</p>
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <BookOpen className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg">Summary Edition</h3>
+                        <p className="text-sm text-muted-foreground">Board governance document - concise and board-readable</p>
+                      </div>
                     </div>
-                    <Button onClick={() => handleDownloadFramework('summary')} variant="outline">
-                      <Download className="mr-2 h-4 w-4" />
-                      Download Markdown
+                    <Button onClick={() => handleDownloadFramework('summary')} className="gap-2">
+                      <FileDown className="h-4 w-4" />
+                      Download
                     </Button>
                   </div>
-                  <div className="border rounded-lg p-6 bg-muted/30 max-h-[600px] overflow-y-auto">
-                    <pre className="whitespace-pre-wrap text-sm font-mono">{generatedFrameworks.summary}</pre>
-                  </div>
+                  <Card className="border-2">
+                    <ScrollArea className="h-[700px]">
+                      <div className="p-8">
+                        <FrameworkRenderer content={generatedFrameworks.summary} />
+                      </div>
+                    </ScrollArea>
+                  </Card>
                 </TabsContent>
               )}
 
               {(profile.edition === 'detailed' || profile.edition === 'both') && generatedFrameworks.detailed && (
                 <TabsContent value="detailed" className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">Detailed Edition</h3>
-                      <p className="text-sm text-muted-foreground">Practitioner reference with explanations and examples</p>
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <BookOpen className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg">Detailed Edition</h3>
+                        <p className="text-sm text-muted-foreground">Practitioner reference with explanations and examples</p>
+                      </div>
                     </div>
-                    <Button onClick={() => handleDownloadFramework('detailed')} variant="outline">
-                      <Download className="mr-2 h-4 w-4" />
-                      Download Markdown
+                    <Button onClick={() => handleDownloadFramework('detailed')} className="gap-2">
+                      <FileDown className="h-4 w-4" />
+                      Download
                     </Button>
                   </div>
-                  <div className="border rounded-lg p-6 bg-muted/30 max-h-[600px] overflow-y-auto">
-                    <pre className="whitespace-pre-wrap text-sm font-mono">{generatedFrameworks.detailed}</pre>
-                  </div>
+                  <Card className="border-2">
+                    <ScrollArea className="h-[700px]">
+                      <div className="p-8">
+                        <FrameworkRenderer content={generatedFrameworks.detailed} />
+                      </div>
+                    </ScrollArea>
+                  </Card>
                 </TabsContent>
               )}
             </Tabs>
