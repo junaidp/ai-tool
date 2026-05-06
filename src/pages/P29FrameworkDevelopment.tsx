@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileText, Download, Loader2 } from 'lucide-react';
+import { FileText, Download, Loader2, Eye } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const API_BASE_RAW = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3001';
 const API_BASE = API_BASE_RAW.replace(/\/$/, '');
@@ -27,14 +28,82 @@ interface ClientProfile {
 }
 
 const INDUSTRIES = [
-  'FMCG / Consumer Goods',
-  'Healthcare / Pharma',
+  'Aerospace & Defence',
+  'Aerospace & Defence / Manufacturing',
+  'Alternative Energy',
+  'Automobiles & Parts',
+  'Banking',
+  'Banking Services',
+  'Banks',
+  'Basic Resources',
+  'Beverages',
+  'Building Materials Distribution',
+  'Chemicals',
+  'Chemicals / Advanced Materials',
+  'Chemicals / Industrials',
+  'Collective Investments',
+  'Construction',
+  'Construction & Materials',
+  'Construction & Materials / Ventilation',
+  'Consumer Digital Services',
+  'Consumer Staples / Manufacturing',
+  'Electricity / Energy',
+  'Electronic & Electrical / Manufacturing',
+  'Electronic & Electrical / Precision Engineering',
+  'Electronic & Electrical Equipment',
+  'Energy',
+  'Engineering & Construction',
+  'Equity Investments',
   'Financial Services',
-  'Construction / Infrastructure',
-  'Technology / SaaS',
+  'Food & Drink Manufacturing',
+  'Food & Drug Retailers',
+  'Food & Drug Retailers / Manufacturing',
+  'Food & Tobacco',
+  'Food Producers',
+  'Food Producers / Ingredients Manufacturing',
+  'Food, Beverage & Tobacco',
+  'Gas, Water & Multiutilities',
+  'General Financial',
+  'General Industrials',
+  'General Industrials / Manufacturing',
+  'Health Care',
+  'Health Care Equipment & Services',
+  'Hedge Funds',
+  'Home Construction',
+  'Industrial Engineering',
+  'Industrial Materials / Manufacturing',
+  'Industrial Metals & Mining',
+  'Industrial Support Services',
+  'Industrial Transportation',
+  'Industrials',
+  'Investment Banking & Brokerage',
+  'Investment Trusts',
+  'Leisure Goods',
+  'Life Insurance',
+  'Media',
+  'Nonlife Insurance',
+  'Oil & Gas Producers',
+  'Oil, Gas & Coal',
+  'Personal Goods',
+  'Personal Products / eCommerce',
+  'Pharmaceuticals & Biotechnology',
+  'Precious Metals & Mining',
+  'Real Estate',
+  'Real Estate Investment & Services',
+  'Real Estate Investment Trusts',
   'Retail',
-  'Manufacturing / Industrial',
-  'Professional Services',
+  'Retailers',
+  'Retailers / Automotive',
+  'Retailers / Building Materials',
+  'Retailers / Food Service',
+  'Software & Computer Services',
+  'Support Services',
+  'Support Services / Facilities Management',
+  'Support Services / Financial Markets',
+  'Support Services / Fleet Management',
+  'Technology',
+  'Telecommunications',
+  'Travel & Leisure',
 ];
 
 const ORGANISATION_TYPES = [
@@ -167,10 +236,10 @@ export default function P29FrameworkDevelopment() {
     const content = type === 'summary' ? generatedFrameworks?.summary : generatedFrameworks?.detailed;
     if (!content) return;
 
-    const blob = new Blob([content], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    const blob = new Blob([content], { type: 'text/markdown' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `P29-Framework-${type}-${profile.organisationName.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.docx`;
+    link.download = `P29-Framework-${type}-${profile.organisationName.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.md`;
     link.click();
   };
 
@@ -362,35 +431,56 @@ export default function P29FrameworkDevelopment() {
           <CardHeader>
             <CardTitle>Generated Frameworks</CardTitle>
             <CardDescription>
-              Download your customized P29 framework documents
+              View and download your customized P29 framework documents
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {(profile.edition === 'summary' || profile.edition === 'both') && generatedFrameworks.summary && (
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <h3 className="font-semibold">Summary Edition</h3>
-                  <p className="text-sm text-muted-foreground">Board governance document - concise and board-readable</p>
-                </div>
-                <Button onClick={() => handleDownloadFramework('summary')} variant="outline">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download
-                </Button>
-              </div>
-            )}
+          <CardContent className="space-y-6">
+            <Tabs defaultValue={(profile.edition === 'summary' || profile.edition === 'both') ? 'summary' : 'detailed'} className="w-full">
+              <TabsList className="grid w-full" style={{ gridTemplateColumns: profile.edition === 'both' ? '1fr 1fr' : '1fr' }}>
+                {(profile.edition === 'summary' || profile.edition === 'both') && generatedFrameworks.summary && (
+                  <TabsTrigger value="summary">Summary Edition</TabsTrigger>
+                )}
+                {(profile.edition === 'detailed' || profile.edition === 'both') && generatedFrameworks.detailed && (
+                  <TabsTrigger value="detailed">Detailed Edition</TabsTrigger>
+                )}
+              </TabsList>
 
-            {(profile.edition === 'detailed' || profile.edition === 'both') && generatedFrameworks.detailed && (
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <h3 className="font-semibold">Detailed Edition</h3>
-                  <p className="text-sm text-muted-foreground">Practitioner reference with explanations and examples</p>
-                </div>
-                <Button onClick={() => handleDownloadFramework('detailed')} variant="outline">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download
-                </Button>
-              </div>
-            )}
+              {(profile.edition === 'summary' || profile.edition === 'both') && generatedFrameworks.summary && (
+                <TabsContent value="summary" className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold">Summary Edition</h3>
+                      <p className="text-sm text-muted-foreground">Board governance document - concise and board-readable</p>
+                    </div>
+                    <Button onClick={() => handleDownloadFramework('summary')} variant="outline">
+                      <Download className="mr-2 h-4 w-4" />
+                      Download Markdown
+                    </Button>
+                  </div>
+                  <div className="border rounded-lg p-6 bg-muted/30 max-h-[600px] overflow-y-auto">
+                    <pre className="whitespace-pre-wrap text-sm font-mono">{generatedFrameworks.summary}</pre>
+                  </div>
+                </TabsContent>
+              )}
+
+              {(profile.edition === 'detailed' || profile.edition === 'both') && generatedFrameworks.detailed && (
+                <TabsContent value="detailed" className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold">Detailed Edition</h3>
+                      <p className="text-sm text-muted-foreground">Practitioner reference with explanations and examples</p>
+                    </div>
+                    <Button onClick={() => handleDownloadFramework('detailed')} variant="outline">
+                      <Download className="mr-2 h-4 w-4" />
+                      Download Markdown
+                    </Button>
+                  </div>
+                  <div className="border rounded-lg p-6 bg-muted/30 max-h-[600px] overflow-y-auto">
+                    <pre className="whitespace-pre-wrap text-sm font-mono">{generatedFrameworks.detailed}</pre>
+                  </div>
+                </TabsContent>
+              )}
+            </Tabs>
           </CardContent>
         </Card>
       )}
