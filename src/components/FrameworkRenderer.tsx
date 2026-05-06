@@ -167,21 +167,19 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
     if (execSummary && execSummary.length > 0) {
       elements.push(
         <div key="exec-summary" className="mb-8">
-          <div className="bg-[#1e5631] text-white p-4 border-b-2 border-[#1e5631]">
-            <h2 className="text-2xl font-bold">Executive Summary</h2>
-            <p className="text-sm italic mt-1 text-green-100">
-              For the board — what this framework is and what it requires
-            </p>
-          </div>
-          <div className="border border-gray-300 overflow-hidden">
-            <table className="w-full">
+          <h2 className="text-3xl font-bold text-[#2d7a4a] mb-2">Executive Summary</h2>
+          <p className="text-base italic text-[#2d7a4a] mb-4 border-b-2 border-[#2d7a4a] pb-2">
+            For the board — what this framework is and what it requires
+          </p>
+          <div className="border-t-8 border-[#2d7a4a] mb-0">
+            <table className="w-full border-collapse">
               <tbody>
                 {execSummary.map((item, idx) => (
-                  <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                    <td className="px-6 py-4 font-semibold text-sm align-top w-1/4 border-r border-gray-300">
+                  <tr key={idx} className="border-b border-gray-300 last:border-b-0">
+                    <td className="px-4 py-4 font-normal text-sm align-top w-1/5 bg-[#d4e8d4]">
                       {item.title}
                     </td>
-                    <td className="px-6 py-4 text-sm leading-relaxed">
+                    <td className="px-6 py-4 text-sm leading-relaxed bg-white">
                       {renderFormattedText(item.content)}
                     </td>
                   </tr>
@@ -196,20 +194,18 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
     // Render metadata section - "Internal Control Framework" header and boxes
     if (Object.keys(metadata).length > 0) {
       elements.push(
-        <div key="metadata" className="mb-8">
-          <div className="bg-[#1e5631] text-white p-4 border-b-2 border-[#1e5631] mb-0">
-            <h2 className="text-2xl font-bold">Internal Control Framework</h2>
-            <p className="text-sm italic mt-1 text-green-100">
-              Fast-Moving Consumer Goods Organisation — Summary Edition
-            </p>
-          </div>
+        <div key="metadata" className="mb-8 mt-12">
+          <h2 className="text-3xl font-bold text-[#2d7a4a] mb-2">Internal Control Framework</h2>
+          <p className="text-base italic text-[#2d7a4a] mb-4 border-b-2 border-[#2d7a4a] pb-2">
+            Fast-Moving Consumer Goods Organisation — Summary Edition
+          </p>
           <div className="space-y-0">
             {Object.entries(metadata).map(([key, value], idx) => (
               <div key={key} className="flex border-b border-gray-300 last:border-b-0">
-                <div className="bg-[#2d7a4a] text-white px-6 py-4 font-semibold text-sm w-1/4 flex items-center">
+                <div className="bg-[#2d7a4a] text-white px-4 py-4 font-semibold text-sm w-1/5 flex items-center">
                   {key}
                 </div>
-                <div className={`px-6 py-4 text-sm leading-relaxed flex-1 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                <div className="px-6 py-4 text-sm leading-relaxed flex-1 bg-[#e8f5e8]">
                   {renderFormattedText(value)}
                 </div>
               </div>
