@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { apiService } from '@/services/api';
 import type { PrincipalRisk, AIRiskCandidate, FinancialReportingRisk, FraudRisk, CyberSecurityRisk } from '@/types';
-import { Plus, AlertTriangle, Pencil, Trash2, TrendingDown, DollarSign, Target, Building2, Sparkles, FileText, ShieldAlert, Lock, Users } from 'lucide-react';
+import { Plus, AlertTriangle, Pencil, Trash2, TrendingDown, DollarSign, Target, Building2, Sparkles, FileText, ShieldAlert, Lock, Users, Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import AIRiskWizard from '@/components/AIRiskWizard';
 import FinancialReportingRiskModule from '@/components/FinancialReportingRiskModule';
@@ -30,6 +30,7 @@ export default function RiskIdentificationPage() {
   const [showReconfigureDialog, setShowReconfigureDialog] = useState(false);
   const [isHumanInLoopOpen, setIsHumanInLoopOpen] = useState(false);
   const [humanInLoopContext, setHumanInLoopContext] = useState('');
+  const [isDeletingAllRisks, setIsDeletingAllRisks] = useState(false);
   
   const [formData, setFormData] = useState({
     riskTitle: '',
@@ -480,23 +481,37 @@ export default function RiskIdentificationPage() {
                     </p>
                     <Button 
                       variant="destructive"
+                      disabled={isDeletingAllRisks}
                       onClick={async () => {
                         if (confirm(`Are you sure you want to delete all ${risks.length} existing principal risks? This action cannot be undone.`)) {
+                          setIsDeletingAllRisks(true);
                           try {
+                            console.log(`Deleting ${risks.length} risks...`);
                             for (const risk of risks) {
+                              console.log(`Deleting risk ${risk.id}...`);
                               await apiService.deletePrincipalRisk(risk.id);
                             }
+                            console.log('All risks deleted, reloading...');
                             await loadRisks();
                             setShowReconfigureDialog(false);
                             setShowAIWizard(true);
                           } catch (error) {
                             console.error('Failed to delete risks:', error);
                             alert('Failed to delete some risks. Please try again.');
+                          } finally {
+                            setIsDeletingAllRisks(false);
                           }
                         }
                       }}
                     >
-                      Clear All & Restart Wizard
+                      {isDeletingAllRisks ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Deleting {risks.length} risks...
+                        </>
+                      ) : (
+                        'Clear All & Restart Wizard'
+                      )}
                     </Button>
                   </div>
                 </div>

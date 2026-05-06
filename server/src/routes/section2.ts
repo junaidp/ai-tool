@@ -188,6 +188,53 @@ section2Router.get('/controls', async (req, res) => {
   }
 });
 
+// Update a Section 2 control
+section2Router.put('/controls/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('=== Section2 Control Update Request ===');
+    console.log('Control ID:', id);
+    console.log('Update data:', JSON.stringify(req.body, null, 2));
+
+    const updateData: any = {};
+
+    // Only update fields that are provided
+    if (req.body.status !== undefined) updateData.status = req.body.status;
+    if (req.body.implementedDate !== undefined) updateData.implementedAt = req.body.implementedDate;
+    if (req.body.title !== undefined) updateData.title = req.body.title;
+    if (req.body.description !== undefined) updateData.description = req.body.description;
+    if (req.body.owner !== undefined) updateData.owner = req.body.owner;
+    if (req.body.reviewer !== undefined) updateData.reviewer = req.body.reviewer;
+    if (req.body.frequency !== undefined) updateData.frequency = req.body.frequency;
+    if (req.body.evidence !== undefined) updateData.evidence = req.body.evidence;
+    if (req.body.evidenceLocation !== undefined) updateData.evidenceLocation = req.body.evidenceLocation;
+    if (req.body.maturityLevel !== undefined) updateData.maturityLevel = req.body.maturityLevel;
+
+    console.log('Final update data:', JSON.stringify(updateData, null, 2));
+
+    const control = await prisma.section2Control.update({
+      where: { id },
+      data: updateData,
+    });
+
+    console.log('Control updated successfully:', control.id);
+
+    res.json({
+      ...control,
+      objectives: JSON.parse(control.objectives),
+    });
+  } catch (error: any) {
+    console.error('=== ERROR updating Section 2 control ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    res.status(500).json({ 
+      error: 'Failed to update control',
+      details: error.message 
+    });
+  }
+});
+
 // Save gap analysis results
 section2Router.post('/gap-analysis', async (req, res) => {
   try {
