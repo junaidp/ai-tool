@@ -10,23 +10,46 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
   
   // Parse Executive Summary section
   const parseExecutiveSummary = (text: string) => {
-    const execSummaryMatch = text.match(/Executive Summary\s*\n([\s\S]*?)(?=\n#|$)/i);
+    const execSummaryMatch = text.match(/Executive Summary\s*\nFor the board[^\n]*\n\n([\s\S]*?)(?=\n\n(?:Internal Control Framework|Section \d|$))/i);
     if (!execSummaryMatch) return null;
 
     const summaryText = execSummaryMatch[1];
     const items: { title: string; content: string }[] = [];
     
-    // Match patterns like "What this framework is" followed by content
-    const itemMatches = summaryText.matchAll(/^([A-Z][^\n]+)\n((?:(?!^[A-Z][^\n]+\n)[^\n]+\n?)*)/gm);
+    // Split by lines and parse key-value pairs
+    const lines = summaryText.split('\n');
+    let currentTitle = '';
+    let currentContent: string[] = [];
     
-    for (const match of itemMatches) {
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      
+      // Check if this is a title line (starts with capital, ends without period, and is relatively short)
+      if (trimmed.match(/^[A-Z][^.]*$/) && trimmed.length < 80 && !trimmed.match(/^(The|A|An|This|It|Level|Immediate|Principal|Going)/)) {
+        // Save previous item if exists
+        if (currentTitle && currentContent.length > 0) {
+          items.push({
+            title: currentTitle,
+            content: currentContent.join(' ').trim()
+          });
+        }
+        currentTitle = trimmed;
+        currentContent = [];
+      } else {
+        currentContent.push(trimmed);
+      }
+    }
+    
+    // Save last item
+    if (currentTitle && currentContent.length > 0) {
       items.push({
-        title: match[1].trim(),
-        content: match[2].trim()
+        title: currentTitle,
+        content: currentContent.join(' ').trim()
       });
     }
 
-    return items;
+    return items.length > 0 ? items : null;
   };
 
   // Parse document metadata
@@ -144,18 +167,18 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
     if (execSummary && execSummary.length > 0) {
       elements.push(
         <div key="exec-summary" className="mb-8">
-          <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-4 rounded-t-lg border-t border-x">
-            <h2 className="text-2xl font-bold text-primary">Executive Summary</h2>
-            <p className="text-sm text-muted-foreground italic mt-1">
+          <div className="bg-[#1e5631] text-white p-4 border-b-2 border-[#1e5631]">
+            <h2 className="text-2xl font-bold">Executive Summary</h2>
+            <p className="text-sm italic mt-1 text-green-100">
               For the board — what this framework is and what it requires
             </p>
           </div>
-          <div className="border border-border rounded-b-lg overflow-hidden">
+          <div className="border border-gray-300 overflow-hidden">
             <table className="w-full">
               <tbody>
                 {execSummary.map((item, idx) => (
-                  <tr key={idx} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
-                    <td className="px-6 py-4 font-semibold text-sm align-top w-1/4 border-r border-border">
+                  <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    <td className="px-6 py-4 font-semibold text-sm align-top w-1/4 border-r border-gray-300">
                       {item.title}
                     </td>
                     <td className="px-6 py-4 text-sm leading-relaxed">
@@ -170,16 +193,28 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
       );
     }
 
-    // Render metadata section
+    // Render metadata section - "Internal Control Framework" header and boxes
     if (Object.keys(metadata).length > 0) {
       elements.push(
-        <div key="metadata" className="mb-8 grid grid-cols-1 gap-4">
-          {Object.entries(metadata).map(([key, value]) => (
-            <Card key={key} className="p-4 bg-muted/30">
-              <h3 className="font-semibold text-sm text-primary mb-2">{key}</h3>
-              <p className="text-sm leading-relaxed">{renderFormattedText(value)}</p>
-            </Card>
-          ))}
+        <div key="metadata" className="mb-8">
+          <div className="bg-[#1e5631] text-white p-4 border-b-2 border-[#1e5631] mb-0">
+            <h2 className="text-2xl font-bold">Internal Control Framework</h2>
+            <p className="text-sm italic mt-1 text-green-100">
+              Fast-Moving Consumer Goods Organisation — Summary Edition
+            </p>
+          </div>
+          <div className="space-y-0">
+            {Object.entries(metadata).map(([key, value], idx) => (
+              <div key={key} className="flex border-b border-gray-300 last:border-b-0">
+                <div className="bg-[#2d7a4a] text-white px-6 py-4 font-semibold text-sm w-1/4 flex items-center">
+                  {key}
+                </div>
+                <div className={`px-6 py-4 text-sm leading-relaxed flex-1 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                  {renderFormattedText(value)}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       );
     }
@@ -199,10 +234,10 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
         if (sectionContent.length > 0) {
           elements.push(
             <div key={currentSectionTitle} className="mb-8">
-              <div className="bg-primary/10 p-4 rounded-t-lg border-t border-x border-primary/20">
-                <h2 className="text-2xl font-bold text-primary">{currentSectionTitle}</h2>
+              <div className="bg-[#1e5631] text-white p-4 border-b-2 border-[#1e5631]">
+                <h2 className="text-2xl font-bold">{currentSectionTitle}</h2>
               </div>
-              <div className="border border-primary/20 rounded-b-lg p-6 bg-card">
+              <div className="border border-gray-300 p-6 bg-white">
                 {sectionContent}
               </div>
             </div>
@@ -219,7 +254,7 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
       // Subsection headers (###)
       if (line.startsWith('### ')) {
         sectionContent.push(
-          <h3 key={`h3-${i}`} className="text-xl font-semibold mt-6 mb-3 text-primary/90">
+          <h3 key={`h3-${i}`} className="text-xl font-semibold mt-6 mb-3 text-[#1e5631]">
             {line.substring(4)}
           </h3>
         );
@@ -230,7 +265,7 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
       // Subheadings (####)
       if (line.startsWith('#### ')) {
         sectionContent.push(
-          <h4 key={`h4-${i}`} className="text-lg font-semibold mt-4 mb-2 text-primary/80">
+          <h4 key={`h4-${i}`} className="text-lg font-semibold mt-4 mb-2 text-[#2d7a4a]">
             {line.substring(5)}
           </h4>
         );
@@ -296,10 +331,10 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
     if (sectionContent.length > 0) {
       elements.push(
         <div key={currentSectionTitle} className="mb-8">
-          <div className="bg-primary/10 p-4 rounded-t-lg border-t border-x border-primary/20">
-            <h2 className="text-2xl font-bold text-primary">{currentSectionTitle}</h2>
+          <div className="bg-[#1e5631] text-white p-4 border-b-2 border-[#1e5631]">
+            <h2 className="text-2xl font-bold">{currentSectionTitle}</h2>
           </div>
-          <div className="border border-primary/20 rounded-b-lg p-6 bg-card">
+          <div className="border border-gray-300 p-6 bg-white">
             {sectionContent}
           </div>
         </div>
