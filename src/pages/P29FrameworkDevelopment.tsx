@@ -9,6 +9,7 @@ import { FileText, Download, Loader2, Eye, BookOpen, FileDown } from 'lucide-rea
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FrameworkRenderer } from '@/components/FrameworkRenderer';
+import { DetailedFrameworkRenderer } from '@/components/DetailedFrameworkRenderer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const API_BASE_RAW = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3001';
@@ -494,7 +495,7 @@ export default function P29FrameworkDevelopment() {
                   <Card className="border-2">
                     <ScrollArea className="h-[700px]">
                       <div className="p-8">
-                        <FrameworkRenderer content={generatedFrameworks.detailed} />
+                        <DetailedFrameworkRenderer content={generatedFrameworks.detailed} />
                       </div>
                     </ScrollArea>
                   </Card>
