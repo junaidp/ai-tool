@@ -1,6 +1,4 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 
 interface FrameworkRendererProps {
   content: string;
@@ -8,7 +6,13 @@ interface FrameworkRendererProps {
 
 export function FrameworkRenderer({ content }: FrameworkRendererProps) {
   
-  // Parse Executive Summary section
+  const renderFormattedText = (text: string) => {
+    const parts = text.split('**');
+    return parts.map((part, idx) => 
+      idx % 2 === 1 ? <strong key={idx}>{part}</strong> : part
+    );
+  };
+
   const parseExecutiveSummary = (text: string) => {
     const execSummaryMatch = text.match(/Executive Summary\s*\nFor the board[^\n]*\n\n([\s\S]*?)(?=\n\n(?:Internal Control Framework|Section \d|$))/i);
     if (!execSummaryMatch) return null;
@@ -16,7 +20,6 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
     const summaryText = execSummaryMatch[1];
     const items: { title: string; content: string }[] = [];
     
-    // Split by lines and parse key-value pairs
     const lines = summaryText.split('\n');
     let currentTitle = '';
     let currentContent: string[] = [];
@@ -25,9 +28,7 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
       const trimmed = line.trim();
       if (!trimmed) continue;
       
-      // Check if this is a title line (starts with capital, ends without period, and is relatively short)
       if (trimmed.match(/^[A-Z][^.]*$/) && trimmed.length < 80 && !trimmed.match(/^(The|A|An|This|It|Level|Immediate|Principal|Going)/)) {
-        // Save previous item if exists
         if (currentTitle && currentContent.length > 0) {
           items.push({
             title: currentTitle,
@@ -41,7 +42,6 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
       }
     }
     
-    // Save last item
     if (currentTitle && currentContent.length > 0) {
       items.push({
         title: currentTitle,
@@ -52,7 +52,6 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
     return items.length > 0 ? items : null;
   };
 
-  // Parse document metadata
   const parseMetadata = (text: string) => {
     const metadata: { [key: string]: string } = {};
     
@@ -74,15 +73,6 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
     return metadata;
   };
 
-  // Render formatted text with bold support
-  const renderFormattedText = (text: string) => {
-    const parts = text.split('**');
-    return parts.map((part, idx) => 
-      idx % 2 === 1 ? <strong key={idx} className="font-semibold">{part}</strong> : part
-    );
-  };
-
-  // Parse and render tables
   const renderTable = (lines: string[], startIdx: number) => {
     const tableLines: string[] = [];
     let idx = startIdx;
@@ -97,7 +87,7 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
     if (tableLines.length === 0) return { element: null, nextIdx: startIdx };
 
     const rows = tableLines
-      .filter(line => !line.match(/^\|[\s:-]+\|/)) // Skip separator rows
+      .filter(line => !line.match(/^\|[\s:-]+\|/))
       .map(line => 
         line.split('|')
           .map(cell => cell.trim())
@@ -107,182 +97,134 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
     if (rows.length === 0) return { element: null, nextIdx: idx };
 
     const element = (
-      <div className="overflow-x-auto my-6">
-        <table className="w-full border-collapse border border-border">
-          <thead>
-            <tr className="bg-primary/5">
-              {rows[0].map((header, hIdx) => (
-                <th key={hIdx} className="border border-border px-4 py-3 text-left font-semibold text-sm">
-                  {renderFormattedText(header)}
-                </th>
+      <table className="std-table">
+        <thead>
+          <tr>
+            {rows[0].map((header, hIdx) => (
+              <th key={hIdx}>{renderFormattedText(header)}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.slice(1).map((row, rIdx) => (
+            <tr key={rIdx}>
+              {row.map((cell, cIdx) => (
+                <td key={cIdx}>{renderFormattedText(cell)}</td>
               ))}
             </tr>
-          </thead>
-          <tbody>
-            {rows.slice(1).map((row, rIdx) => (
-              <tr key={rIdx} className="hover:bg-muted/30">
-                {row.map((cell, cIdx) => (
-                  <td key={cIdx} className="border border-border px-4 py-3 text-sm align-top">
-                    {renderFormattedText(cell)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
     );
 
     return { element, nextIdx: idx };
   };
 
-  // Main rendering function
   const renderContent = () => {
     const elements: React.ReactNode[] = [];
     const lines = content.split('\n');
     
-    // Extract title
     const titleMatch = content.match(/^#\s+(.+)/m);
     const title = titleMatch ? titleMatch[1] : '';
     
-    // Parse Executive Summary
     const execSummary = parseExecutiveSummary(content);
-    
-    // Parse metadata
     const metadata = parseMetadata(content);
 
-    // Render title
-    if (title) {
-      elements.push(
-        <div key="title" className="mb-8">
-          <h1 className="text-4xl font-bold text-center text-primary mb-2">
-            {title}
-          </h1>
-          <Separator className="mt-4" />
-        </div>
-      );
-    }
-
-    // Render Executive Summary as special table
+    // Executive Summary
     if (execSummary && execSummary.length > 0) {
       elements.push(
-        <div key="exec-summary" className="mb-8">
-          <h2 className="text-3xl font-bold text-[#2d7a4a] mb-2">Executive Summary</h2>
-          <p className="text-base italic text-[#2d7a4a] mb-4 border-b-2 border-[#2d7a4a] pb-2">
-            For the board — what this framework is and what it requires
-          </p>
-          <div className="border-t-8 border-[#2d7a4a] mb-0">
-            <table className="w-full border-collapse">
-              <tbody>
-                {execSummary.map((item, idx) => (
-                  <tr key={idx} className="border-b border-gray-300 last:border-b-0">
-                    <td className="px-4 py-4 font-normal text-sm align-top w-1/5 bg-[#d4e8d4]">
-                      {item.title}
-                    </td>
-                    <td className="px-6 py-4 text-sm leading-relaxed bg-white">
-                      {renderFormattedText(item.content)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div key="exec-summary">
+          <h1 className="exec-title">Executive Summary</h1>
+          <p className="exec-subtitle">For the board — what this framework is and what it requires</p>
+          <table className="exec-table">
+            <tbody>
+              <tr><td colSpan={2}>&nbsp;</td></tr>
+              {execSummary.map((item, idx) => (
+                <tr key={idx}>
+                  <td>{item.title}</td>
+                  <td>{renderFormattedText(item.content)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       );
     }
 
-    // Render metadata section - "Internal Control Framework" header and boxes
+    // Main Title Section
     if (Object.keys(metadata).length > 0) {
       elements.push(
-        <div key="metadata" className="mb-8 mt-12">
-          <h2 className="text-3xl font-bold text-[#2d7a4a] mb-2">Internal Control Framework</h2>
-          <p className="text-base italic text-[#2d7a4a] mb-4 border-b-2 border-[#2d7a4a] pb-2">
-            Fast-Moving Consumer Goods Organisation — Summary Edition
-          </p>
-          <div className="space-y-0">
-            {Object.entries(metadata).map(([key, value], idx) => (
-              <div key={key} className="flex border-b border-gray-300 last:border-b-0">
-                <div className="bg-[#2d7a4a] text-white px-4 py-4 font-semibold text-sm w-1/5 flex items-center">
-                  {key}
-                </div>
-                <div className="px-6 py-4 text-sm leading-relaxed flex-1 bg-[#e8f5e8]">
-                  {renderFormattedText(value)}
-                </div>
-              </div>
-            ))}
-          </div>
+        <div key="metadata" className="main-title-section">
+          <h1 className="main-title">Internal Control Framework</h1>
+          <p className="main-subtitle">Fast-Moving Consumer Goods Organisation — Summary Edition</p>
+          <table className="info-card-table">
+            <tbody>
+              {Object.entries(metadata).map(([key, value]) => (
+                <tr key={key}>
+                  <td className="card-label" dangerouslySetInnerHTML={{ __html: key.replace(' ', '<br>') }} />
+                  <td className="card-body">{renderFormattedText(value)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       );
     }
 
-    // Render main content sections
+    // Main content sections
     let i = 0;
-    let inSection = false;
     let sectionContent: React.ReactNode[] = [];
     let currentSectionTitle = '';
 
     while (i < lines.length) {
       const line = lines[i];
 
-      // Section headers (## )
       if (line.match(/^##\s+Section\s+\d+/i)) {
-        // Flush previous section
         if (sectionContent.length > 0) {
           elements.push(
-            <div key={currentSectionTitle} className="mb-8">
-              <div className="bg-[#1e5631] text-white p-4 border-b-2 border-[#1e5631]">
-                <h2 className="text-2xl font-bold">{currentSectionTitle}</h2>
-              </div>
-              <div className="border border-gray-300 p-6 bg-white">
-                {sectionContent}
-              </div>
+            <div key={currentSectionTitle}>
+              <div className="section-header">{currentSectionTitle}</div>
+              {sectionContent}
             </div>
           );
           sectionContent = [];
         }
 
         currentSectionTitle = line.replace(/^##\s+/, '');
-        inSection = true;
         i++;
         continue;
       }
 
-      // Subsection headers (###)
       if (line.startsWith('### ')) {
         sectionContent.push(
-          <h3 key={`h3-${i}`} className="text-xl font-semibold mt-6 mb-3 text-[#1e5631]">
+          <h2 key={`h3-${i}`} className="subsection-title">
             {line.substring(4)}
+          </h2>
+        );
+        i++;
+        continue;
+      }
+
+      if (line.startsWith('#### ')) {
+        sectionContent.push(
+          <h3 key={`h4-${i}`} className="component-title">
+            {line.substring(5)}
           </h3>
         );
         i++;
         continue;
       }
 
-      // Subheadings (####)
-      if (line.startsWith('#### ')) {
+      if (line.match(/^(R\d+\.\d+|CE\d+|P\d+)\s*—/)) {
         sectionContent.push(
-          <h4 key={`h4-${i}`} className="text-lg font-semibold mt-4 mb-2 text-[#2d7a4a]">
-            {line.substring(5)}
-          </h4>
-        );
-        i++;
-        continue;
-      }
-
-      // Component headers (R1.1, CE1, P1, etc.)
-      if (line.match(/^(R\d+\.\d+|CE\d+|P\d+)\s*$/)) {
-        sectionContent.push(
-          <div key={`component-${i}`} className="mt-6 mb-2">
-            <span className="inline-block bg-primary text-primary-foreground px-3 py-1 rounded font-semibold text-sm">
-              {line.trim()}
-            </span>
+          <div key={`req-${i}`} className="req-block">
+            <div className="req-id">{line.trim()}</div>
           </div>
         );
         i++;
         continue;
       }
 
-      // Tables
       if (line.trim().startsWith('|')) {
         const { element, nextIdx } = renderTable(lines, i);
         if (element) {
@@ -292,7 +234,6 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
         continue;
       }
 
-      // Lists
       if (line.match(/^\s*[-*]\s+/)) {
         const listItems: string[] = [];
         while (i < lines.length && lines[i].match(/^\s*[-*]\s+/)) {
@@ -300,21 +241,18 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
           i++;
         }
         sectionContent.push(
-          <ul key={`list-${i}`} className="list-disc ml-6 space-y-2 my-4">
+          <ul key={`list-${i}`} style={{ margin: '10px 0 16px 24px', fontSize: '13.5px', lineHeight: '1.8' }}>
             {listItems.map((item, idx) => (
-              <li key={idx} className="text-sm leading-relaxed">
-                {renderFormattedText(item)}
-              </li>
+              <li key={idx}>{renderFormattedText(item)}</li>
             ))}
           </ul>
         );
         continue;
       }
 
-      // Regular paragraphs
       if (line.trim() && !line.startsWith('#')) {
         sectionContent.push(
-          <p key={`p-${i}`} className="text-sm leading-relaxed my-3">
+          <p key={`p-${i}`} className="body-text">
             {renderFormattedText(line)}
           </p>
         );
@@ -323,16 +261,11 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
       i++;
     }
 
-    // Flush last section
     if (sectionContent.length > 0) {
       elements.push(
-        <div key={currentSectionTitle} className="mb-8">
-          <div className="bg-[#1e5631] text-white p-4 border-b-2 border-[#1e5631]">
-            <h2 className="text-2xl font-bold">{currentSectionTitle}</h2>
-          </div>
-          <div className="border border-gray-300 p-6 bg-white">
-            {sectionContent}
-          </div>
+        <div key={currentSectionTitle}>
+          <div className="section-header">{currentSectionTitle}</div>
+          {sectionContent}
         </div>
       );
     }
@@ -341,8 +274,210 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
   };
 
   return (
-    <div className="max-w-none">
-      {renderContent()}
-    </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap');
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+          --dark-green: #1e4d2b;
+          --mid-green: #2d6a3f;
+          --light-green-bg: #e8f2eb;
+          --lighter-green-bg: #f2f8f3;
+          --gold: #b8860b;
+          --gold-bg: #fdf3d0;
+          --gold-light-bg: #fef9e7;
+          --text-dark: #1a1a1a;
+          --text-body: #2c2c2c;
+          --border-green: #4a8c5c;
+          --border-light: #c8dece;
+          --white: #ffffff;
+          --page-width: 900px;
+        }
+
+        .exec-title {
+          font-family: 'Source Sans 3', sans-serif;
+          font-size: 26px;
+          font-weight: 700;
+          color: var(--dark-green);
+          margin-bottom: 4px;
+        }
+
+        .exec-subtitle {
+          font-style: italic;
+          color: var(--mid-green);
+          font-size: 13.5px;
+          margin-bottom: 18px;
+          font-family: 'Source Sans 3', sans-serif;
+        }
+
+        .exec-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 48px;
+        }
+
+        .exec-table tr:nth-child(odd) td { background: var(--lighter-green-bg); }
+        .exec-table tr:nth-child(even) td { background: var(--light-green-bg); }
+
+        .exec-table tr:first-child td {
+          background: var(--dark-green);
+          color: var(--white);
+          font-weight: 600;
+          font-size: 13px;
+          padding: 10px 14px;
+          border: none;
+        }
+
+        .exec-table td {
+          padding: 11px 14px;
+          border: none;
+          vertical-align: top;
+          font-size: 13.5px;
+        }
+
+        .exec-table td:first-child {
+          width: 160px;
+          font-weight: 600;
+          color: var(--text-dark);
+          white-space: nowrap;
+        }
+
+        .main-title-section {
+          margin-bottom: 36px;
+        }
+
+        .main-title {
+          font-family: 'Source Sans 3', sans-serif;
+          font-size: 36px;
+          font-weight: 700;
+          color: var(--dark-green);
+          margin-bottom: 2px;
+        }
+
+        .main-subtitle {
+          font-style: italic;
+          color: var(--mid-green);
+          font-size: 17px;
+          margin-bottom: 24px;
+          border-bottom: 2px solid var(--border-green);
+          padding-bottom: 10px;
+        }
+
+        .info-card-table {
+          width: 100%;
+          border-collapse: separate;
+          border-spacing: 0 10px;
+          margin-bottom: 8px;
+        }
+
+        .info-card-table td {
+          padding: 12px 16px;
+          vertical-align: top;
+          font-size: 13.5px;
+        }
+
+        .info-card-table td.card-label {
+          background: var(--dark-green);
+          color: var(--white);
+          font-weight: 700;
+          font-size: 13px;
+          width: 120px;
+          text-align: center;
+          vertical-align: middle;
+        }
+
+        .info-card-table td.card-body {
+          background: var(--light-green-bg);
+          color: var(--text-body);
+        }
+
+        .section-header {
+          background: var(--dark-green);
+          color: var(--white);
+          font-size: 18px;
+          font-weight: 700;
+          padding: 12px 18px;
+          margin: 40px 0 24px 0;
+          font-family: 'Source Sans 3', sans-serif;
+        }
+
+        .subsection-title {
+          font-size: 16px;
+          font-weight: 700;
+          color: var(--dark-green);
+          border-bottom: 1.5px solid var(--border-green);
+          padding-bottom: 5px;
+          margin: 28px 0 12px 0;
+          font-family: 'Source Sans 3', sans-serif;
+        }
+
+        .body-text {
+          font-size: 13.5px;
+          line-height: 1.65;
+          color: var(--text-body);
+          margin-bottom: 14px;
+        }
+
+        .std-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 16px 0;
+          font-size: 13.5px;
+        }
+
+        .std-table th {
+          background: var(--dark-green);
+          color: var(--white);
+          padding: 9px 12px;
+          text-align: left;
+          font-weight: 600;
+          font-size: 13px;
+        }
+
+        .std-table td {
+          padding: 9px 12px;
+          border-bottom: 1px solid var(--border-light);
+          vertical-align: top;
+        }
+
+        .std-table tr:nth-child(even) td { background: var(--lighter-green-bg); }
+        .std-table tr:nth-child(odd) td  { background: var(--white); }
+
+        .std-table td:first-child { font-weight: 600; }
+
+        .req-block {
+          margin: 18px 0;
+        }
+
+        .req-id {
+          font-weight: 700;
+          color: var(--dark-green);
+          font-size: 13.5px;
+          margin-bottom: 4px;
+        }
+
+        .component-title {
+          font-size: 15px;
+          font-weight: 700;
+          color: var(--dark-green);
+          margin: 28px 0 10px 0;
+          font-family: 'Source Sans 3', sans-serif;
+        }
+      `}</style>
+      <div style={{ 
+        fontFamily: "'Source Sans 3', 'Gill Sans', Calibri, sans-serif",
+        fontSize: '14px',
+        lineHeight: '1.6',
+        color: 'var(--text-body)',
+        maxWidth: '900px',
+        margin: '0 auto',
+        background: '#ffffff',
+        padding: '48px 56px'
+      }}>
+        {renderContent()}
+      </div>
+    </>
   );
 }
