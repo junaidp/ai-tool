@@ -175,116 +175,116 @@ export function DetailedFrameworkRenderer({ content }: DetailedFrameworkRenderer
         .framework-detailed-page * { box-sizing: border-box; }
         
         .framework-detailed-page {
-          font-family: 'Source Sans 3', 'Gill Sans', Calibri, sans-serif;
-          font-size: 14px;
-          line-height: 1.6;
-          color: #2c2c2c;
-          background: #f5f5f5;
+          font-family: 'Source Sans 3', 'Gill Sans', Calibri, sans-serif !important;
+          font-size: 14px !important;
+          line-height: 1.6 !important;
+          color: #2c2c2c !important;
+          background: #f5f5f5 !important;
         }
 
         .framework-detailed-page .page {
-          max-width: 900px;
-          margin: 0 auto;
-          background: #ffffff;
-          padding: 48px 56px;
+          max-width: 900px !important;
+          margin: 0 auto !important;
+          background: #ffffff !important;
+          padding: 48px 56px !important;
         }
 
         .framework-detailed-page .main-title-section {
-          margin-bottom: 36px;
+          margin-bottom: 36px !important;
         }
 
         .framework-detailed-page .main-title {
-          font-family: 'Source Sans 3', sans-serif;
-          font-size: 36px;
-          font-weight: 700;
-          color: #1e4d2b;
-          margin-bottom: 2px;
+          font-family: 'Source Sans 3', sans-serif !important;
+          font-size: 36px !important;
+          font-weight: 700 !important;
+          color: #1e4d2b !important;
+          margin-bottom: 2px !important;
         }
 
         .framework-detailed-page .main-subtitle {
-          font-style: italic;
-          color: #2d6a3f;
-          font-size: 17px;
-          margin-bottom: 24px;
-          border-bottom: 2px solid #4a8c5c;
-          padding-bottom: 10px;
+          font-style: italic !important;
+          color: #2d6a3f !important;
+          font-size: 17px !important;
+          margin-bottom: 24px !important;
+          border-bottom: 2px solid #4a8c5c !important;
+          padding-bottom: 10px !important;
         }
 
         .framework-detailed-page .section-header {
-          background: #1e4d2b;
-          color: #ffffff;
-          font-size: 18px;
-          font-weight: 700;
-          padding: 12px 18px;
-          margin: 40px 0 24px 0;
-          font-family: 'Source Sans 3', sans-serif;
+          background: #1e4d2b !important;
+          color: #ffffff !important;
+          font-size: 18px !important;
+          font-weight: 700 !important;
+          padding: 12px 18px !important;
+          margin: 40px 0 24px 0 !important;
+          font-family: 'Source Sans 3', sans-serif !important;
         }
 
         .framework-detailed-page .subsection-title {
-          font-size: 16px;
-          font-weight: 700;
-          color: #1e4d2b;
-          border-bottom: 1.5px solid #4a8c5c;
-          padding-bottom: 5px;
-          margin: 28px 0 12px 0;
-          font-family: 'Source Sans 3', sans-serif;
+          font-size: 16px !important;
+          font-weight: 700 !important;
+          color: #1e4d2b !important;
+          border-bottom: 1.5px solid #4a8c5c !important;
+          padding-bottom: 5px !important;
+          margin: 28px 0 12px 0 !important;
+          font-family: 'Source Sans 3', sans-serif !important;
         }
 
         .framework-detailed-page .body-text {
-          font-size: 13.5px;
-          line-height: 1.65;
-          color: #2c2c2c;
-          margin-bottom: 14px;
+          font-size: 13.5px !important;
+          line-height: 1.65 !important;
+          color: #2c2c2c !important;
+          margin-bottom: 14px !important;
         }
 
         .framework-detailed-page .highlight-card {
-          display: table;
-          width: 100%;
-          border-collapse: collapse;
-          margin: 14px 0;
+          display: table !important;
+          width: 100% !important;
+          border-collapse: collapse !important;
+          margin: 14px 0 !important;
         }
 
         .framework-detailed-page .highlight-card .hc-label {
-          display: table-cell;
-          width: 110px;
-          padding: 12px 14px;
-          font-weight: 700;
-          font-size: 13px;
-          vertical-align: middle;
-          text-align: center;
+          display: table-cell !important;
+          width: 110px !important;
+          padding: 12px 14px !important;
+          font-weight: 700 !important;
+          font-size: 13px !important;
+          vertical-align: middle !important;
+          text-align: center !important;
         }
 
         .framework-detailed-page .highlight-card .hc-body {
-          display: table-cell;
-          padding: 12px 16px;
-          font-size: 13.5px;
-          line-height: 1.6;
-          vertical-align: top;
+          display: table-cell !important;
+          padding: 12px 16px !important;
+          font-size: 13.5px !important;
+          line-height: 1.6 !important;
+          vertical-align: top !important;
         }
 
-        .framework-detailed-page .hc-gold .hc-label { background: #b8860b; color: #ffffff; }
-        .framework-detailed-page .hc-gold .hc-body  { background: #fdf3d0; color: #1a1a1a; }
+        .framework-detailed-page .hc-gold .hc-label { background: #b8860b !important; color: #ffffff !important; }
+        .framework-detailed-page .hc-gold .hc-body  { background: #fdf3d0 !important; color: #1a1a1a !important; }
 
-        .framework-detailed-page .hc-green .hc-label { background: #2d6a3f; color: #ffffff; }
-        .framework-detailed-page .hc-green .hc-body  { background: #e8f2eb; color: #1a1a1a; }
+        .framework-detailed-page .hc-green .hc-label { background: #2d6a3f !important; color: #ffffff !important; }
+        .framework-detailed-page .hc-green .hc-body  { background: #e8f2eb !important; color: #1a1a1a !important; }
 
         .framework-detailed-page .req-block {
-          margin: 18px 0;
+          margin: 18px 0 !important;
         }
 
         .framework-detailed-page .req-id {
-          font-weight: 700;
-          color: #1e4d2b;
-          font-size: 13.5px;
-          margin-bottom: 4px;
+          font-weight: 700 !important;
+          color: #1e4d2b !important;
+          font-size: 13.5px !important;
+          margin-bottom: 4px !important;
         }
 
         .framework-detailed-page .component-title {
-          font-size: 15px;
-          font-weight: 700;
-          color: #1e4d2b;
-          margin: 28px 0 10px 0;
-          font-family: 'Source Sans 3', sans-serif;
+          font-size: 15px !important;
+          font-weight: 700 !important;
+          color: #1e4d2b !important;
+          margin: 28px 0 10px 0 !important;
+          font-family: 'Source Sans 3', sans-serif !important;
         }
       `}} />
       <div className="framework-detailed-page">

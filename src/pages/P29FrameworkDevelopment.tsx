@@ -467,9 +467,7 @@ export default function P29FrameworkDevelopment() {
                   </div>
                   <Card className="border-2">
                     <ScrollArea className="h-[700px]">
-                      <div className="p-8">
-                        <FrameworkRenderer content={generatedFrameworks.summary} />
-                      </div>
+                      <FrameworkRenderer content={generatedFrameworks.summary} />
                     </ScrollArea>
                   </Card>
                 </TabsContent>
@@ -494,9 +492,7 @@ export default function P29FrameworkDevelopment() {
                   </div>
                   <Card className="border-2">
                     <ScrollArea className="h-[700px]">
-                      <div className="p-8">
-                        <DetailedFrameworkRenderer content={generatedFrameworks.detailed} />
-                      </div>
+                      <DetailedFrameworkRenderer content={generatedFrameworks.detailed} />
                     </ScrollArea>
                   </Card>
                 </TabsContent>
