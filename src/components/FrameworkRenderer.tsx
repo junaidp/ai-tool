@@ -275,112 +275,110 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap');
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        :root {
-          --dark-green: #1e4d2b;
-          --mid-green: #2d6a3f;
-          --light-green-bg: #e8f2eb;
-          --lighter-green-bg: #f2f8f3;
-          --gold: #b8860b;
-          --gold-bg: #fdf3d0;
-          --gold-light-bg: #fef9e7;
-          --text-dark: #1a1a1a;
-          --text-body: #2c2c2c;
-          --border-green: #4a8c5c;
-          --border-light: #c8dece;
-          --white: #ffffff;
-          --page-width: 900px;
+      <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+      <style dangerouslySetInnerHTML={{ __html: `
+        .framework-page * { box-sizing: border-box; }
+        
+        .framework-page {
+          font-family: 'Source Sans 3', 'Gill Sans', Calibri, sans-serif;
+          font-size: 14px;
+          line-height: 1.6;
+          color: #2c2c2c;
+          background: #f5f5f5;
         }
 
-        .exec-title {
+        .framework-page .page {
+          max-width: 900px;
+          margin: 0 auto;
+          background: #ffffff;
+          padding: 48px 56px;
+        }
+
+        .framework-page .exec-title {
           font-family: 'Source Sans 3', sans-serif;
           font-size: 26px;
           font-weight: 700;
-          color: var(--dark-green);
+          color: #1e4d2b;
           margin-bottom: 4px;
         }
 
-        .exec-subtitle {
+        .framework-page .exec-subtitle {
           font-style: italic;
-          color: var(--mid-green);
+          color: #2d6a3f;
           font-size: 13.5px;
           margin-bottom: 18px;
           font-family: 'Source Sans 3', sans-serif;
         }
 
-        .exec-table {
+        .framework-page .exec-table {
           width: 100%;
           border-collapse: collapse;
           margin-bottom: 48px;
         }
 
-        .exec-table tr:nth-child(odd) td { background: var(--lighter-green-bg); }
-        .exec-table tr:nth-child(even) td { background: var(--light-green-bg); }
+        .framework-page .exec-table tr:nth-child(odd) td { background: #f2f8f3; }
+        .framework-page .exec-table tr:nth-child(even) td { background: #e8f2eb; }
 
-        .exec-table tr:first-child td {
-          background: var(--dark-green);
-          color: var(--white);
+        .framework-page .exec-table tr:first-child td {
+          background: #1e4d2b;
+          color: #ffffff;
           font-weight: 600;
           font-size: 13px;
           padding: 10px 14px;
           border: none;
         }
 
-        .exec-table td {
+        .framework-page .exec-table td {
           padding: 11px 14px;
           border: none;
           vertical-align: top;
           font-size: 13.5px;
         }
 
-        .exec-table td:first-child {
+        .framework-page .exec-table td:first-child {
           width: 160px;
           font-weight: 600;
-          color: var(--text-dark);
+          color: #1a1a1a;
           white-space: nowrap;
         }
 
-        .main-title-section {
+        .framework-page .main-title-section {
           margin-bottom: 36px;
         }
 
-        .main-title {
+        .framework-page .main-title {
           font-family: 'Source Sans 3', sans-serif;
           font-size: 36px;
           font-weight: 700;
-          color: var(--dark-green);
+          color: #1e4d2b;
           margin-bottom: 2px;
         }
 
-        .main-subtitle {
+        .framework-page .main-subtitle {
           font-style: italic;
-          color: var(--mid-green);
+          color: #2d6a3f;
           font-size: 17px;
           margin-bottom: 24px;
-          border-bottom: 2px solid var(--border-green);
+          border-bottom: 2px solid #4a8c5c;
           padding-bottom: 10px;
         }
 
-        .info-card-table {
+        .framework-page .info-card-table {
           width: 100%;
           border-collapse: separate;
           border-spacing: 0 10px;
           margin-bottom: 8px;
         }
 
-        .info-card-table td {
+        .framework-page .info-card-table td {
           padding: 12px 16px;
           vertical-align: top;
           font-size: 13.5px;
         }
 
-        .info-card-table td.card-label {
-          background: var(--dark-green);
-          color: var(--white);
+        .framework-page .info-card-table td.card-label {
+          background: #1e4d2b;
+          color: #ffffff;
           font-weight: 700;
           font-size: 13px;
           width: 120px;
@@ -388,14 +386,14 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
           vertical-align: middle;
         }
 
-        .info-card-table td.card-body {
-          background: var(--light-green-bg);
-          color: var(--text-body);
+        .framework-page .info-card-table td.card-body {
+          background: #e8f2eb;
+          color: #2c2c2c;
         }
 
-        .section-header {
-          background: var(--dark-green);
-          color: var(--white);
+        .framework-page .section-header {
+          background: #1e4d2b;
+          color: #ffffff;
           font-size: 18px;
           font-weight: 700;
           padding: 12px 18px;
@@ -403,80 +401,73 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
           font-family: 'Source Sans 3', sans-serif;
         }
 
-        .subsection-title {
+        .framework-page .subsection-title {
           font-size: 16px;
           font-weight: 700;
-          color: var(--dark-green);
-          border-bottom: 1.5px solid var(--border-green);
+          color: #1e4d2b;
+          border-bottom: 1.5px solid #4a8c5c;
           padding-bottom: 5px;
           margin: 28px 0 12px 0;
           font-family: 'Source Sans 3', sans-serif;
         }
 
-        .body-text {
+        .framework-page .body-text {
           font-size: 13.5px;
           line-height: 1.65;
-          color: var(--text-body);
+          color: #2c2c2c;
           margin-bottom: 14px;
         }
 
-        .std-table {
+        .framework-page .std-table {
           width: 100%;
           border-collapse: collapse;
           margin: 16px 0;
           font-size: 13.5px;
         }
 
-        .std-table th {
-          background: var(--dark-green);
-          color: var(--white);
+        .framework-page .std-table th {
+          background: #1e4d2b;
+          color: #ffffff;
           padding: 9px 12px;
           text-align: left;
           font-weight: 600;
           font-size: 13px;
         }
 
-        .std-table td {
+        .framework-page .std-table td {
           padding: 9px 12px;
-          border-bottom: 1px solid var(--border-light);
+          border-bottom: 1px solid #c8dece;
           vertical-align: top;
         }
 
-        .std-table tr:nth-child(even) td { background: var(--lighter-green-bg); }
-        .std-table tr:nth-child(odd) td  { background: var(--white); }
+        .framework-page .std-table tbody tr:nth-child(even) td { background: #f2f8f3; }
+        .framework-page .std-table tbody tr:nth-child(odd) td  { background: #ffffff; }
 
-        .std-table td:first-child { font-weight: 600; }
+        .framework-page .std-table td:first-child { font-weight: 600; }
 
-        .req-block {
+        .framework-page .req-block {
           margin: 18px 0;
         }
 
-        .req-id {
+        .framework-page .req-id {
           font-weight: 700;
-          color: var(--dark-green);
+          color: #1e4d2b;
           font-size: 13.5px;
           margin-bottom: 4px;
         }
 
-        .component-title {
+        .framework-page .component-title {
           font-size: 15px;
           font-weight: 700;
-          color: var(--dark-green);
+          color: #1e4d2b;
           margin: 28px 0 10px 0;
           font-family: 'Source Sans 3', sans-serif;
         }
-      `}</style>
-      <div style={{ 
-        fontFamily: "'Source Sans 3', 'Gill Sans', Calibri, sans-serif",
-        fontSize: '14px',
-        lineHeight: '1.6',
-        color: 'var(--text-body)',
-        maxWidth: '900px',
-        margin: '0 auto',
-        background: '#ffffff',
-        padding: '48px 56px'
-      }}>
-        {renderContent()}
+      `}} />
+      <div className="framework-page">
+        <div className="page">
+          {renderContent()}
+        </div>
       </div>
     </>
   );

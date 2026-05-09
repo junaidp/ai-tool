@@ -170,51 +170,49 @@ export function DetailedFrameworkRenderer({ content }: DetailedFrameworkRenderer
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap');
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        :root {
-          --dark-green: #1e4d2b;
-          --mid-green: #2d6a3f;
-          --light-green-bg: #e8f2eb;
-          --lighter-green-bg: #f2f8f3;
-          --gold: #b8860b;
-          --gold-bg: #fdf3d0;
-          --gold-light-bg: #fef9e7;
-          --text-dark: #1a1a1a;
-          --text-body: #2c2c2c;
-          --border-green: #4a8c5c;
-          --border-light: #c8dece;
-          --white: #ffffff;
-          --page-width: 900px;
+      <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+      <style dangerouslySetInnerHTML={{ __html: `
+        .framework-detailed-page * { box-sizing: border-box; }
+        
+        .framework-detailed-page {
+          font-family: 'Source Sans 3', 'Gill Sans', Calibri, sans-serif;
+          font-size: 14px;
+          line-height: 1.6;
+          color: #2c2c2c;
+          background: #f5f5f5;
         }
 
-        .main-title-section {
+        .framework-detailed-page .page {
+          max-width: 900px;
+          margin: 0 auto;
+          background: #ffffff;
+          padding: 48px 56px;
+        }
+
+        .framework-detailed-page .main-title-section {
           margin-bottom: 36px;
         }
 
-        .main-title {
+        .framework-detailed-page .main-title {
           font-family: 'Source Sans 3', sans-serif;
           font-size: 36px;
           font-weight: 700;
-          color: var(--dark-green);
+          color: #1e4d2b;
           margin-bottom: 2px;
         }
 
-        .main-subtitle {
+        .framework-detailed-page .main-subtitle {
           font-style: italic;
-          color: var(--mid-green);
+          color: #2d6a3f;
           font-size: 17px;
           margin-bottom: 24px;
-          border-bottom: 2px solid var(--border-green);
+          border-bottom: 2px solid #4a8c5c;
           padding-bottom: 10px;
         }
 
-        .section-header {
-          background: var(--dark-green);
-          color: var(--white);
+        .framework-detailed-page .section-header {
+          background: #1e4d2b;
+          color: #ffffff;
           font-size: 18px;
           font-weight: 700;
           padding: 12px 18px;
@@ -222,31 +220,31 @@ export function DetailedFrameworkRenderer({ content }: DetailedFrameworkRenderer
           font-family: 'Source Sans 3', sans-serif;
         }
 
-        .subsection-title {
+        .framework-detailed-page .subsection-title {
           font-size: 16px;
           font-weight: 700;
-          color: var(--dark-green);
-          border-bottom: 1.5px solid var(--border-green);
+          color: #1e4d2b;
+          border-bottom: 1.5px solid #4a8c5c;
           padding-bottom: 5px;
           margin: 28px 0 12px 0;
           font-family: 'Source Sans 3', sans-serif;
         }
 
-        .body-text {
+        .framework-detailed-page .body-text {
           font-size: 13.5px;
           line-height: 1.65;
-          color: var(--text-body);
+          color: #2c2c2c;
           margin-bottom: 14px;
         }
 
-        .highlight-card {
+        .framework-detailed-page .highlight-card {
           display: table;
           width: 100%;
           border-collapse: collapse;
           margin: 14px 0;
         }
 
-        .highlight-card .hc-label {
+        .framework-detailed-page .highlight-card .hc-label {
           display: table-cell;
           width: 110px;
           padding: 12px 14px;
@@ -256,7 +254,7 @@ export function DetailedFrameworkRenderer({ content }: DetailedFrameworkRenderer
           text-align: center;
         }
 
-        .highlight-card .hc-body {
+        .framework-detailed-page .highlight-card .hc-body {
           display: table-cell;
           padding: 12px 16px;
           font-size: 13.5px;
@@ -264,42 +262,35 @@ export function DetailedFrameworkRenderer({ content }: DetailedFrameworkRenderer
           vertical-align: top;
         }
 
-        .hc-gold .hc-label { background: var(--gold); color: var(--white); }
-        .hc-gold .hc-body  { background: var(--gold-bg); color: var(--text-dark); }
+        .framework-detailed-page .hc-gold .hc-label { background: #b8860b; color: #ffffff; }
+        .framework-detailed-page .hc-gold .hc-body  { background: #fdf3d0; color: #1a1a1a; }
 
-        .hc-green .hc-label { background: var(--mid-green); color: var(--white); }
-        .hc-green .hc-body  { background: var(--light-green-bg); color: var(--text-dark); }
+        .framework-detailed-page .hc-green .hc-label { background: #2d6a3f; color: #ffffff; }
+        .framework-detailed-page .hc-green .hc-body  { background: #e8f2eb; color: #1a1a1a; }
 
-        .req-block {
+        .framework-detailed-page .req-block {
           margin: 18px 0;
         }
 
-        .req-id {
+        .framework-detailed-page .req-id {
           font-weight: 700;
-          color: var(--dark-green);
+          color: #1e4d2b;
           font-size: 13.5px;
           margin-bottom: 4px;
         }
 
-        .component-title {
+        .framework-detailed-page .component-title {
           font-size: 15px;
           font-weight: 700;
-          color: var(--dark-green);
+          color: #1e4d2b;
           margin: 28px 0 10px 0;
           font-family: 'Source Sans 3', sans-serif;
         }
-      `}</style>
-      <div style={{ 
-        fontFamily: "'Source Sans 3', 'Gill Sans', Calibri, sans-serif",
-        fontSize: '14px',
-        lineHeight: '1.6',
-        color: 'var(--text-body)',
-        maxWidth: '900px',
-        margin: '0 auto',
-        background: '#ffffff',
-        padding: '48px 56px'
-      }}>
-        {renderContent()}
+      `}} />
+      <div className="framework-detailed-page">
+        <div className="page">
+          {renderContent()}
+        </div>
       </div>
     </>
   );
