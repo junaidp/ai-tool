@@ -280,188 +280,188 @@ export function FrameworkRenderer({ content }: FrameworkRendererProps) {
         .framework-page * { box-sizing: border-box; }
         
         .framework-page {
-          font-family: 'Source Sans 3', 'Gill Sans', Calibri, sans-serif;
-          font-size: 14px;
-          line-height: 1.6;
-          color: #2c2c2c;
-          background: #f5f5f5;
+          font-family: 'Source Sans 3', 'Gill Sans', Calibri, sans-serif !important;
+          font-size: 14px !important;
+          line-height: 1.6 !important;
+          color: #2c2c2c !important;
+          background: #f5f5f5 !important;
         }
 
         .framework-page .page {
-          max-width: 900px;
-          margin: 0 auto;
-          background: #ffffff;
-          padding: 48px 56px;
+          max-width: 900px !important;
+          margin: 0 auto !important;
+          background: #ffffff !important;
+          padding: 48px 56px !important;
         }
 
         .framework-page .exec-title {
-          font-family: 'Source Sans 3', sans-serif;
-          font-size: 26px;
-          font-weight: 700;
-          color: #1e4d2b;
-          margin-bottom: 4px;
+          font-family: 'Source Sans 3', sans-serif !important;
+          font-size: 26px !important;
+          font-weight: 700 !important;
+          color: #1e4d2b !important;
+          margin-bottom: 4px !important;
         }
 
         .framework-page .exec-subtitle {
-          font-style: italic;
-          color: #2d6a3f;
-          font-size: 13.5px;
-          margin-bottom: 18px;
-          font-family: 'Source Sans 3', sans-serif;
+          font-style: italic !important;
+          color: #2d6a3f !important;
+          font-size: 13.5px !important;
+          margin-bottom: 18px !important;
+          font-family: 'Source Sans 3', sans-serif !important;
         }
 
         .framework-page .exec-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 48px;
+          width: 100% !important;
+          border-collapse: collapse !important;
+          margin-bottom: 48px !important;
         }
 
-        .framework-page .exec-table tr:nth-child(odd) td { background: #f2f8f3; }
-        .framework-page .exec-table tr:nth-child(even) td { background: #e8f2eb; }
+        .framework-page .exec-table tr:nth-child(odd) td { background: #f2f8f3 !important; }
+        .framework-page .exec-table tr:nth-child(even) td { background: #e8f2eb !important; }
 
         .framework-page .exec-table tr:first-child td {
-          background: #1e4d2b;
-          color: #ffffff;
-          font-weight: 600;
-          font-size: 13px;
-          padding: 10px 14px;
-          border: none;
+          background: #1e4d2b !important;
+          color: #ffffff !important;
+          font-weight: 600 !important;
+          font-size: 13px !important;
+          padding: 10px 14px !important;
+          border: none !important;
         }
 
         .framework-page .exec-table td {
-          padding: 11px 14px;
-          border: none;
-          vertical-align: top;
-          font-size: 13.5px;
+          padding: 11px 14px !important;
+          border: none !important;
+          vertical-align: top !important;
+          font-size: 13.5px !important;
         }
 
         .framework-page .exec-table td:first-child {
-          width: 160px;
-          font-weight: 600;
-          color: #1a1a1a;
-          white-space: nowrap;
+          width: 160px !important;
+          font-weight: 600 !important;
+          color: #1a1a1a !important;
+          white-space: nowrap !important;
         }
 
         .framework-page .main-title-section {
-          margin-bottom: 36px;
+          margin-bottom: 36px !important;
         }
 
         .framework-page .main-title {
-          font-family: 'Source Sans 3', sans-serif;
-          font-size: 36px;
-          font-weight: 700;
-          color: #1e4d2b;
-          margin-bottom: 2px;
+          font-family: 'Source Sans 3', sans-serif !important;
+          font-size: 36px !important;
+          font-weight: 700 !important;
+          color: #1e4d2b !important;
+          margin-bottom: 2px !important;
         }
 
         .framework-page .main-subtitle {
-          font-style: italic;
-          color: #2d6a3f;
-          font-size: 17px;
-          margin-bottom: 24px;
-          border-bottom: 2px solid #4a8c5c;
-          padding-bottom: 10px;
+          font-style: italic !important;
+          color: #2d6a3f !important;
+          font-size: 17px !important;
+          margin-bottom: 24px !important;
+          border-bottom: 2px solid #4a8c5c !important;
+          padding-bottom: 10px !important;
         }
 
         .framework-page .info-card-table {
-          width: 100%;
-          border-collapse: separate;
-          border-spacing: 0 10px;
-          margin-bottom: 8px;
+          width: 100% !important;
+          border-collapse: separate !important;
+          border-spacing: 0 10px !important;
+          margin-bottom: 8px !important;
         }
 
         .framework-page .info-card-table td {
-          padding: 12px 16px;
-          vertical-align: top;
-          font-size: 13.5px;
+          padding: 12px 16px !important;
+          vertical-align: top !important;
+          font-size: 13.5px !important;
         }
 
         .framework-page .info-card-table td.card-label {
-          background: #1e4d2b;
-          color: #ffffff;
-          font-weight: 700;
-          font-size: 13px;
-          width: 120px;
-          text-align: center;
-          vertical-align: middle;
+          background: #1e4d2b !important;
+          color: #ffffff !important;
+          font-weight: 700 !important;
+          font-size: 13px !important;
+          width: 120px !important;
+          text-align: center !important;
+          vertical-align: middle !important;
         }
 
         .framework-page .info-card-table td.card-body {
-          background: #e8f2eb;
-          color: #2c2c2c;
+          background: #e8f2eb !important;
+          color: #2c2c2c !important;
         }
 
         .framework-page .section-header {
-          background: #1e4d2b;
-          color: #ffffff;
-          font-size: 18px;
-          font-weight: 700;
-          padding: 12px 18px;
-          margin: 40px 0 24px 0;
-          font-family: 'Source Sans 3', sans-serif;
+          background: #1e4d2b !important;
+          color: #ffffff !important;
+          font-size: 18px !important;
+          font-weight: 700 !important;
+          padding: 12px 18px !important;
+          margin: 40px 0 24px 0 !important;
+          font-family: 'Source Sans 3', sans-serif !important;
         }
 
         .framework-page .subsection-title {
-          font-size: 16px;
-          font-weight: 700;
-          color: #1e4d2b;
-          border-bottom: 1.5px solid #4a8c5c;
-          padding-bottom: 5px;
-          margin: 28px 0 12px 0;
-          font-family: 'Source Sans 3', sans-serif;
+          font-size: 16px !important;
+          font-weight: 700 !important;
+          color: #1e4d2b !important;
+          border-bottom: 1.5px solid #4a8c5c !important;
+          padding-bottom: 5px !important;
+          margin: 28px 0 12px 0 !important;
+          font-family: 'Source Sans 3', sans-serif !important;
         }
 
         .framework-page .body-text {
-          font-size: 13.5px;
-          line-height: 1.65;
-          color: #2c2c2c;
-          margin-bottom: 14px;
+          font-size: 13.5px !important;
+          line-height: 1.65 !important;
+          color: #2c2c2c !important;
+          margin-bottom: 14px !important;
         }
 
         .framework-page .std-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin: 16px 0;
-          font-size: 13.5px;
+          width: 100% !important;
+          border-collapse: collapse !important;
+          margin: 16px 0 !important;
+          font-size: 13.5px !important;
         }
 
         .framework-page .std-table th {
-          background: #1e4d2b;
-          color: #ffffff;
-          padding: 9px 12px;
-          text-align: left;
-          font-weight: 600;
-          font-size: 13px;
+          background: #1e4d2b !important;
+          color: #ffffff !important;
+          padding: 9px 12px !important;
+          text-align: left !important;
+          font-weight: 600 !important;
+          font-size: 13px !important;
         }
 
         .framework-page .std-table td {
-          padding: 9px 12px;
-          border-bottom: 1px solid #c8dece;
-          vertical-align: top;
+          padding: 9px 12px !important;
+          border-bottom: 1px solid #c8dece !important;
+          vertical-align: top !important;
         }
 
-        .framework-page .std-table tbody tr:nth-child(even) td { background: #f2f8f3; }
-        .framework-page .std-table tbody tr:nth-child(odd) td  { background: #ffffff; }
+        .framework-page .std-table tbody tr:nth-child(even) td { background: #f2f8f3 !important; }
+        .framework-page .std-table tbody tr:nth-child(odd) td  { background: #ffffff !important; }
 
-        .framework-page .std-table td:first-child { font-weight: 600; }
+        .framework-page .std-table td:first-child { font-weight: 600 !important; }
 
         .framework-page .req-block {
-          margin: 18px 0;
+          margin: 18px 0 !important;
         }
 
         .framework-page .req-id {
-          font-weight: 700;
-          color: #1e4d2b;
-          font-size: 13.5px;
-          margin-bottom: 4px;
+          font-weight: 700 !important;
+          color: #1e4d2b !important;
+          font-size: 13.5px !important;
+          margin-bottom: 4px !important;
         }
 
         .framework-page .component-title {
-          font-size: 15px;
-          font-weight: 700;
-          color: #1e4d2b;
-          margin: 28px 0 10px 0;
-          font-family: 'Source Sans 3', sans-serif;
+          font-size: 15px !important;
+          font-weight: 700 !important;
+          color: #1e4d2b !important;
+          margin: 28px 0 10px 0 !important;
+          font-family: 'Source Sans 3', sans-serif !important;
         }
       `}} />
       <div className="framework-page">
