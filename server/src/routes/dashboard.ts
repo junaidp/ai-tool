@@ -48,8 +48,8 @@ dashboardRouter.get('/', async (req, res) => {
       }).length;
       
       const closed = issues.filter(issue => {
-        const resolvedDate = issue.resolvedAt ? new Date(issue.resolvedAt) : null;
-        return resolvedDate && resolvedDate >= monthDate && resolvedDate < nextMonthDate;
+        const updatedDate = new Date(issue.updatedAt);
+        return issue.status === 'resolved' && updatedDate >= monthDate && updatedDate < nextMonthDate;
       }).length;
       
       remediationProgress.push({ month: monthName, opened, closed });
