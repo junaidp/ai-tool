@@ -267,7 +267,21 @@ export default function Integrations() {
                   <p className="text-xs text-muted-foreground">Financial controls monitoring</p>
                 </div>
               </div>
-              <Button size="sm" variant="outline">Connect</Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => {
+                  setIntegrationFormData({
+                    system: 'Oracle ERP',
+                    type: 'erp',
+                    endpoint: '',
+                    apiKey: ''
+                  });
+                  setIsAddIntegrationOpen(true);
+                }}
+              >
+                Connect
+              </Button>
             </div>
             <div className="flex items-center justify-between p-3 border rounded">
               <div className="flex items-center gap-3">
@@ -277,7 +291,21 @@ export default function Integrations() {
                   <p className="text-xs text-muted-foreground">Identity and access management</p>
                 </div>
               </div>
-              <Button size="sm" variant="outline">Connect</Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => {
+                  setIntegrationFormData({
+                    system: 'Okta',
+                    type: 'identity',
+                    endpoint: '',
+                    apiKey: ''
+                  });
+                  setIsAddIntegrationOpen(true);
+                }}
+              >
+                Connect
+              </Button>
             </div>
             <div className="flex items-center justify-between p-3 border rounded">
               <div className="flex items-center gap-3">
@@ -287,7 +315,21 @@ export default function Integrations() {
                   <p className="text-xs text-muted-foreground">Issue and remediation tracking</p>
                 </div>
               </div>
-              <Button size="sm" variant="outline">Connect</Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => {
+                  setIntegrationFormData({
+                    system: 'Jira',
+                    type: 'ticketing',
+                    endpoint: '',
+                    apiKey: ''
+                  });
+                  setIsAddIntegrationOpen(true);
+                }}
+              >
+                Connect
+              </Button>
             </div>
           </CardContent>
         </Card>

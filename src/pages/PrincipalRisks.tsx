@@ -226,12 +226,6 @@ export default function RiskIdentificationPage() {
               </p>
             </div>
             <div className="flex gap-2">
-              {risks.length === 0 && (
-                <Button variant="outline" onClick={() => setShowAIWizard(true)} className="border-blue-300 text-blue-700 hover:bg-blue-50">
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  AI Risk Identification
-                </Button>
-              )}
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
