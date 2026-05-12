@@ -34,14 +34,26 @@ dashboardRouter.get('/', async (req, res) => {
       count,
     }));
 
-    const remediationProgress = [
-      { month: 'Sep', opened: 8, closed: 6 },
-      { month: 'Oct', opened: 12, closed: 10 },
-      { month: 'Nov', opened: 7, closed: 9 },
-      { month: 'Dec', opened: 10, closed: 8 },
-      { month: 'Jan', opened: 9, closed: 11 },
-      { month: 'Feb', opened: 5, closed: 3 },
-    ];
+    // Calculate remediation progress from actual issue data
+    const now = new Date();
+    const remediationProgress = [];
+    for (let i = 5; i >= 0; i--) {
+      const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const nextMonthDate = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+      const monthName = monthDate.toLocaleString('en-US', { month: 'short' });
+      
+      const opened = issues.filter(issue => {
+        const createdDate = new Date(issue.createdAt);
+        return createdDate >= monthDate && createdDate < nextMonthDate;
+      }).length;
+      
+      const closed = issues.filter(issue => {
+        const resolvedDate = issue.resolvedAt ? new Date(issue.resolvedAt) : null;
+        return resolvedDate && resolvedDate >= monthDate && resolvedDate < nextMonthDate;
+      }).length;
+      
+      remediationProgress.push({ month: monthName, opened, closed });
+    }
 
     res.json({
       effectivenessStatus,

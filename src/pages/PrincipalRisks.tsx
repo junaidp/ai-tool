@@ -182,7 +182,7 @@ export default function RiskIdentificationPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Risk Identification</h1>
           <p className="text-muted-foreground mt-1">
-            Identify and assess principal, financial reporting, fraud, and cyber security risks
+            Identify and assess principal, financial reporting, fraud, and information security risks
           </p>
         </div>
         <Button
@@ -213,7 +213,7 @@ export default function RiskIdentificationPage() {
           </TabsTrigger>
           <TabsTrigger value="cyber" className="flex items-center gap-2">
             <Lock className="h-4 w-4" />
-            Cyber Security
+            Information Security
           </TabsTrigger>
         </TabsList>
 
@@ -226,16 +226,12 @@ export default function RiskIdentificationPage() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => {
-                if (risks.length > 0) {
-                  setShowReconfigureDialog(true);
-                } else {
-                  setShowAIWizard(true);
-                }
-              }} className="border-blue-300 text-blue-700 hover:bg-blue-50">
-                <Sparkles className="h-4 w-4 mr-2" />
-                {risks.length > 0 ? 'Reconfigure Risks' : 'AI Risk Identification'}
-              </Button>
+              {risks.length === 0 && (
+                <Button variant="outline" onClick={() => setShowAIWizard(true)} className="border-blue-300 text-blue-700 hover:bg-blue-50">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  AI Risk Identification
+                </Button>
+              )}
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
@@ -453,7 +449,7 @@ export default function RiskIdentificationPage() {
           <CyberSecurityRiskModule
             onRisksIdentified={(risks) => {
               setCyberSecurityRisks(risks);
-              console.log('Cyber Security Risks identified:', risks);
+              console.log('Information Security Risks identified:', risks);
             }}
           />
         </TabsContent>

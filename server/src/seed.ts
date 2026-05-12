@@ -222,56 +222,9 @@ async function main() {
 
   console.log('✅ Created material controls');
 
-  await prisma.integrationStatus.createMany({
-    data: [
-      {
-        system: 'SAP ERP',
-        type: 'erp',
-        status: 'connected',
-        endpoint: 'https://sap.example.com',
-        authMethod: 'basic',
-        syncFrequency: '15min',
-        lastSync: new Date('2024-02-04T09:30:00'),
-        signalsReceived: 15234,
-        exceptionsRaised: 12,
-      },
-      {
-        system: 'Azure Active Directory',
-        type: 'identity',
-        status: 'connected',
-        endpoint: 'https://graph.microsoft.com',
-        authMethod: 'oauth',
-        syncFrequency: '15min',
-        lastSync: new Date('2024-02-04T09:45:00'),
-        signalsReceived: 8921,
-        exceptionsRaised: 3,
-      },
-      {
-        system: 'ServiceNow',
-        type: 'ticketing',
-        status: 'connected',
-        endpoint: 'https://servicenow.example.com/api',
-        authMethod: 'api_key',
-        syncFrequency: '1hour',
-        lastSync: new Date('2024-02-04T09:20:00'),
-        signalsReceived: 4532,
-        exceptionsRaised: 7,
-      },
-      {
-        system: 'Vendor Portal',
-        type: 'custom',
-        status: 'error',
-        endpoint: 'https://vendor.example.com/api',
-        authMethod: 'api_key',
-        syncFrequency: 'daily',
-        lastSync: new Date('2024-02-03T14:20:00'),
-        signalsReceived: 0,
-        exceptionsRaised: 0,
-      },
-    ],
-  });
-
-  console.log('✅ Created integrations');
+  // Note: Integrations should be added by users through the UI
+  // No dummy integration data is seeded
+  console.log('ℹ️  No integrations seeded - users should add their own through the UI');
 
   await prisma.controlGap.createMany({
     data: [

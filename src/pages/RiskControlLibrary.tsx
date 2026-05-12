@@ -674,10 +674,10 @@ export default function RiskControlLibrary() {
                                           </div>
                                         </div>
                                       </td>
-                                      <td className="p-3 text-sm text-muted-foreground align-top">{control.owner}</td>
-                                      <td className="p-3 text-sm text-muted-foreground align-top">{control.frequency}</td>
-                                      <td className="p-3 text-sm text-muted-foreground align-top">{control.implementationPhase ? `Phase ${control.implementationPhase}` : 'N/A'}</td>
-                                      <td className="p-3 text-sm text-muted-foreground align-top">{control.implementationTimeline || 'TBD'}</td>
+                                      <td className="p-3 text-sm text-muted-foreground align-top">{control.owner || 'Department Manager'}</td>
+                                      <td className="p-3 text-sm text-muted-foreground align-top">{control.frequency || 'ad hoc'}</td>
+                                      <td className="p-3 text-sm text-muted-foreground align-top">{control.implementationPhase ? `Phase ${control.implementationPhase}` : 'Phase 2'}</td>
+                                      <td className="p-3 text-sm text-muted-foreground align-top">{control.implementationTimeline || 'Months 4-6'}</td>
                                     </tr>
                                   ))}
                                 </tbody>

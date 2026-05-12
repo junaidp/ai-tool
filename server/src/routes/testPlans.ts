@@ -23,16 +23,29 @@ testPlansRouter.get('/', async (req, res) => {
 testPlansRouter.post('/', async (req, res) => {
   try {
     const data = req.body;
+    
+    // Validate required fields
+    if (!data.controlId || !data.controlName || !data.testType || !data.tester || !data.scheduledDate || !data.status) {
+      return res.status(400).json({ error: 'Missing required fields: controlId, controlName, testType, tester, scheduledDate, status' });
+    }
+    
     const testPlan = await prisma.testPlan.create({
       data: {
-        ...data,
-        exceptions: data.exceptions ? JSON.stringify(data.exceptions) : null,
+        controlId: data.controlId,
+        controlName: data.controlName,
+        testType: data.testType,
+        tester: data.tester,
         scheduledDate: new Date(data.scheduledDate),
+        status: data.status,
+        results: data.results || null,
+        exceptions: data.exceptions ? JSON.stringify(data.exceptions) : null,
+        remediationRequired: data.remediationRequired || false,
       },
     });
     res.json(testPlan);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create test plan' });
+  } catch (error: any) {
+    console.error('Error creating test plan:', error);
+    res.status(500).json({ error: error.message || 'Failed to create test plan' });
   }
 });
 

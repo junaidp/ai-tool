@@ -800,17 +800,6 @@ export default function AIRiskWizard({ onComplete, onCancel }: AIRiskWizardProps
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label className="text-sm">Are you profitable?</Label>
-              <Select value={context.isProfitable} onValueChange={(v) => setContext(prev => ({ ...prev, isProfitable: v }))}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Yes">Yes</SelectItem>
-                  <SelectItem value="No">No</SelectItem>
-                  <SelectItem value="Break-even">Break-even</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </CardContent>
       </Card>

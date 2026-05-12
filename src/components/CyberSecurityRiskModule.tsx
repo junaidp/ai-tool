@@ -247,10 +247,10 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            Cyber Security Risk Assessment - Complete
+            Information Security Risk Assessment - Complete
           </CardTitle>
           <CardDescription>
-            {identifiedRisks.length} cyber security risks identified
+            {identifiedRisks.length} information security risks identified
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -299,7 +299,7 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Edit Cyber Security Risk</CardTitle>
+          <CardTitle>Edit Information Security Risk</CardTitle>
           <CardDescription>Modify the risk details</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -335,10 +335,10 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Lock className="h-5 w-5" />
-              Cyber Security Risk Assessment
+              Information Security Risk Assessment
             </CardTitle>
             <CardDescription>
-              Select cyber security domains to assess organizational vulnerabilities
+              Select information security domains to assess organizational vulnerabilities
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -488,7 +488,12 @@ export default function CyberSecurityRiskModule({ onRisksIdentified }: CyberSecu
           </Button>
           <Button
             onClick={handleNext}
-            disabled={answers[currentQuestion.id] === undefined || answers[currentQuestion.id] === null || (typeof answers[currentQuestion.id] === 'string' && answers[currentQuestion.id] === '')}
+            disabled={
+              !(currentQuestion.id in answers) || 
+              answers[currentQuestion.id] === undefined || 
+              answers[currentQuestion.id] === null || 
+              (typeof answers[currentQuestion.id] === 'string' && answers[currentQuestion.id].trim() === '')
+            }
           >
             {currentQuestionIndex < visibleQuestions.length - 1 ? 'Next' : 'Complete Domain'}
             <ChevronRight className="h-4 w-4 ml-2" />

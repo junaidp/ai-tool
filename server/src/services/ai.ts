@@ -379,7 +379,7 @@ REQUIREMENTS:
 4. Reference SPECIFIC details from the business context (revenue figures, customer details, employee counts, industry specifics)
 5. Reference SPECIFIC details from the user's answers
 6. Include detailed causes/drivers (4-6 per risk)
-7. Include detailed impacts with financial estimates where possible (4-6 per risk)
+7. Include detailed impacts WITHOUT specific monetary values (4-6 per risk) - describe the nature and severity of impacts qualitatively
 8. The primary threatCategory MUST be "${threatCategory}", but you may add secondary threat categories if the risk cascades
 9. Classify control domains: ops, reporting, financial, compliance
 10. Rate confidence (HIGH/MEDIUM/LOW) based on how clearly the answers support this risk
@@ -392,7 +392,7 @@ Return as JSON with a "risks" array containing objects with these exact fields:
 - title (string, concise but descriptive risk title)
 - definition (string, FULL board-quality definition, 5-10 sentences, referencing specific business details and user answers)
 - causes (string array, 4-6 specific causes/drivers)
-- impacts (string array, 4-6 specific impacts with financial estimates)
+- impacts (string array, 4-6 specific impacts described qualitatively without monetary values)
 - threatCategories (string array, primary: "${threatCategory}", plus any secondary)
 - domainTags (string array from: ops, reporting, financial, compliance)
 - confidence (string: HIGH, MEDIUM, or LOW)
@@ -401,7 +401,7 @@ Return as JSON with a "risks" array containing objects with these exact fields:
 - likelihoodScore (number 1-5)
 - likelihoodReasoning (string, detailed)
 - impactScore (number 1-5)
-- impactReasoning (string, detailed with financial estimates)`;
+- impactReasoning (string, detailed description without specific monetary values)`;
 }
 
 export async function generateRisksByCategory(
@@ -502,12 +502,13 @@ Type: ${userEdits.editType}
 Details: "${userEdits.details}"
 
 Regenerate the risk definition incorporating the user's changes. Maintain board-quality language and specificity.
+IMPORTANT: Do NOT include specific monetary values (e.g., £50M, $100K) in the impacts - describe impacts qualitatively.
 
 Return as JSON with:
 - title (string)
 - definition (string, full updated definition)
 - causes (string array)
-- impacts (string array)
+- impacts (string array, described qualitatively without specific monetary values)
 - explanation (string, brief description of what changed)`;
 
   const completion = await openai.chat.completions.create({
@@ -568,7 +569,9 @@ Score on two dimensions (1-5 scale):
 - Likelihood: 1=Rare, 2=Unlikely, 3=Possible, 4=Likely, 5=Almost Certain
 - Impact: 1=Insignificant, 2=Minor, 3=Moderate, 4=Major, 5=Catastrophic
 
-Return as JSON with: likelihoodScore, likelihoodReasoning, impactScore, impactReasoning`;
+IMPORTANT: In your reasoning, describe impacts qualitatively without specific monetary values (e.g., avoid £50M, $100K).
+
+Return as JSON with: likelihoodScore, likelihoodReasoning, impactScore, impactReasoning (without specific monetary values)`;
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',

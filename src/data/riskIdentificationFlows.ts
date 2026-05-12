@@ -11,13 +11,13 @@ export const financialReportingFlows: FinancialReportingQuestionFlow[] = [
     questions: [
       {
         id: 'rev_001',
-        text: 'Do you have multiple revenue streams or complex revenue arrangements?',
+        text: 'Do you have multiple revenue streams or complex revenue arrangements? (e.g., product sales + services, licensing + maintenance, bundled offerings)',
         type: 'yes_no',
         riskIndicator: 'high',
       },
       {
         id: 'rev_002',
-        text: 'Do you recognize revenue over time (e.g., subscriptions, long-term contracts)?',
+        text: 'Do you recognize revenue over time? (e.g., SaaS subscriptions, construction contracts, professional services engagements, long-term supply agreements)',
         type: 'yes_no',
         conditionalOn: { questionId: 'rev_001', answer: 'yes' },
         riskIndicator: 'high',
