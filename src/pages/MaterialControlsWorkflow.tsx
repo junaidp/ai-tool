@@ -680,16 +680,17 @@ export default function MaterialControlsWorkflow() {
       const existingSection2Titles = new Set(existingSection2Controls.map((c: any) => c.title.toLowerCase().trim()));
       
       console.log('Existing Section2 controls for this risk:', existingSection2Controls.length);
-      console.log('Existing Section2 titles:', Array.from(existingSection2Titles));
-      
+
       let savedCount = 0;
       let skippedCount = 0;
+      
+      // Get the current max control number for this risk to generate sequential ref numbers
+      let maxControlNumber = existingSection2Controls.length;
       
       for (const control of allControls) {
         const controlNameLower = control.title.toLowerCase().trim();
         
         // Try to create control in Control table (global library)
-        // This may fail if duplicate exists globally, but that's okay
         try {
           if (!existingControlNames.has(controlNameLower)) {
             await apiService.createControl({
@@ -698,23 +699,25 @@ export default function MaterialControlsWorkflow() {
               type: control.type === 'preventive' ? 'preventive' : control.type === 'detective' ? 'detective' : 'corrective',
               automation: 'manual',
               frequency: control.frequency || 'monthly',
-              owner: control.owner || 'To be assigned',
-              linkedRisks: [selectedRisk.riskTitle],
+              owner: control.owner || '',
+              linkedRisks: [selectedRisk.id],
               effectiveness: 'effective',
               evidenceSource: control.evidence || 'To be documented',
             });
             existingControlNames.add(controlNameLower);
           }
         } catch (error) {
-          // Control might already exist globally - that's fine, continue
           console.log('Control already exists in global library:', control.title);
         }
 
         // ALWAYS save to Section2Control table for this specific risk
-        // Only skip if it already exists for THIS specific risk
         if (!existingSection2Titles.has(controlNameLower)) {
+          maxControlNumber++;
+          const refNumber = `CTRL-${String(maxControlNumber).padStart(3, '0')}`;
+          
           const section2Data: any = {
             riskId: selectedRisk.id,
+            refNumber: refNumber,
             title: control.title,
             description: control.description || '',
             controlType: control.type,
@@ -727,13 +730,12 @@ export default function MaterialControlsWorkflow() {
             source: control.source || 'workflow_documented',
           };
 
-          // Only add optional fields if they have actual values
           if (control.reviewer) section2Data.reviewer = control.reviewer;
           if (control.implementationPhase !== undefined) section2Data.implementationPhase = control.implementationPhase;
           if (control.implementationEffort) section2Data.implementationEffort = control.implementationEffort;
           if (control.implementationTimeline) section2Data.implementationTimeline = control.implementationTimeline;
 
-          console.log('Saving Section2Control:', control.title);
+          console.log('Saving Section2Control:', control.title, 'with ref:', refNumber);
           try {
             await apiService.saveSection2Control(section2Data);
             existingSection2Titles.add(controlNameLower);

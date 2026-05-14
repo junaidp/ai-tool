@@ -331,6 +331,54 @@ export default function Integrations() {
                 Connect
               </Button>
             </div>
+            <div className="flex items-center justify-between p-3 border rounded">
+              <div className="flex items-center gap-3">
+                <Database className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">SAP ERP</p>
+                  <p className="text-xs text-muted-foreground">Financial and operational controls</p>
+                </div>
+              </div>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => {
+                  setIntegrationFormData({
+                    system: 'SAP ERP',
+                    type: 'erp',
+                    endpoint: '',
+                    apiKey: ''
+                  });
+                  setIsAddIntegrationOpen(true);
+                }}
+              >
+                Connect
+              </Button>
+            </div>
+            <div className="flex items-center justify-between p-3 border rounded">
+              <div className="flex items-center gap-3">
+                <Database className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">Microsoft Dynamics</p>
+                  <p className="text-xs text-muted-foreground">ERP and business applications</p>
+                </div>
+              </div>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => {
+                  setIntegrationFormData({
+                    system: 'Microsoft Dynamics',
+                    type: 'erp',
+                    endpoint: '',
+                    apiKey: ''
+                  });
+                  setIsAddIntegrationOpen(true);
+                }}
+              >
+                Connect
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -345,21 +393,21 @@ export default function Integrations() {
               <p className="text-sm text-muted-foreground mb-3">
                 Define events and metrics to monitor for each control
               </p>
-              <Button variant="outline" className="w-full">Configure Signals</Button>
+              <Button variant="outline" className="w-full" onClick={() => alert('Control Signals configuration coming soon. This will allow you to define specific events and metrics to monitor for each control.')}>Configure Signals</Button>
             </div>
             <div>
               <h4 className="font-medium mb-2">Alert Thresholds</h4>
               <p className="text-sm text-muted-foreground mb-3">
                 Set thresholds that trigger exception workflows
               </p>
-              <Button variant="outline" className="w-full">Configure Thresholds</Button>
+              <Button variant="outline" className="w-full" onClick={() => alert('Alert Thresholds configuration coming soon. This will allow you to set thresholds that trigger exception workflows.')}>Configure Thresholds</Button>
             </div>
             <div>
               <h4 className="font-medium mb-2">Exception Workflows</h4>
               <p className="text-sm text-muted-foreground mb-3">
                 Owner notification, investigation, and remediation flows
               </p>
-              <Button variant="outline" className="w-full">Configure Workflows</Button>
+              <Button variant="outline" className="w-full" onClick={() => alert('Exception Workflows configuration coming soon. This will allow you to configure owner notification, investigation, and remediation flows.')}>Configure Workflows</Button>
             </div>
           </CardContent>
         </Card>
