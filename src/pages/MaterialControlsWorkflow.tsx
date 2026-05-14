@@ -1230,11 +1230,19 @@ export default function MaterialControlsWorkflow() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {documentedControls.map((control, idx) => (
+                {documentedControls.map((control, idx) => {
+                  // Find the corresponding Section2Control to get refNumber
+                  const section2Control = allDocumentedControls.find(c => c.title === control.title);
+                  return (
                   <div key={idx} className="border rounded-lg p-4 space-y-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h4 className="font-semibold text-lg">{control.title}</h4>
+                        <div className="flex items-center gap-2">
+                          {section2Control?.refNumber && (
+                            <Badge variant="secondary" className="text-xs">{section2Control.refNumber}</Badge>
+                          )}
+                          <h4 className="font-semibold text-lg">{control.title}</h4>
+                        </div>
                         <p className="text-sm text-muted-foreground mt-1">{control.description}</p>
                       </div>
                       <Badge variant="outline">{control.type}</Badge>
@@ -1264,7 +1272,8 @@ export default function MaterialControlsWorkflow() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

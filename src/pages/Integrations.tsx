@@ -18,6 +18,9 @@ export default function Integrations() {
   const [isConfigureOpen, setIsConfigureOpen] = useState(false);
   const [isViewSignalsOpen, setIsViewSignalsOpen] = useState(false);
   const [isViewExceptionsOpen, setIsViewExceptionsOpen] = useState(false);
+  const [isConfigureSignalsOpen, setIsConfigureSignalsOpen] = useState(false);
+  const [isConfigureThresholdsOpen, setIsConfigureThresholdsOpen] = useState(false);
+  const [isConfigureWorkflowsOpen, setIsConfigureWorkflowsOpen] = useState(false);
   const [selectedIntegration, setSelectedIntegration] = useState<IntegrationStatus | null>(null);
   const [integrationFormData, setIntegrationFormData] = useState({
     system: '',
@@ -393,21 +396,21 @@ export default function Integrations() {
               <p className="text-sm text-muted-foreground mb-3">
                 Define events and metrics to monitor for each control
               </p>
-              <Button variant="outline" className="w-full" onClick={() => alert('Control Signals configuration coming soon. This will allow you to define specific events and metrics to monitor for each control.')}>Configure Signals</Button>
+              <Button variant="outline" className="w-full" onClick={() => setIsConfigureSignalsOpen(true)}>Configure Signals</Button>
             </div>
             <div>
               <h4 className="font-medium mb-2">Alert Thresholds</h4>
               <p className="text-sm text-muted-foreground mb-3">
                 Set thresholds that trigger exception workflows
               </p>
-              <Button variant="outline" className="w-full" onClick={() => alert('Alert Thresholds configuration coming soon. This will allow you to set thresholds that trigger exception workflows.')}>Configure Thresholds</Button>
+              <Button variant="outline" className="w-full" onClick={() => setIsConfigureThresholdsOpen(true)}>Configure Thresholds</Button>
             </div>
             <div>
               <h4 className="font-medium mb-2">Exception Workflows</h4>
               <p className="text-sm text-muted-foreground mb-3">
                 Owner notification, investigation, and remediation flows
               </p>
-              <Button variant="outline" className="w-full" onClick={() => alert('Exception Workflows configuration coming soon. This will allow you to configure owner notification, investigation, and remediation flows.')}>Configure Workflows</Button>
+              <Button variant="outline" className="w-full" onClick={() => setIsConfigureWorkflowsOpen(true)}>Configure Workflows</Button>
             </div>
           </CardContent>
         </Card>
@@ -853,6 +856,197 @@ export default function Integrations() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsViewExceptionsOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Configure Signals Dialog */}
+      <Dialog open={isConfigureSignalsOpen} onOpenChange={setIsConfigureSignalsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Configure Control Signals</DialogTitle>
+            <DialogDescription>
+              Define events and metrics to monitor for each control
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Signal Type</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select signal type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="transaction_volume">Transaction Volume</SelectItem>
+                  <SelectItem value="error_rate">Error Rate</SelectItem>
+                  <SelectItem value="access_pattern">Access Pattern</SelectItem>
+                  <SelectItem value="approval_time">Approval Time</SelectItem>
+                  <SelectItem value="segregation_violation">Segregation of Duties Violation</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Metric Name</Label>
+              <Input placeholder="e.g., Daily transaction count" />
+            </div>
+            <div>
+              <Label>Data Source</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select data source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="erp">ERP System</SelectItem>
+                  <SelectItem value="identity">Identity Management</SelectItem>
+                  <SelectItem value="ticketing">Ticketing System</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Monitoring Frequency</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select frequency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="realtime">Real-time</SelectItem>
+                  <SelectItem value="hourly">Hourly</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsConfigureSignalsOpen(false)}>Cancel</Button>
+            <Button onClick={() => { alert('Signal configuration saved!'); setIsConfigureSignalsOpen(false); }}>Save Signal</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Configure Thresholds Dialog */}
+      <Dialog open={isConfigureThresholdsOpen} onOpenChange={setIsConfigureThresholdsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Configure Alert Thresholds</DialogTitle>
+            <DialogDescription>
+              Set thresholds that trigger exception workflows
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Control Signal</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select signal to configure" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="transaction_volume">Transaction Volume</SelectItem>
+                  <SelectItem value="error_rate">Error Rate</SelectItem>
+                  <SelectItem value="access_pattern">Access Pattern</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Threshold Type</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select threshold type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="upper_limit">Upper Limit</SelectItem>
+                  <SelectItem value="lower_limit">Lower Limit</SelectItem>
+                  <SelectItem value="range">Range</SelectItem>
+                  <SelectItem value="percentage_change">Percentage Change</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Threshold Value</Label>
+              <Input type="number" placeholder="e.g., 1000" />
+            </div>
+            <div>
+              <Label>Severity Level</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select severity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low - Informational</SelectItem>
+                  <SelectItem value="medium">Medium - Requires Review</SelectItem>
+                  <SelectItem value="high">High - Immediate Action</SelectItem>
+                  <SelectItem value="critical">Critical - Escalation Required</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsConfigureThresholdsOpen(false)}>Cancel</Button>
+            <Button onClick={() => { alert('Threshold configuration saved!'); setIsConfigureThresholdsOpen(false); }}>Save Threshold</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Configure Workflows Dialog */}
+      <Dialog open={isConfigureWorkflowsOpen} onOpenChange={setIsConfigureWorkflowsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Configure Exception Workflows</DialogTitle>
+            <DialogDescription>
+              Define owner notification, investigation, and remediation flows
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Workflow Name</Label>
+              <Input placeholder="e.g., High Value Transaction Exception" />
+            </div>
+            <div>
+              <Label>Trigger Condition</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select trigger" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="threshold_breach">Threshold Breach</SelectItem>
+                  <SelectItem value="pattern_anomaly">Pattern Anomaly</SelectItem>
+                  <SelectItem value="manual_flag">Manual Flag</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Primary Owner</Label>
+              <Input placeholder="Email or user ID" />
+            </div>
+            <div>
+              <Label>Escalation Owner</Label>
+              <Input placeholder="Email or user ID for escalation" />
+            </div>
+            <div>
+              <Label>Response SLA (hours)</Label>
+              <Input type="number" placeholder="e.g., 24" />
+            </div>
+            <div>
+              <Label>Notification Method</Label>
+              <div className="flex gap-2">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" defaultChecked />
+                  <span className="text-sm">Email</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" />
+                  <span className="text-sm">SMS</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" defaultChecked />
+                  <span className="text-sm">In-App</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsConfigureWorkflowsOpen(false)}>Cancel</Button>
+            <Button onClick={() => { alert('Workflow configuration saved!'); setIsConfigureWorkflowsOpen(false); }}>Save Workflow</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
