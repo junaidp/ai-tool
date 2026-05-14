@@ -872,7 +872,7 @@ export default function MaterialControlsWorkflow() {
                     </div>
                     <div className="flex items-center gap-4 text-muted-foreground">
                       <span>Maturity: {cr.currentScore?.toFixed(1)} → {cr.targetScore?.toFixed(1)}</span>
-                      <span>Controls: {cr.controlCount}</span>
+                      <span>Controls: {cr.controlCount} (Click to view with ref numbers)</span>
                       <ArrowRight className="h-4 w-4" />
                     </div>
                   </div>

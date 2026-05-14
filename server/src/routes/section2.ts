@@ -67,6 +67,7 @@ section2Router.post('/controls', async (req, res) => {
       owner, reviewer, frequency, evidence, evidenceLocation,
       status, maturityLevel, source, templateId,
       implementationPhase, implementationEffort, implementationTimeline,
+      refNumber,
     } = req.body;
 
     if (!riskId || !title || !controlType) {
@@ -87,6 +88,12 @@ section2Router.post('/controls', async (req, res) => {
       maturityLevel: maturityLevel || 1,
       source: source || 'existing_documented',
     };
+
+    // Add refNumber if provided
+    if (refNumber && refNumber.trim() !== '') {
+      controlData.refNumber = refNumber;
+      console.log('Adding refNumber:', refNumber);
+    }
 
     // Only add optional fields if they have values (not empty strings)
     if (reviewer && reviewer.trim() !== '') {
