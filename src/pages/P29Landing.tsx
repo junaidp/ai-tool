@@ -314,7 +314,7 @@ h2.p29-section-title em{font-style:italic;font-weight:300;color:var(--gold-dim)}
             <a href="#how">How it works</a>
             <a href="#workflows">Platform</a>
             <a href="#pricing">Pricing</a>
-            <button onClick={handleLoginClick} className="p29-login-btn">Login</button>
+
           </div>
         </nav>
 
