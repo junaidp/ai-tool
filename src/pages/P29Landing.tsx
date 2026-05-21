@@ -335,9 +335,9 @@ h2.p29-section-title em{font-style:italic;font-weight:300;color:var(--gold-dim)}
             </p>
 
             <div className="p29-hero-cta-row reveal" data-d="3">
-              <a href="#signup" className="p29-btn-primary">
+              <button onClick={() => navigate('/signup')} className="p29-btn-primary">
                 Start free trial <span className="arrow">→</span>
-              </a>
+              </button>
               <a href="#how" className="p29-btn-secondary">
                 How it works
               </a>
@@ -616,7 +616,7 @@ h2.p29-section-title em{font-style:italic;font-weight:300;color:var(--gold-dim)}
                   <li>Sample quarterly report</li>
                   <li>Onboarding session</li>
                 </ul>
-                <a href="#signup" className="p29-tier-cta">Start free trial</a>
+                <button onClick={() => window.location.href = 'https://risk-tlmk.onrender.com/signup'} className="p29-tier-cta" style={{ cursor: 'pointer' }}>Start free trial</button>
               </div>
 
               <div className="p29-tier reveal" data-d="1">
@@ -633,7 +633,7 @@ h2.p29-section-title em{font-style:italic;font-weight:300;color:var(--gold-dim)}
                   <li>Declaration builder</li>
                   <li>Standard support</li>
                 </ul>
-                <a href="#signup" className="p29-tier-cta">Select Professional</a>
+                <button onClick={() => window.location.href = 'https://risk-tlmk.onrender.com/signup'} className="p29-tier-cta" style={{ cursor: 'pointer' }}>Select Professional</button>
               </div>
 
               <div className="p29-tier featured reveal" data-d="2">
@@ -649,7 +649,7 @@ h2.p29-section-title em{font-style:italic;font-weight:300;color:var(--gold-dim)}
                   <li className="expert-line">Audit Committee preparation</li>
                   <li>Priority support</li>
                 </ul>
-                <a href="#signup" className="p29-tier-cta">Select Expert</a>
+                <button onClick={() => window.location.href = 'https://risk-tlmk.onrender.com/signup'} className="p29-tier-cta" style={{ cursor: 'pointer' }}>Select Expert</button>
               </div>
             </div>
 
@@ -672,36 +672,15 @@ h2.p29-section-title em{font-style:italic;font-weight:300;color:var(--gold-dim)}
                 The free trial gives you the full structure, the industry-specific question set for one domain, and an AI-prepared risk register against your answers. No card. No discovery call. No partner introductions.
               </p>
             </div>
-            <form className="p29-signup-form reveal" data-d="3" onSubmit={(e) => {
-              e.preventDefault();
-              const btn = e.currentTarget.querySelector('button[type=submit]') as HTMLButtonElement;
-              if (btn) {
-                btn.innerHTML = '✓ &nbsp;Welcome — check your inbox';
-                btn.style.background = 'var(--teal)';
-                btn.style.color = 'var(--cream)';
-                btn.disabled = true;
-              }
-            }}>
-              <div className="row-2">
-                <input type="text" placeholder="Full name" required />
-                <input type="text" placeholder="Company" required />
-              </div>
-              <input type="email" placeholder="Work email" required />
-              <select required>
-                <option value="">Role</option>
-                <option>CFO / Finance Director</option>
-                <option>Head of Internal Audit</option>
-                <option>Audit Committee Chair</option>
-                <option>Non-Executive Director</option>
-                <option>Head of Risk / Internal Control</option>
-                <option>Company Secretary</option>
-                <option>Other</option>
-              </select>
-              <button type="submit" className="p29-btn-primary">
+            <div className="reveal" data-d="3" style={{ display: 'flex', justifyContent: 'center' }}>
+              <button 
+                onClick={() => window.location.href = 'https://risk-tlmk.onrender.com/signup'} 
+                className="p29-btn-primary"
+                style={{ fontSize: '16px', padding: '20px 48px' }}
+              >
                 Start free trial <span className="arrow">→</span>
               </button>
-              <p className="p29-form-note">Trial activates instantly. We will never share your details. Annual billing only for paid tiers.</p>
-            </form>
+            </div>
           </div>
         </section>
 
