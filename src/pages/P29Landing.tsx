@@ -616,7 +616,7 @@ h2.p29-section-title em{font-style:italic;font-weight:300;color:var(--gold-dim)}
                   <li>Sample quarterly report</li>
                   <li>Onboarding session</li>
                 </ul>
-                <button onClick={() => window.location.href = 'https://risk-tlmk.onrender.com/signup'} className="p29-tier-cta" style={{ cursor: 'pointer' }}>Start free trial</button>
+                <button onClick={() => navigate('/signup')} className="p29-tier-cta" style={{ cursor: 'pointer' }}>Start free trial</button>
               </div>
 
               <div className="p29-tier reveal" data-d="1">
@@ -633,7 +633,7 @@ h2.p29-section-title em{font-style:italic;font-weight:300;color:var(--gold-dim)}
                   <li>Declaration builder</li>
                   <li>Standard support</li>
                 </ul>
-                <button onClick={() => window.location.href = 'https://risk-tlmk.onrender.com/signup'} className="p29-tier-cta" style={{ cursor: 'pointer' }}>Select Professional</button>
+                <button onClick={() => navigate('/signup')} className="p29-tier-cta" style={{ cursor: 'pointer' }}>Select Professional</button>
               </div>
 
               <div className="p29-tier featured reveal" data-d="2">
@@ -649,7 +649,7 @@ h2.p29-section-title em{font-style:italic;font-weight:300;color:var(--gold-dim)}
                   <li className="expert-line">Audit Committee preparation</li>
                   <li>Priority support</li>
                 </ul>
-                <button onClick={() => window.location.href = 'https://risk-tlmk.onrender.com/signup'} className="p29-tier-cta" style={{ cursor: 'pointer' }}>Select Expert</button>
+                <button onClick={() => navigate('/signup')} className="p29-tier-cta" style={{ cursor: 'pointer' }}>Select Expert</button>
               </div>
             </div>
 
