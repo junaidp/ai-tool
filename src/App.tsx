@@ -3,6 +3,7 @@ import { useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import CompanySignup from './pages/CompanySignup';
+import P29Landing from './pages/P29Landing';
 import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
 import EffectivenessCriteria from './pages/EffectivenessCriteriaV2';
@@ -38,15 +39,19 @@ function App() {
     <Router>
       <Routes>
         <Route 
+          path="/" 
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <P29Landing />} 
+        />
+        <Route 
           path="/login" 
-          element={isAuthenticated ? <Navigate to="/" replace /> : <Login />} 
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} 
         />
         <Route 
           path="/signup" 
-          element={isAuthenticated ? <Navigate to="/" replace /> : <CompanySignup />} 
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <CompanySignup />} 
         />
         <Route 
-          path="/" 
+          path="/dashboard" 
           element={
             <ProtectedRoute>
               <Layout />
