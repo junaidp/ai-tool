@@ -673,7 +673,8 @@ h2.p29-section-title em{font-style:italic;font-weight:300;color:var(--gold-dim)}
               </p>
             </div>
             <div className="reveal" data-d="3" style={{ display: 'flex', justifyContent: 'center' }}>
-              <button 
+              <button
+                visibility="hidden"
                 onClick={() => window.location.href = 'https://risk-tlmk.onrender.com/signup'} 
                 className="p29-btn-primary"
                 style={{ fontSize: '16px', padding: '20px 48px' }}
